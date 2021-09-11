@@ -73,7 +73,7 @@ interface StatisticProperties {
  * @param {StatisticProperties} properties Properties of statistic to save.
  */
 export async function saveStatistic(clubPath: string, properties: StatisticProperties) {
-    const path = `${clubPath}/statistics/${guid.newGuid()}`;
+    const path = `${clubPath}/statistics/${guid.newGuid().guidString}`;
     const reference = admin.database().ref(path);
     await reference.set({
         ...properties,

@@ -1,9 +1,12 @@
-import {assert, expect} from "chai";
-import {FirebaseError} from "firebase/app";
-import {signOut} from "firebase/auth";
 import {privateKey} from "../src/privateKeys";
 import {guid} from "../src/TypeDefinitions/guid";
-import {auth, callFunction, signInTestUser} from "./utils";
+import {auth, callFunction, getDatabaseFines, getDatabaseReasonTemplates, signInTestUser} from "./utils";
+import {assert, expect} from "chai";
+import {signOut} from "firebase/auth";
+import {Fine} from "../src/TypeDefinitions/Fine";
+import {FineReasonTemplate} from "../src/TypeDefinitions/FineReason";
+import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
+import { FirebaseError } from "firebase/app";
 
 describe("ChangeFinePayed", () => {
 
@@ -149,40 +152,82 @@ describe("ChangeFinePayed", () => {
         }
     });
 
-    /* async function addFinesAndReason() {
+    async function addFinesAndReason() {
 
-    }*/
+        // Add reason
+        const fine1 = Fine.fromObject({
+            id: guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba").guidString,
+            personId: guid.fromString("5bf1ffda-4f69-41eb-ae93-0242ac130002").guidString,
+            date: 9284765,
+            payedState: {
+                state: "unpayed",
+            },
+            number: 2,
+            fineReason: {
+                reasonTemplateId: guid.fromString("9d0681f0-2045-4a1d-abbc-6bb289934ff9").guidString,
+            },
+        });
+        const reason = ReasonTemplate.fromObject({
+            id: (fine1.fineReason.value as FineReasonTemplate).reasonTemplateId.guidString,
+            reason: "asldkfj",
+            importance: "low",
+            amount: 12.98,
+        });
+        await callFunction("changeReasonTemplate", {
+            privateKey: privateKey,
+            clubLevel: "testing",
+            clubId: clubId.guidString,
+            changeType: "update",
+            reasonTemplate: reason.object,
+        });
+
+        // Add fine with reason template
+        await callFunction("changeFine", {
+            privateKey: privateKey,
+            clubLevel: "testing",
+            clubId: clubId.guidString,
+            changeType: "update",
+            fine: fine1.object,
+        });
+
+        // Add fine with custom reason
+        const fine2 = Fine.fromObject({
+            id: guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba").guidString,
+            personId: guid.fromString("5bf1ffda-4f69-41eb-ae93-0242ac130002").guidString,
+            date: 9284765,
+            payedState: {
+                state: "payed",
+                inApp: false,
+                payDate: 234689,
+            },
+            number: 10,
+            fineReason: {
+                reason: "Reason",
+                amount: 1.50,
+                importance: "high",
+            },
+        });
+        await callFunction("changeFine", {
+            privateKey: privateKey,
+            clubLevel: "testing",
+            clubId: clubId.guidString,
+            changeType: "update",
+            fine: fine2.object,
+        });
+
+        // Check fines and reason
+        const fineList = await getDatabaseFines(clubId);
+        const fetchedFine1 = fineList.find(fine => fine.id.equals(fine1.id));
+        const fetchedFine2 = fineList.find(fine => fine.id.equals(fine2.id));
+        expect(fetchedFine1).to.deep.equal(fine1);
+        expect(fetchedFine2).to.deep.equal(fine2);
+
+        const reasonList = await getDatabaseReasonTemplates(clubId);
+        const fetchedReason = reasonList.find(_reason => _reason.id.equals(reason.id));
+        expect(fetchedReason).to.deep.equal(reason);
+    }
+
+    it("asdf", async () => {
+        await addFinesAndReason();
+    });
 });
-
-/*
-/// Add fines and reason for test change fine payed
-func _testChangeFinePayedAddFinesAndReason() async throws {
-
-    // Add reason
-    let clubId = TestProperty.shared.testClub.id
-    let fine1 = TestProperty.shared.testFine.withReasonTemplate
-    let reason = FirebaseReasonTemplate(id: (fine1.fineReason as! FineReasonTemplate).templateId, // swiftlint:disable:this force_cast
-                                        reason: "asldkfj", importance: .low, amount: Amount(12, subUnit: 98))
-    let callItem3 = FFChangeListCall(clubId: clubId, item: reason)
-    try await FirebaseFunctionCaller.shared.call(callItem3)
-
-    // Add fine with reason template
-    let callItem1 = FFChangeListCall(clubId: clubId, item: fine1)
-    try await FirebaseFunctionCaller.shared.call(callItem1)
-
-    // Add fine with custom reason
-    let fine2 = TestProperty.shared.testFine2.withReasonCustom
-    let callItem2 = FFChangeListCall(clubId: clubId, item: fine2)
-    try await FirebaseFunctionCaller.shared.call(callItem2)
-
-    // Check fines and reason
-    let fineList: [FirebaseFine] = try await FirebaseFetcher.shared.fetchList(clubId: clubId)
-    let fetchedFine1 = fineList.first { $0.id == fine1.id }
-    let fetchedFine2 = fineList.first { $0.id == fine2.id }
-    XCTAssertEqual(fetchedFine1, fine1)
-    XCTAssertEqual(fetchedFine2, fine2)
-
-    let reasonList: [FirebaseReasonTemplate] = try await FirebaseFetcher.shared.fetchList(clubId: clubId)
-    let fetchedReason = reasonList.first { $0.id == reason.id }
-    XCTAssertEqual(fetchedReason, reason)
-}*/

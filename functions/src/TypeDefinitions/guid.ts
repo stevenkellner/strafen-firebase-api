@@ -54,4 +54,8 @@ export class guid {
         });
         return guid.fromString(guidString);
     }
+
+    equals(other: guid): boolean {
+        return this.guidString == other.guidString;
+    }
 }

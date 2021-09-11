@@ -1,24 +1,7 @@
+import {Amount} from "./Amount";
+import {FineReason} from "./FineReason";
+import {Importance} from "./Importance";
 import {PayedState} from "./PayedState";
-
-// Fine reason with template id
-export interface FineReasonTemplate {
-
-    // Id of template associated with fine reason
-    templateId: string;
-}
-
-// Fine reason with reason message, amount and importance
-export interface FineReasonCustom {
-
-    // Reason message of the fine
-    reason: string;
-
-    // Amount of the fine
-    amount: number;
-
-    // Importance of the fine
-    importance: "low" | "medium" | "high";
-}
 
 // First and last name of a person
 export interface PersonName {
@@ -63,28 +46,6 @@ export interface PersonProperties {
 }
 
 // Contains all porperties of a fine in statistics
-export interface Fine {
-
-    // Id of the fine
-    id: string;
-
-    // Id of associated person of the fine
-    personId: string;
-
-    // State of payement
-    payed: PayedState;
-
-    // Number of fines
-    number: number;
-
-    // Date when fine was created
-    date: number;
-
-    // Reason of fine
-    reason: FineReasonTemplate | FineReasonCustom;
-}
-
-// Contains all porperties of a fine in statistics
 export interface FineProperties {
 
     // Id of associated person of the fine
@@ -100,7 +61,7 @@ export interface FineProperties {
     date: number;
 
     // Reason of fine
-    reason: FineReasonTemplate | FineReasonCustom;
+    reason: FineReason;
 }
 
 // Contains all properties of a fine in statistics
@@ -135,10 +96,10 @@ export interface StatisticsFineReason {
     reason: string;
 
     // Amount of the fine
-    amount: number;
+    amount: Amount;
 
     // Importance of the fine
-    importance: "low" | "medium" | "high";
+    importance: Importance;
 }
 
 // Period of a time
@@ -178,22 +139,6 @@ export interface ClubProperties {
     personUserIds: {
         [key: string]: string;
     };
-}
-
-// Contains all properties of a reason template
-export interface ReasonTemplate {
-
-    // Id of reason template
-    id: string;
-
-    // Reason message of the reason template
-    reason: string;
-
-    // Amount of the reason template
-    amount: number;
-
-    // Importance of the reason template
-    importance: "low" | "medium" | "high";
 }
 
 // Contains all properties of a transaction

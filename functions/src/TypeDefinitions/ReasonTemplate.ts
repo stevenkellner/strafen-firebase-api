@@ -41,8 +41,8 @@ export class ReasonTemplate {
      * @param {any} object Object to parse ReasonTemplate from.
      * @return {ReasonTemplate} Parsed ReasonTemplate from specified object.
      */
-    static fromObject(object: any): ReasonTemplate {
-
+    static fromObject(object: { [key: string]: any }): ReasonTemplate {
+        
         // Check if type of id is string
         if (typeof object.id !== "string")
             throw new functions.https.HttpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '${object.id}' from type '${typeof object.id}'.`);
@@ -82,10 +82,10 @@ export class ReasonTemplate {
      * Returns reason template as object without id.
      * @return {any} Reason template as object without id
      */
-    toObjectWithoutId(): any {
+    get ["objectWithoutId"](): { [key: string]: any } {
         return {
             reason: this.reason,
-            amount: this.amount.toNumber(),
+            amount: this.amount.numberValue,
             importance: this.importance.value,
         };
     }
@@ -94,10 +94,10 @@ export class ReasonTemplate {
      * Returns reason template as object.
      * @return {any} Reason template as object
      */
-    toObject(): any {
+    get ["object"](): { [key: string]: any } {
         return {
-            id: this.id,
-            ...this.toObjectWithoutId(),
+            id: this.id.guidString,
+            ...this.objectWithoutId,
         };
     }
 }

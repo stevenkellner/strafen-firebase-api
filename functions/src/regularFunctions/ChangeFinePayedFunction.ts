@@ -5,7 +5,9 @@ import {guid} from "../TypeDefinitions/guid";
 import {ClubLevel} from "../TypeDefinitions/ClubLevel";
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import {StatisticsFine, Fine, Person, StatisticsFineReason, FineReasonCustom, FineReasonTemplate} from "../TypeDefinitions/typeDefinitions";
+import {StatisticsFine, Person, StatisticsFineReason} from "../TypeDefinitions/typeDefinitions";
+import {Fine} from "../TypeDefinitions/Fine";
+import {FineReasonCustom, FineReasonTemplate} from "../TypeDefinitions/FineReason";
 
 /**
  * Type of Parameters for ChangeFinePayedFunction
@@ -84,7 +86,7 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
         const statisticsFine = await this.getStatisticsFine();
 
         // Set payed state
-        await payedRef.set(this.parameters.state.toObject(), error => {
+        await payedRef.set(this.parameters.state.object, error => {
             if (error != null)
                 throw new functions.https.HttpsError("internal", `Couldn't update payed state, underlying error: ${error.name}, ${error.message}`);
         });
@@ -94,7 +96,7 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
             name: "changeFinePayed",
             properties: {
                 previousFine: statisticsFine,
-                changedState: this.parameters.state.toObject(),
+                changedState: this.parameters.state.object,
             },
         });
     }
@@ -112,10 +114,10 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
         const payedSnapshot = await fineRef.once("value");
         if (!payedSnapshot.exists())
             throw new functions.https.HttpsError("failed-precondition", "No fine payed state to change.");
-        const previousFine: Fine = payedSnapshot.val();
+        const previousFine = Fine.fromObject(payedSnapshot.val());
 
         // Set person of previous fine
-        const personRef = admin.database().ref(`${clubPath}/persons/${previousFine.personId.toUpperCase()}`);
+        const personRef = admin.database().ref(`${clubPath}/persons/${previousFine.personId.guidString}`);
         const personSnapshot = await personRef.once("value");
         if (!personSnapshot.exists || personSnapshot.key == null)
             throw new functions.https.HttpsError("failed-precondition", "Couldn't get person for previous fine.");
@@ -125,16 +127,16 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
         };
 
         // Set reason of previous fine if fine has template id
-        let fineReason: StatisticsFineReason = previousFine.reason as FineReasonCustom;
-        const templateId = (previousFine.reason as FineReasonTemplate).templateId;
-        if (templateId != null) {
-            const reasonRef = admin.database().ref(`${clubPath}/reasons/${templateId.toUpperCase()}`);
+        let fineReason: StatisticsFineReason | null = previousFine.fineReason.value as FineReasonCustom | null;
+        const reasonTemplateId = (previousFine.fineReason.value as FineReasonTemplate | null)?.reasonTemplateId;
+        if (reasonTemplateId != null) {
+            const reasonRef = admin.database().ref(`${clubPath}/reasons/${reasonTemplateId.guidString}`);
             const reasonSnapshot = await reasonRef.once("value");
             if (!reasonSnapshot.exists())
                 throw new functions.https.HttpsError("failed-precondition", "Couldn't get reason for previous fine.");
             fineReason = {
                 ...reasonSnapshot.val(),
-                id: templateId,
+                id: reasonTemplateId,
             };
         }
 
@@ -142,10 +144,10 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
         return {
             id: this.parameters.fineId.guidString,
             person: person,
-            payed: previousFine.payed,
+            payed: previousFine.payedState.object as any,
             number: previousFine.number,
             date: previousFine.date,
-            reason: fineReason,
+            reason: fineReason!,
         };
     }
 }

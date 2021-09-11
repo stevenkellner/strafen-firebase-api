@@ -26,11 +26,7 @@ export class Amount {
         const value = Math.floor(amountValue);
         const subUnitValue = (amountValue - value) * 100;
 
-        // Check if subunit value only has two digit
-        if (subUnitValue != Math.floor(subUnitValue))
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse Amount since subunit value has more than two digits: ${amountValue}`);
-
-        return new Amount(value, subUnitValue);
+        return new Amount(value, Math.floor(subUnitValue));
     }
 
     /**
@@ -44,7 +40,7 @@ export class Amount {
         return Amount.fromNumber(container.getParameter(parameterName, "number"));
     }
 
-    toNumber(): number {
-        return this.value + 100 * this.subUnitValue;
+    get ["numberValue"](): number {
+        return this.value + this.subUnitValue / 100;
     }
 }

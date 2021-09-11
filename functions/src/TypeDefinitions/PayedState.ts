@@ -40,18 +40,18 @@ export class PayedState {
      * @param {any} object Object to parse PayedState from.
      * @return {PayedState} Parsed PayedState from specified object.
      */
-    static fromObject(object: any): PayedState {
+    static fromObject(object: { [key: string]: any }): PayedState {
 
         // Check if type of state is a string and the value either 'payed', 'settled' or 'unpayed'.
         if (typeof object.state !== "string" || (object.state != "payed" && object.state != "settled" && object.state != "unpayed"))
             throw new functions.https.HttpsError("invalid-argument", `Couldn't parse PayedState parameter 'state'. Expected values 'payed', 'settled' or 'unpayed' from type 'string', but got '${object.state}' from type '${typeof object.state}'.`);
 
         // Check if type of payDate is undefined, null or number.
-        if (typeof object.payDate !== "undefined" && typeof object.paydate !== null && typeof object.payDate !== "number")
+        if (typeof object.payDate !== "undefined" && object.payDate !== null && typeof object.payDate !== "number")
             throw new functions.https.HttpsError("invalid-argument", `Couldn't parse PayedState parameter 'payDate'. Expected type 'number', undefined or null, but got '${object.payDate}' from type '${typeof object.payDate}'.`);
 
         // Check if type of inApp is undefined, null or boolean.
-        if (typeof object.inApp !== "undefined" && typeof object.inApp !== null && typeof object.inApp !== "boolean")
+        if (typeof object.inApp !== "undefined" && object.inApp !== null && typeof object.inApp !== "boolean")
             throw new functions.https.HttpsError("invalid-argument", `Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', undefined or null, but got '${object.payDate}' from type '${typeof object.payDate}'.`);
 
         // Check if payDate and inApp isn't null if state is 'payed'.
@@ -77,7 +77,7 @@ export class PayedState {
      * Returns payed state as object.
      * @return {any} Payed state as object
      */
-    toObject(): any {
+    get ["object"](): { [key: string]: any } {
         return {
             state: this.state,
             payDate: this.payDate,

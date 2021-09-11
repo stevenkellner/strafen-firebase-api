@@ -3,23 +3,24 @@
       "02462A8B-107F-4BAE-A85B-EFF1F727C00F" : {
         "date" : 6.3018780725609E8,
         "number" : 1,
-        "payed" : {
+        "payedState" : {
           "state" : "unpayed"
         },
         "personId" : "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
-        "reason" : {
-          "templateId" : "062FB0CB-F730-497B-BCF5-A4F907A6DCD5"
+        "fineReason" : {
+          "reasonTemplateId" : "062FB0CB-F730-497B-BCF5-A4F907A6DCD5"
         }
       },
       "0B5F958E-9D7D-46E1-8AEE-F52F4370A95A" : {
         "date" : 6.3016007523132E8,
         "number" : 2,
-        "payed" : {
+        "payedState" : {
           "payDate" : 6.30160103445665E8,
-          "state" : "payed"
+          "state" : "payed",
+          "inApp": false
         },
         "personId" : "76025DDE-6893-46D2-BC34-9864BB5B8DAD",
-        "reason" : {
+        "fineReason" : {
             "amount": 1.1,
             "importance": "medium",
             "reason": "Das ist ein Test"
@@ -28,12 +29,13 @@
       "1B5F958E-9D7D-46E1-8AEE-F52F4370A95A": {
         "date" : 6.3016007523132E8,
         "number" : 2,
-        "payed" : {
+        "payedState" : {
           "payDate" : 6.30160103445665E8,
-          "state" : "payed"
+          "state" : "payed",
+          "inApp": true
         },
         "personId" : "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9",
-        "reason" : {
+        "fineReason" : {
             "amount": 1.1,
             "importance": "medium",
             "reason": "Das ist ein Test"
