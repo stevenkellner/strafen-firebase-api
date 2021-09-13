@@ -1,12 +1,12 @@
 import {privateKey} from "../src/privateKeys";
 import {guid} from "../src/TypeDefinitions/guid";
-import {auth, callFunction, getDatabaseFines, getDatabaseReasonTemplates, signInTestUser} from "./utils";
+import {auth, callFunction, getDatabaseFines, getDatabaseReasonTemplates, getDatabaseStatisticsPropertiesWithName, signInTestUser} from "./utils";
 import {assert, expect} from "chai";
 import {signOut} from "firebase/auth";
+import {FirebaseError} from "firebase/app";
 import {Fine} from "../src/TypeDefinitions/Fine";
 import {FineReasonTemplate} from "../src/TypeDefinitions/FineReason";
 import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
-import { FirebaseError } from "firebase/app";
 
 describe("ChangeFinePayed", () => {
 
@@ -147,17 +147,17 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            expect((error as FirebaseError).code).to.equal("functions/failed-precondition");
-            expect((error as FirebaseError).message).to.equal("No fine payed state to change.");
+            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.equal("Couldn't parse Fine since no data exists in snapshot.");
         }
     });
 
-    async function addFinesAndReason() {
+    async function addFinesAndReason(fine2PersonId: guid = guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9"), addReason = true) {
 
         // Add reason
         const fine1 = Fine.fromObject({
             id: guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba").guidString,
-            personId: guid.fromString("5bf1ffda-4f69-41eb-ae93-0242ac130002").guidString,
+            personId: guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9").guidString,
             date: 9284765,
             payedState: {
                 state: "unpayed",
@@ -173,13 +173,15 @@ describe("ChangeFinePayed", () => {
             importance: "low",
             amount: 12.98,
         });
-        await callFunction("changeReasonTemplate", {
-            privateKey: privateKey,
-            clubLevel: "testing",
-            clubId: clubId.guidString,
-            changeType: "update",
-            reasonTemplate: reason.object,
-        });
+        if (addReason) {
+            await callFunction("changeReasonTemplate", {
+                privateKey: privateKey,
+                clubLevel: "testing",
+                clubId: clubId.guidString,
+                changeType: "update",
+                reasonTemplate: reason.object,
+            });
+        }
 
         // Add fine with reason template
         await callFunction("changeFine", {
@@ -193,7 +195,7 @@ describe("ChangeFinePayed", () => {
         // Add fine with custom reason
         const fine2 = Fine.fromObject({
             id: guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba").guidString,
-            personId: guid.fromString("5bf1ffda-4f69-41eb-ae93-0242ac130002").guidString,
+            personId: fine2PersonId.guidString,
             date: 9284765,
             payedState: {
                 state: "payed",
@@ -222,12 +224,296 @@ describe("ChangeFinePayed", () => {
         expect(fetchedFine1).to.deep.equal(fine1);
         expect(fetchedFine2).to.deep.equal(fine2);
 
-        const reasonList = await getDatabaseReasonTemplates(clubId);
-        const fetchedReason = reasonList.find(_reason => _reason.id.equals(reason.id));
-        expect(fetchedReason).to.deep.equal(reason);
+        if (addReason) {
+            const reasonList = await getDatabaseReasonTemplates(clubId);
+            const fetchedReason = reasonList.find(_reason => _reason.id.equals(reason.id));
+            expect(fetchedReason).to.deep.equal(reason);
+        }
     }
 
-    it("asdf", async () => {
+    it("Change fine payed to payed 1", async () => {
+
+        // Add fines and reason
         await addFinesAndReason();
+
+        // Change fine payed
+        const fineId = guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba");
+        await callFunction("changeFinePayed", {
+            privateKey: privateKey,
+            clubLevel: "testing",
+            clubId: clubId.guidString,
+            fineId: fineId.guidString,
+            state: {
+                state: "payed",
+                payDate: 12345,
+                inApp: false,
+            },
+        });
+
+        // Check fine payed
+        const fineList = await getDatabaseFines(clubId);
+        const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
+        expect(fetchedFine?.payedState.object).to.deep.equal({
+            state: "payed",
+            payDate: 12345,
+            inApp: false,
+        });
+
+        // Check statistic
+        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed");
+        expect(statisticsList.length).to.be.equal(1);
+        expect(statisticsList[0]).to.be.deep.equal({
+            changedState: {
+                inApp: false,
+                payDate: 12345,
+                state: "payed",
+            },
+            previousFine: {
+                date: 9284765,
+                id: "637D6187-68D2-4000-9CB8-7DFC3877D5BA",
+                number: 2,
+                payedState: {
+                    state: "unpayed",
+                },
+                person: {
+                    id: "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9",
+                    name: {
+                        first: "John",
+                        last: "Doe",
+                    },
+                },
+                fineReason: {
+                    amount: 12.98,
+                    id: "9D0681F0-2045-4A1D-ABBC-6BB289934FF9",
+                    importance: "low",
+                    reason: "asldkfj",
+                },
+            },
+        });
+    });
+
+    it("Change fine payed to payed 2", async () => {
+
+        // Add fines and reason
+        await addFinesAndReason();
+
+        // Change fine payed
+        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba");
+        await callFunction("changeFinePayed", {
+            privateKey: privateKey,
+            clubLevel: "testing",
+            clubId: clubId.guidString,
+            fineId: fineId.guidString,
+            state: {
+                state: "payed",
+                payDate: 54321,
+                inApp: true,
+            },
+        });
+
+        // Check fine payed
+        const fineList = await getDatabaseFines(clubId);
+        const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
+        expect(fetchedFine?.payedState.object).to.deep.equal({
+            state: "payed",
+            payDate: 54321,
+            inApp: true,
+        });
+
+        // Check statistic
+        expect(await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed")).to.be.deep.equal([
+            {
+                changedState: {
+                    state: "payed",
+                    payDate: 54321,
+                    inApp: true,
+                },
+                previousFine: {
+                    date: 9284765,
+                    id: "137D6187-68D2-4000-9CB8-7DFC3877D5BA",
+                    number: 10,
+                    payedState: {
+                        inApp: false,
+                        payDate: 234689,
+                        state: "payed",
+                    },
+                    person: {
+                        id: "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9",
+                        name: {
+                            first: "John",
+                            last: "Doe",
+                        },
+                    },
+                    fineReason: {
+                        amount: 1.50,
+                        importance: "high",
+                        reason: "Reason",
+                    },
+                },
+            },
+        ]);
+    });
+
+    it("Change fine payed to unpayed", async () => {
+
+        // Add fines and reason
+        await addFinesAndReason();
+
+        // Change fine payed
+        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba");
+        await callFunction("changeFinePayed", {
+            privateKey: privateKey,
+            clubLevel: "testing",
+            clubId: clubId.guidString,
+            fineId: fineId.guidString,
+            state: {
+                state: "unpayed",
+            },
+        });
+
+        // Check fine payed
+        const fineList = await getDatabaseFines(clubId);
+        const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
+        expect(fetchedFine?.payedState.object).to.deep.equal({
+            state: "unpayed",
+            inApp: null,
+            payDate: null,
+        });
+
+        // Check statistic
+        expect(await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed")).to.be.deep.equal([
+            {
+                changedState: {
+                    state: "unpayed",
+                },
+                previousFine: {
+                    date: 9284765,
+                    id: "137D6187-68D2-4000-9CB8-7DFC3877D5BA",
+                    number: 10,
+                    payedState: {
+                        inApp: false,
+                        payDate: 234689,
+                        state: "payed",
+                    },
+                    person: {
+                        id: "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9",
+                        name: {
+                            first: "John",
+                            last: "Doe",
+                        },
+                    },
+                    fineReason: {
+                        amount: 1.50,
+                        importance: "high",
+                        reason: "Reason",
+                    },
+                },
+            },
+        ]);
+    });
+
+    it("Change fine payed to settled", async () => {
+
+        // Add fines and reason
+        await addFinesAndReason();
+
+        // Change fine payed
+        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba");
+        await callFunction("changeFinePayed", {
+            privateKey: privateKey,
+            clubLevel: "testing",
+            clubId: clubId.guidString,
+            fineId: fineId.guidString,
+            state: {
+                state: "settled",
+            },
+        });
+
+        // Check fine payed
+        const fineList = await getDatabaseFines(clubId);
+        const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
+        expect(fetchedFine?.payedState.object).to.deep.equal({
+            state: "settled",
+            inApp: null,
+            payDate: null,
+        });
+
+        // Check statistic
+        expect(await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed")).to.be.deep.equal([
+            {
+                changedState: {
+                    state: "settled",
+                },
+                previousFine: {
+                    date: 9284765,
+                    id: "137D6187-68D2-4000-9CB8-7DFC3877D5BA",
+                    number: 10,
+                    payedState: {
+                        inApp: false,
+                        payDate: 234689,
+                        state: "payed",
+                    },
+                    person: {
+                        id: "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9",
+                        name: {
+                            first: "John",
+                            last: "Doe",
+                        },
+                    },
+                    fineReason: {
+                        amount: 1.50,
+                        importance: "high",
+                        reason: "Reason",
+                    },
+                },
+            },
+        ]);
+    });
+
+    it("No person for statistic", async () => {
+
+        // Add fines and reason
+        await addFinesAndReason(guid.fromString("ae7d6187-A0E2-4091-AC7E-CB2C23F708D9"));
+
+        try {
+            const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba");
+            await callFunction("changeFinePayed", {
+                privateKey: privateKey,
+                clubLevel: "testing",
+                clubId: clubId.guidString,
+                fineId: fineId.guidString,
+                state: {
+                    state: "unpayed",
+                },
+            });
+            assert.fail("A statement above should throw an exception.");
+        } catch (error) {
+            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.equal("Couldn't parse Person since no data exists in snapshot.");
+        }
+    });
+
+    it("No reason for statistic", async () => {
+
+        // Add fines and reason
+        await addFinesAndReason(undefined, false);
+
+        try {
+            const fineId = guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba");
+            await callFunction("changeFinePayed", {
+                privateKey: privateKey,
+                clubLevel: "testing",
+                clubId: clubId.guidString,
+                fineId: fineId.guidString,
+                state: {
+                    state: "unpayed",
+                },
+            });
+            assert.fail("A statement above should throw an exception.");
+        } catch (error) {
+            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.equal("Couldn't parse ReasonTemplate since no data exists in snapshot.");
+        }
+
     });
 });

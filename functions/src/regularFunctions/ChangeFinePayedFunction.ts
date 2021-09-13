@@ -1,18 +1,39 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, saveStatistic} from "../utils";
-import {PayedState} from "../TypeDefinitions/PayedState";
+import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, saveStatistic, StatisticsProperties} from "../utils";
+import {PayedState, PayedStateObject} from "../TypeDefinitions/PayedState";
 import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import {guid} from "../TypeDefinitions/guid";
 import {ClubLevel} from "../TypeDefinitions/ClubLevel";
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import {StatisticsFine, Person, StatisticsFineReason} from "../TypeDefinitions/typeDefinitions";
-import {Fine} from "../TypeDefinitions/Fine";
-import {FineReasonCustom, FineReasonTemplate} from "../TypeDefinitions/FineReason";
+import {Fine, StatisticsFineObject} from "../TypeDefinitions/Fine";
+import {Person} from "../TypeDefinitions/Person";
 
 /**
  * Type of Parameters for ChangeFinePayedFunction
  */
 type FunctionParameters = FunctionDefaultParameters & { clubId: guid, fineId: guid, state: PayedState }
+
+interface FunctionStatisticsPropertiesObject {
+    previousFine: StatisticsFineObject;
+    changedState: PayedStateObject;
+}
+
+class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
+    readonly previousFine: StatisticsFineObject;
+    readonly changedState: PayedState;
+
+    constructor(previousFine: StatisticsFineObject, changedState: PayedState) {
+        this.previousFine = previousFine;
+        this.changedState = changedState;
+    }
+
+    get ["object"](): FunctionStatisticsPropertiesObject {
+        return {
+            previousFine: this.previousFine,
+            changedState: this.changedState.object,
+        };
+    }
+}
 
 /**
  * @summary
@@ -79,7 +100,7 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
         await checkPrerequirements(this.parameters, auth, this.parameters.clubId);
 
         const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
-        const payedPath = `${clubPath}/fines/${this.parameters.fineId.guidString}/payed`;
+        const payedPath = `${clubPath}/fines/${this.parameters.fineId.guidString}/payedState`;
         const payedRef = admin.database().ref(payedPath);
 
         // Get statistics fine
@@ -94,10 +115,7 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
         // Save statistic
         await saveStatistic(clubPath, {
             name: "changeFinePayed",
-            properties: {
-                previousFine: statisticsFine,
-                changedState: this.parameters.state.object,
-            },
+            properties: new FunctionStatisticsProperties(statisticsFine, this.parameters.state),
         });
     }
 
@@ -105,49 +123,31 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
      * Gets previous fine for statistics.
      * @return {Promise<StatisticsFine>} Fine for statistics.
      */
-    private async getStatisticsFine(): Promise<StatisticsFine> {
+    private async getStatisticsFine(): Promise<StatisticsFineObject> {
 
-        // / Get previous payed state
+        // Get previous payed state
         const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
         const finePath = `${clubPath}/fines/${this.parameters.fineId.guidString}`;
         const fineRef = admin.database().ref(finePath);
         const payedSnapshot = await fineRef.once("value");
-        if (!payedSnapshot.exists())
-            throw new functions.https.HttpsError("failed-precondition", "No fine payed state to change.");
-        const previousFine = Fine.fromObject(payedSnapshot.val());
+        const previousFine = Fine.fromSnapshot(payedSnapshot);
 
         // Set person of previous fine
         const personRef = admin.database().ref(`${clubPath}/persons/${previousFine.personId.guidString}`);
         const personSnapshot = await personRef.once("value");
-        if (!personSnapshot.exists || personSnapshot.key == null)
-            throw new functions.https.HttpsError("failed-precondition", "Couldn't get person for previous fine.");
-        const person: Person = {
-            id: personSnapshot.key,
-            name: personSnapshot.child("name").val(),
-        };
+        const person = Person.fromSnapshot(personSnapshot);
 
         // Set reason of previous fine if fine has template id
-        let fineReason: StatisticsFineReason | null = previousFine.fineReason.value as FineReasonCustom | null;
-        const reasonTemplateId = (previousFine.fineReason.value as FineReasonTemplate | null)?.reasonTemplateId;
-        if (reasonTemplateId != null) {
-            const reasonRef = admin.database().ref(`${clubPath}/reasons/${reasonTemplateId.guidString}`);
-            const reasonSnapshot = await reasonRef.once("value");
-            if (!reasonSnapshot.exists())
-                throw new functions.https.HttpsError("failed-precondition", "Couldn't get reason for previous fine.");
-            fineReason = {
-                ...reasonSnapshot.val(),
-                id: reasonTemplateId,
-            };
-        }
+        const statisticsFineReason = await previousFine.fineReason.forStatistics(clubPath);
 
         // Get statistics fine
         return {
             id: this.parameters.fineId.guidString,
-            person: person,
-            payed: previousFine.payedState.object as any,
+            person: person.object,
+            payedState: previousFine.payedState.object,
             number: previousFine.number,
             date: previousFine.date,
-            reason: fineReason!,
+            fineReason: statisticsFineReason.object,
         };
     }
 }

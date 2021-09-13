@@ -2,37 +2,42 @@ import * as functions from "firebase-functions";
 import {undefinedAsNull} from "../utils";
 import {ParameterContainer} from "./ParameterContainer";
 
+interface PayedStateValuePayed {
+    state: "payed";
+    payDate: number;
+    inApp: boolean;
+}
+
+interface PayedStateValueUnpayed {
+    state: "unpayed";
+}
+
+interface PayedStateValueSettled {
+    state: "settled";
+}
+
+type PayedStateValue = PayedStateValuePayed | PayedStateValueUnpayed | PayedStateValueSettled;
+
+export interface PayedStateObject {
+    state: "payed" | "unpayed" | "settled";
+    payDate: number;
+    inApp: boolean;
+}
+
 /**
  * State of fine payment, can be payed, settled or unpayed. Contains extra properties
  * for pay date and in app payment if state is payed.
  */
 export class PayedState {
 
-    /**
-     * State of the payment of the fine.
-     */
-    readonly state: "payed" | "settled" | "unpayed";
-
-    /**
-     * Pay date of the fine (provided if state is `payed`).
-     */
-    readonly payDate: number | null;
-
-    /**
-     * Indicates if the fine is payed in app (provided if state is `payed`).
-     */
-    readonly inApp: boolean | null;
+    private readonly value: PayedStateValue;
 
     /**
      * Initializes PayedState with a state, optional pay date and in app payment.
-     * @param {"payed" | "settled" | "unpayed"} state State of the payment of the fine.
-     * @param {number | null} payDate Pay date of the fine (provided if state is `payed`).
-     * @param {boolean | null} inApp Indicates if the fine is payed in app (provided if state is `payed`).
+     * @param {PayedStateValue} value Value of the payment of the fine.
      */
-    private constructor(state: "payed" | "settled" | "unpayed", payDate: number | null, inApp: boolean | null) {
-        this.state = state;
-        this.payDate = payDate;
-        this.inApp = inApp;
+    private constructor(value: PayedStateValue) {
+        this.value = value;
     }
 
     /**
@@ -40,7 +45,7 @@ export class PayedState {
      * @param {any} object Object to parse PayedState from.
      * @return {PayedState} Parsed PayedState from specified object.
      */
-    static fromObject(object: { [key: string]: any }): PayedState {
+    static fromObject(object: any): PayedState {
 
         // Check if type of state is a string and the value either 'payed', 'settled' or 'unpayed'.
         if (typeof object.state !== "string" || (object.state != "payed" && object.state != "settled" && object.state != "unpayed"))
@@ -59,7 +64,7 @@ export class PayedState {
             throw new functions.https.HttpsError("invalid-argument", "Couldn't parse PayedState since state is 'payed' but payDate or inApp is null.");
 
         // Return payed state
-        return new PayedState(object.state, undefinedAsNull(object.payDate), undefinedAsNull(object.inApp));
+        return new PayedState({state: object.state, payDate: object.payDate, inApp: object.inApp});
     }
 
     /**
@@ -77,11 +82,11 @@ export class PayedState {
      * Returns payed state as object.
      * @return {any} Payed state as object
      */
-    get ["object"](): { [key: string]: any } {
+    get ["object"](): PayedStateObject {
         return {
-            state: this.state,
-            payDate: this.payDate,
-            inApp: this.inApp,
+            state: this.value.state,
+            inApp: undefinedAsNull((this.value as any).inApp),
+            payDate: undefinedAsNull((this.value as any).payDate),
         };
     }
 }

@@ -52,3 +52,18 @@ export async function getDatabaseReasonTemplates(clubId: guid): Promise<ReasonTe
         });
     });
 }
+
+export async function getDatabaseStatistics(clubId: guid): Promise<{id: guid, name: string, timestamp: number, properties: any}[]> {
+    return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/statistics`)).map(value => {
+        return {
+            id: guid.fromString(value[0]),
+            name: (value[1] as any).name,
+            timestamp: (value[1] as any).timestamp,
+            properties: (value[1] as any).properties,
+        };
+    });
+}
+
+export async function getDatabaseStatisticsPropertiesWithName(clubId: guid, name: string) {
+    return (await getDatabaseStatistics(clubId)).filter(statistic => statistic.name == name ).map(statistic => statistic.properties);
+}

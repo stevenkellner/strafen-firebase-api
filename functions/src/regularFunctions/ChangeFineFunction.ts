@@ -1,4 +1,4 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, undefinedAsNull} from "../utils";
+import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull} from "../utils";
 import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import {guid} from "../TypeDefinitions/guid";
 import {ClubLevel} from "../TypeDefinitions/ClubLevel";
@@ -6,12 +6,35 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import {ChangeType} from "../TypeDefinitions/ChangeType";
 import {Reference} from "@firebase/database-types";
-import {Fine} from "../TypeDefinitions/Fine";
+import {Fine, FineObject} from "../TypeDefinitions/Fine";
+import {TypeOrId} from "../TypeDefinitions/TypeOrId";
 
 /**
  * Type of Parameters for ChangeFineFunction
  */
 type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, fine: Fine }
+
+interface FunctionStatisticsPropertiesObject {
+    previousFine: FineObject | null;
+    changedFine: FineObject | { id: string };
+}
+
+class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
+    readonly previousFine: Fine | null;
+    readonly changedFine: TypeOrId<Fine, FineObject>;
+
+    constructor(previousFine: Fine | null, changedFine: TypeOrId<Fine, FineObject>) {
+        this.previousFine = previousFine;
+        this.changedFine = changedFine;
+    }
+
+    get ["object"](): FunctionStatisticsPropertiesObject {
+        return {
+            previousFine: undefinedAsNull(this.previousFine?.object),
+            changedFine: this.changedFine.object,
+        };
+    }
+}
 
 /**
  * @summary
@@ -87,19 +110,19 @@ export class ChangeFineFunction implements FirebaseFunction {
         const fineSnapshot = await fineRef.once("value");
         let previousFine: Fine | null = null;
         if (fineSnapshot.exists())
-            previousFine = Fine.fromObject(fineSnapshot.val());
+            previousFine = Fine.fromSnapshot(fineSnapshot);
 
         // Change fine
-        let changedFine: any | { id: guid; };
+        let changedFine: TypeOrId<Fine, FineObject>;
         switch (this.parameters.changeType.value) {
         case "delete":
             await this.deleteItem();
-            changedFine = {id: this.parameters.fine.id};
+            changedFine = TypeOrId.onlyId(this.parameters.fine.id);
             break;
 
         case "update":
             await this.updateItem();
-            changedFine = this.parameters.fine.object;
+            changedFine = TypeOrId.withType(this.parameters.fine);
             break;
         }
 
@@ -107,10 +130,7 @@ export class ChangeFineFunction implements FirebaseFunction {
         const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
         await saveStatistic(clubPath, {
             name: "changeFine",
-            properties: {
-                previousFine: undefinedAsNull(previousFine?.object),
-                changedFine: changedFine,
-            },
+            properties: new FunctionStatisticsProperties(previousFine, changedFine),
         });
     }
 

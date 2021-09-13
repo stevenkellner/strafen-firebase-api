@@ -3,6 +3,20 @@ import {ParameterContainer} from "./ParameterContainer";
 import * as functions from "firebase-functions";
 import {Amount} from "./Amount";
 import {guid} from "./guid";
+import {PrimitveDataSnapshot} from "../utils";
+
+export interface ReasonTemplateObject {
+    id: string;
+    reason: string;
+    amount: number;
+    importance: string;
+}
+
+interface ReasonTemplateObjectWithoutId {
+    reason: string;
+    amount: number;
+    importance: string;
+}
 
 /**
  *  Contains all properties of a reason template
@@ -41,8 +55,8 @@ export class ReasonTemplate {
      * @param {any} object Object to parse ReasonTemplate from.
      * @return {ReasonTemplate} Parsed ReasonTemplate from specified object.
      */
-    static fromObject(object: { [key: string]: any }): ReasonTemplate {
-        
+    static fromObject(object: any): ReasonTemplate {
+
         // Check if type of id is string
         if (typeof object.id !== "string")
             throw new functions.https.HttpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '${object.id}' from type '${typeof object.id}'.`);
@@ -66,6 +80,27 @@ export class ReasonTemplate {
         return new ReasonTemplate(id, object.reason, amount, importance);
     }
 
+    static fromSnapshot(snapshot: PrimitveDataSnapshot): ReasonTemplate {
+
+        // Check if data exists in snapshot
+        if (!snapshot.exists())
+            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse ReasonTemplate since no data exists in snapshot.");
+
+        // Get id
+        const idString = snapshot.key;
+        if (idString == null)
+            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse ReasonTemplate since snapshot has an invalid key.");
+
+        const data = snapshot.val();
+        if (typeof data !== "object")
+            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse ReasonTemplate from snapshot since data isn't an object: ${data}`);
+
+        return ReasonTemplate.fromObject({
+            id: idString,
+            ...data,
+        });
+    }
+
     /**
      * Constructs ReasonTemplate from parameter of parameter container with specified parameter name
      * or throws a HttpsError if parsing failed.
@@ -82,7 +117,7 @@ export class ReasonTemplate {
      * Returns reason template as object without id.
      * @return {any} Reason template as object without id
      */
-    get ["objectWithoutId"](): { [key: string]: any } {
+    get ["objectWithoutId"](): ReasonTemplateObjectWithoutId {
         return {
             reason: this.reason,
             amount: this.amount.numberValue,
@@ -94,7 +129,7 @@ export class ReasonTemplate {
      * Returns reason template as object.
      * @return {any} Reason template as object
      */
-    get ["object"](): { [key: string]: any } {
+    get ["object"](): ReasonTemplateObject {
         return {
             id: this.id.guidString,
             ...this.objectWithoutId,

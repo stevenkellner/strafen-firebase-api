@@ -37,5 +37,7 @@ module.exports = {
         "arrow-parens": "off",
         "padded-blocks": "off",
         "new-cap": "off",
+        "prefer-rest-params": "off",
+        "no-caller": "off",
     },
 };

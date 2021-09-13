@@ -1,17 +1,8 @@
-import {Amount} from "./Amount";
+import {StatisticsFineObject} from "./Fine";
 import {FineReason} from "./FineReason";
-import {Importance} from "./Importance";
 import {PayedState} from "./PayedState";
-
-// First and last name of a person
-export interface PersonName {
-
-    // First name
-    first: string;
-
-    // Last name (can be null)
-    last: string | null;
-}
+import {Person} from "./Person";
+import {PersonName} from "./PersonName";
 
 // First and last name of a person
 export interface OptionalPersonName {
@@ -21,16 +12,6 @@ export interface OptionalPersonName {
 
     // Last name (can be null)
     last: string | null;
-}
-
-// Contains all properties of a person
-export interface Person {
-
-    // Id of the person
-    id: string;
-
-    // Name of the person
-    name: PersonName;
 }
 
 export interface PersonProperties {
@@ -62,44 +43,6 @@ export interface FineProperties {
 
     // Reason of fine
     reason: FineReason;
-}
-
-// Contains all properties of a fine in statistics
-export interface StatisticsFine {
-
-    // Id of the fine
-    id: string;
-
-    // Associated person of the fine
-    person: Person;
-
-    // State of payement
-    payed: PayedState;
-
-    // Number of fines
-    number: number;
-
-    // Date when fine was created
-    date: number;
-
-    // Reason of fine
-    reason: StatisticsFineReason;
-}
-
-// Contains all properties of a fine reason in staistics
-export interface StatisticsFineReason {
-
-    // Id of template reason, null if fine reason is custom
-    id?: string;
-
-    // Reason message of the fine
-    reason: string;
-
-    // Amount of the fine
-    amount: Amount;
-
-    // Importance of the fine
-    importance: Importance;
 }
 
 // Period of a time
@@ -174,7 +117,7 @@ export interface StatisticsTransaction {
     approved: boolean;
 
     // Ids of fines payed by the transaction
-    fines: StatisticsFine[];
+    fines: StatisticsFineObject[];
 
     // Name of the person payed the transaction
     name?: OptionalPersonName;

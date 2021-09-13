@@ -1,8 +1,36 @@
 import {ParameterContainer} from "./ParameterContainer";
 import * as functions from "firebase-functions";
-import {PayedState} from "./PayedState";
+import {PayedState, PayedStateObject} from "./PayedState";
 import {guid} from "./guid";
-import {FineReason} from "./FineReason";
+import {FineReason, FineReasonObject, StatisticsFineReasonObject} from "./FineReason";
+import {PrimitveDataSnapshot} from "../utils";
+import {PersonObject} from "./Person";
+
+export interface FineObject {
+    id: string;
+    personId: string;
+    payedState: PayedStateObject;
+    number: number;
+    date: number;
+    fineReason: FineReasonObject;
+}
+
+interface FineObjectWithoutId {
+    personId: string;
+    payedState: PayedStateObject;
+    number: number;
+    date: number;
+    fineReason: FineReasonObject;
+}
+
+export interface StatisticsFineObject {
+    id: string;
+    person: PersonObject;
+    payedState: PayedStateObject;
+    number: number;
+    date: number;
+    fineReason: StatisticsFineReasonObject;
+}
 
 /**
  * Contains all porperties of a fine in statistics
@@ -12,32 +40,32 @@ export class Fine {
     /**
      * Id of the fine
      */
-    id: guid;
+    readonly id: guid;
 
     /**
      *  Id of associated person of the fine
      */
-    personId: guid;
+    readonly personId: guid;
 
     /**
      * State of payement
      */
-    payedState: PayedState;
+    readonly payedState: PayedState;
 
     /**
      * Number of fines
      */
-    number: number;
+    readonly number: number;
 
     /**
      * Date when fine was created
      */
-    date: number;
+    readonly date: number;
 
     /**
      * Reason of fine
      */
-    fineReason: FineReason;
+    readonly fineReason: FineReason;
 
     private constructor(id: guid, personId: guid, payedState: PayedState, number: number, date: number, fineReason: FineReason) {
         this.id = id;
@@ -81,15 +109,36 @@ export class Fine {
         return new Fine(id, personId, payedState, object.number, object.date, fineReason);
     }
 
+    static fromSnapshot(snapshot: PrimitveDataSnapshot): Fine {
+
+        // Check if data exists in snapshot
+        if (!snapshot.exists())
+            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse Fine since no data exists in snapshot.");
+
+        // Get id
+        const idString = snapshot.key;
+        if (idString == null)
+            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse Fine since snapshot has an invalid key.");
+
+        const data = snapshot.val();
+        if (typeof data !== "object")
+            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse Fine from snapshot since data isn't an object: ${data}`);
+
+        return Fine.fromObject({
+            id: idString,
+            ...data,
+        });
+    }
+
     static fromParameterContainer(container: ParameterContainer, parameterName: string): Fine {
         return Fine.fromObject(container.getParameter(parameterName, "object"));
     }
 
     /**
      * Returns fine as object without id.
-     * @return {any} Fine as object without id
+     * @return {FineObjectWithoutId} Fine as object without id
      */
-    get ["objectWithoutId"](): { [key: string]: any } {
+    get ["objectWithoutId"](): FineObjectWithoutId {
         return {
             personId: this.personId.guidString,
             payedState: this.payedState.object,
@@ -101,9 +150,9 @@ export class Fine {
 
     /**
      * Returns fine as object.
-     * @return {any} Fine as object
+     * @return {FineObject} Fine as object
      */
-    get ["object"](): { [key: string]: any } {
+    get ["object"](): FineObject {
         return {
             id: this.id.guidString,
             ...this.objectWithoutId,

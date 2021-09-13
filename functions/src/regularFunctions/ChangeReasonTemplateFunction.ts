@@ -1,17 +1,41 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, undefinedAsNull} from "../utils";
+import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull} from "../utils";
 import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import {guid} from "../TypeDefinitions/guid";
 import {ClubLevel} from "../TypeDefinitions/ClubLevel";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import {ReasonTemplate} from "../TypeDefinitions/ReasonTemplate";
+import {ReasonTemplate, ReasonTemplateObject} from "../TypeDefinitions/ReasonTemplate";
 import {ChangeType} from "../TypeDefinitions/ChangeType";
 import {Reference} from "@firebase/database-types";
+import {DataSnapshot} from "firebase/database";
+import {TypeOrId} from "../TypeDefinitions/TypeOrId";
 
 /**
  * Type of Parameters for ChangeReasonTemplateFunction
  */
 type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, reasonTemplate: ReasonTemplate }
+
+interface FunctionStatisticsPropertiesObject {
+    previousReasonTemplate: ReasonTemplateObject | null;
+    changedReasonTemplate: ReasonTemplateObject | { id: string };
+}
+
+class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
+    readonly previousReasonTemplate: ReasonTemplate | null;
+    readonly changedReasonTemplate: TypeOrId<ReasonTemplate, ReasonTemplateObject>;
+
+    constructor(previousReasonTemplate: ReasonTemplate | null, changedReasonTemplate: TypeOrId<ReasonTemplate, ReasonTemplateObject>) {
+        this.previousReasonTemplate = previousReasonTemplate;
+        this.changedReasonTemplate = changedReasonTemplate;
+    }
+
+    get ["object"](): FunctionStatisticsPropertiesObject {
+        return {
+            previousReasonTemplate: undefinedAsNull(this.previousReasonTemplate?.object),
+            changedReasonTemplate: this.changedReasonTemplate.object,
+        };
+    }
+}
 
 /**
  * @summary
@@ -87,19 +111,19 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
         const reasonTemplateSnapshot = await reasonTemplateRef.once("value");
         let previousReasonTemplate: ReasonTemplate | null = null;
         if (reasonTemplateSnapshot.exists())
-            previousReasonTemplate = ReasonTemplate.fromObject(reasonTemplateSnapshot.val());
+            previousReasonTemplate = ReasonTemplate.fromSnapshot(reasonTemplateSnapshot as unknown as DataSnapshot);
 
         // Change reason template
-        let changedReasonTemplate: any | { id: guid; };
+        let changedReasonTemplate: TypeOrId<ReasonTemplate, ReasonTemplateObject>;
         switch (this.parameters.changeType.value) {
         case "delete":
             await this.deleteItem();
-            changedReasonTemplate = {id: this.parameters.reasonTemplate.id};
+            changedReasonTemplate = TypeOrId.onlyId(this.parameters.reasonTemplate.id);
             break;
 
         case "update":
             await this.updateItem();
-            changedReasonTemplate = this.parameters.reasonTemplate.object;
+            changedReasonTemplate = TypeOrId.withType(this.parameters.reasonTemplate);
             break;
         }
 
@@ -107,10 +131,7 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
         const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
         await saveStatistic(clubPath, {
             name: "changeReasonTemplate",
-            properties: {
-                previousReasonTemplate: undefinedAsNull(previousReasonTemplate?.object),
-                changedReasonTemplate: changedReasonTemplate,
-            },
+            properties: new FunctionStatisticsProperties(previousReasonTemplate, changedReasonTemplate),
         });
     }
 

@@ -3,7 +3,6 @@ import * as admin from "firebase-admin";
 import {privateKey} from "./privateKeys";
 import {guid} from "./TypeDefinitions/guid";
 import {ClubLevel} from "./TypeDefinitions/ClubLevel";
-import {Result} from "./TypeDefinitions/Result";
 
 /**
  * Checks prerequirements for firebase function:
@@ -47,14 +46,14 @@ export async function existsData(reference: admin.database.Reference): Promise<b
  * @param {any} value Value to get undefined value.
  * @return {any} Same value, but null if specified value is undefined.
  */
-export function undefinedAsNull(value: any): any {
+export function undefinedAsNull<T>(value: T | undefined): T | null {
     return typeof value === "undefined" ? null: value;
 }
 
 /**
  * Contains name and propoerties of a statistic.
  */
-interface StatisticProperties {
+interface Statistic<Properties extends StatisticsProperties<StatisticsPropertiesObject>, StatisticsPropertiesObject> {
 
     /**
      * Name of the statistic.
@@ -64,19 +63,24 @@ interface StatisticProperties {
     /**
      * Properties of the statistic.
      */
-    properties: { [key: string]: any; };
+    properties: Properties;
+}
+
+export interface StatisticsProperties<StatisticsPropertiesObject> {
+    object: StatisticsPropertiesObject;
 }
 
 /**
  * Saves specifed statistic properties to specified club path.
  * @param {string} clubPath Path of club to save statistic to.
- * @param {StatisticProperties} properties Properties of statistic to save.
+ * @param {Statistic} statistic Properties of statistic to save.
  */
-export async function saveStatistic(clubPath: string, properties: StatisticProperties) {
+export async function saveStatistic<Properties extends StatisticsProperties<StatisticsPropertiesObject>, StatisticsPropertiesObject>(clubPath: string, statistic: Statistic<Properties, StatisticsPropertiesObject>) {
     const path = `${clubPath}/statistics/${guid.newGuid().guidString}`;
     const reference = admin.database().ref(path);
     await reference.set({
-        ...properties,
+        name: statistic.name,
+        properties: statistic.properties.object,
         timestamp: Date.now(),
     });
 }
@@ -94,30 +98,6 @@ export interface FirebaseFunction {
 }
 
 /**
- * Executes a firebase function.
- * @param {Func} firebaseFunction Firebase function to execute.
- * @param {{ uid: string } | undefined} auth Authentication state.
- */
-export async function executeFunction<Func extends FirebaseFunction>(firebaseFunction: Func, auth?: { uid: string }): Promise<Result<any, functions.https.HttpsError>> {
-    return new Promise((resolve, reject) => {
-        const handleError = (error: any) => {
-            console.warn(typeof error, error);
-            if (error instanceof functions.https.HttpsError)
-                resolve(Result.failure(error));
-            else
-                reject(error);
-        };
-        try {
-            firebaseFunction.executeFunction(auth).then(value => {
-                resolve(Result.success(value));
-            }).catch(handleError);
-        } catch (error) {
-            handleError(error);
-        }
-    });
-}
-
-/**
  * Default parameters for firebase function with private key and club level.
  */
 export interface FunctionDefaultParameters {
@@ -131,4 +111,10 @@ export interface FunctionDefaultParameters {
      * Club level of firebase function.
      */
     clubLevel: ClubLevel;
+}
+
+export interface PrimitveDataSnapshot {
+    exists(): boolean,
+    key: string | null,
+    val(): any
 }
