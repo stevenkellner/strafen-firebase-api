@@ -6,8 +6,7 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import {ChangeType} from "../TypeDefinitions/ChangeType";
 import {Reference} from "@firebase/database-types";
-import {Fine, FineObject} from "../TypeDefinitions/Fine";
-import {TypeOrId} from "../TypeDefinitions/TypeOrId";
+import {Fine, StatisticsFine, StatisticsFineObject} from "../TypeDefinitions/Fine";
 
 /**
  * Type of Parameters for ChangeFineFunction
@@ -15,15 +14,15 @@ import {TypeOrId} from "../TypeDefinitions/TypeOrId";
 type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, fine: Fine }
 
 interface FunctionStatisticsPropertiesObject {
-    previousFine: FineObject | null;
-    changedFine: FineObject | { id: string };
+    previousFine: StatisticsFineObject | null;
+    changedFine: StatisticsFineObject | null;
 }
 
 class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
-    readonly previousFine: Fine | null;
-    readonly changedFine: TypeOrId<Fine, FineObject>;
+    readonly previousFine: StatisticsFine | null;
+    readonly changedFine: StatisticsFine | null;
 
-    constructor(previousFine: Fine | null, changedFine: TypeOrId<Fine, FineObject>) {
+    constructor(previousFine: StatisticsFine | null, changedFine: StatisticsFine | null) {
         this.previousFine = previousFine;
         this.changedFine = changedFine;
     }
@@ -31,7 +30,7 @@ class FunctionStatisticsProperties implements StatisticsProperties<FunctionStati
     get ["object"](): FunctionStatisticsPropertiesObject {
         return {
             previousFine: undefinedAsNull(this.previousFine?.object),
-            changedFine: this.changedFine.object,
+            changedFine: undefinedAsNull(this.changedFine?.object),
         };
     }
 }
@@ -43,8 +42,8 @@ class FunctionStatisticsProperties implements StatisticsProperties<FunctionStati
  * Saved statistik:
  *  - name: changeFine
  *  - properties:
- *      - previousFine ({@link Fine} | null): Previous fine to change
- *      - changedFine ({@link Fine} | { id: guid; }): Changed fine or only id if change type is `delete`
+ *      - previousFine ({@link StatisticsFine} | null): Previous fine to change
+ *      - changedFine ({@link StatisticsFine} | null): Changed fine or null if change type is `delete`
  *
  * @params
  *  - privateKey (string): private key to check whether the caller is authenticated to use this function
@@ -103,31 +102,30 @@ export class ChangeFineFunction implements FirebaseFunction {
     async executeFunction(auth?: { uid: string }): Promise<void> {
 
         // Check prerequirements
+        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
         await checkPrerequirements(this.parameters, auth, this.parameters.clubId);
 
         // Get previous fine
         const fineRef = this.getFineRef();
         const fineSnapshot = await fineRef.once("value");
-        let previousFine: Fine | null = null;
+        let previousFine: StatisticsFine | null = null;
         if (fineSnapshot.exists())
-            previousFine = Fine.fromSnapshot(fineSnapshot);
+            previousFine = await Fine.fromSnapshot(fineSnapshot).forStatistics(clubPath);
 
         // Change fine
-        let changedFine: TypeOrId<Fine, FineObject>;
+        let changedFine: StatisticsFine | null = null;
         switch (this.parameters.changeType.value) {
         case "delete":
             await this.deleteItem();
-            changedFine = TypeOrId.onlyId(this.parameters.fine.id);
             break;
 
         case "update":
             await this.updateItem();
-            changedFine = TypeOrId.withType(this.parameters.fine);
+            changedFine = await this.parameters.fine.forStatistics(clubPath);
             break;
         }
 
         // Save statistic
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
         await saveStatistic(clubPath, {
             name: "changeFine",
             properties: new FunctionStatisticsProperties(previousFine, changedFine),

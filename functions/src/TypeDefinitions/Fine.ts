@@ -2,9 +2,10 @@ import {ParameterContainer} from "./ParameterContainer";
 import * as functions from "firebase-functions";
 import {PayedState, PayedStateObject} from "./PayedState";
 import {guid} from "./guid";
-import {FineReason, FineReasonObject, StatisticsFineReasonObject} from "./FineReason";
+import {FineReason, FineReasonObject, StatisticsFineReason, StatisticsFineReasonObject} from "./FineReason";
 import {PrimitveDataSnapshot} from "../utils";
-import {PersonObject} from "./Person";
+import {Person, PersonObject} from "./Person";
+import * as admin from "firebase-admin";
 
 export interface FineObject {
     id: string;
@@ -21,15 +22,6 @@ interface FineObjectWithoutId {
     number: number;
     date: number;
     fineReason: FineReasonObject;
-}
-
-export interface StatisticsFineObject {
-    id: string;
-    person: PersonObject;
-    payedState: PayedStateObject;
-    number: number;
-    date: number;
-    fineReason: StatisticsFineReasonObject;
 }
 
 /**
@@ -156,6 +148,60 @@ export class Fine {
         return {
             id: this.id.guidString,
             ...this.objectWithoutId,
+        };
+    }
+
+    async forStatistics(clubPath: string): Promise<StatisticsFine> {
+        return await StatisticsFine.fromFine(this, clubPath);
+    }
+}
+
+export interface StatisticsFineObject {
+    id: string;
+    person: PersonObject;
+    payedState: PayedStateObject;
+    number: number;
+    date: number;
+    fineReason: StatisticsFineReasonObject;
+}
+
+export class StatisticsFine {
+    readonly id: guid;
+    readonly person: Person;
+    readonly payedState: PayedState;
+    readonly number: number;
+    readonly date: number;
+    readonly fineReason: StatisticsFineReason;
+
+    private constructor(id: guid, person: Person, payedState: PayedState, number: number, date: number, fineReason: StatisticsFineReason) {
+        this.id = id;
+        this.person = person;
+        this.payedState = payedState;
+        this.number = number;
+        this.date = date;
+        this.fineReason = fineReason;
+    }
+
+    static async fromFine(fine: Fine, clubPath: string): Promise<StatisticsFine> {
+
+        // Get statistic person
+        const personRef = admin.database().ref(`${clubPath}/persons/${fine.personId.guidString}`);
+        const personSnapshot = await personRef.once("value");
+        const person = Person.fromSnapshot(personSnapshot);
+
+        // Get statistic fine reason
+        const fineReason = await fine.fineReason.forStatistics(clubPath);
+
+        return new StatisticsFine(fine.id, person, fine.payedState, fine.number, fine.date, fineReason);
+    }
+    get ["object"](): StatisticsFineObject {
+        return {
+            id: this.id.guidString,
+            person: this.person.object,
+            payedState: this.payedState.object,
+            number: this.number,
+            date: this.date,
+            fineReason: this.fineReason.object,
         };
     }
 }
