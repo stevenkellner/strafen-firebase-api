@@ -4,7 +4,7 @@ import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import {checkPrerequirements, FirebaseFunction, FunctionDefaultParameters} from "../utils";
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import defaultTestClubJson from "./testClubs/default.json";
+import {defaultTestClub} from "./testClubs/default";
 
 type FunctionParameters = FunctionDefaultParameters & { clubId: guid, testClubType: TestClubType }
 
@@ -60,7 +60,7 @@ class TestClubType {
     getTestClub(): any {
         switch (this.value) {
         case "default":
-            return defaultTestClubJson;
+            return defaultTestClub;
         }
     }
 }

@@ -8,7 +8,6 @@ import {ReasonTemplate, ReasonTemplateObject} from "../TypeDefinitions/ReasonTem
 import {ChangeType} from "../TypeDefinitions/ChangeType";
 import {Reference} from "@firebase/database-types";
 import {DataSnapshot} from "firebase/database";
-import {TypeOrId} from "../TypeDefinitions/TypeOrId";
 
 /**
  * Type of Parameters for ChangeReasonTemplateFunction
@@ -17,14 +16,14 @@ type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType
 
 interface FunctionStatisticsPropertiesObject {
     previousReasonTemplate: ReasonTemplateObject | null;
-    changedReasonTemplate: ReasonTemplateObject | { id: string };
+    changedReasonTemplate: ReasonTemplateObject | null;
 }
 
 class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
     readonly previousReasonTemplate: ReasonTemplate | null;
-    readonly changedReasonTemplate: TypeOrId<ReasonTemplate, ReasonTemplateObject>;
+    readonly changedReasonTemplate: ReasonTemplate | null;
 
-    constructor(previousReasonTemplate: ReasonTemplate | null, changedReasonTemplate: TypeOrId<ReasonTemplate, ReasonTemplateObject>) {
+    constructor(previousReasonTemplate: ReasonTemplate | null, changedReasonTemplate: ReasonTemplate | null) {
         this.previousReasonTemplate = previousReasonTemplate;
         this.changedReasonTemplate = changedReasonTemplate;
     }
@@ -32,7 +31,7 @@ class FunctionStatisticsProperties implements StatisticsProperties<FunctionStati
     get ["object"](): FunctionStatisticsPropertiesObject {
         return {
             previousReasonTemplate: undefinedAsNull(this.previousReasonTemplate?.object),
-            changedReasonTemplate: this.changedReasonTemplate.object,
+            changedReasonTemplate: undefinedAsNull(this.changedReasonTemplate?.object),
         };
     }
 }
@@ -45,7 +44,7 @@ class FunctionStatisticsProperties implements StatisticsProperties<FunctionStati
  *  - name: changeReasonTemplate
  *  - properties:
  *      - previousReasonTemplate ({@link ReasonTemplate} | null): Previous reason template to change
- *      - changedReasonTemplate ({@link ReasonTemplate} | { id: guid; }): Changed reason template or only id if change type is `delete`
+ *      - changedReasonTemplate ({@link ReasonTemplate} | null: Changed reason template or only id if change type is `delete`
  *
  * @params
  *  - privateKey (string): private key to check whether the caller is authenticated to use this function
@@ -114,16 +113,15 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
             previousReasonTemplate = ReasonTemplate.fromSnapshot(reasonTemplateSnapshot as unknown as DataSnapshot);
 
         // Change reason template
-        let changedReasonTemplate: TypeOrId<ReasonTemplate, ReasonTemplateObject>;
+        let changedReasonTemplate: ReasonTemplate | null = null;
         switch (this.parameters.changeType.value) {
         case "delete":
             await this.deleteItem();
-            changedReasonTemplate = TypeOrId.onlyId(this.parameters.reasonTemplate.id);
             break;
 
         case "update":
             await this.updateItem();
-            changedReasonTemplate = TypeOrId.withType(this.parameters.reasonTemplate);
+            changedReasonTemplate = this.parameters.reasonTemplate;
             break;
         }
 
