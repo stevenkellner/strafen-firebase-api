@@ -6,6 +6,7 @@ import {firebaseConfig} from "./firebaseConfig";
 import {Fine} from "../src/TypeDefinitions/Fine";
 import {guid} from "../src/TypeDefinitions/guid";
 import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
+import { Person } from "../src/TypeDefinitions/Person";
 
 const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app, "europe-west1");
@@ -47,6 +48,15 @@ export async function getDatabaseFines(clubId: guid): Promise<Fine[]> {
 export async function getDatabaseReasonTemplates(clubId: guid): Promise<ReasonTemplate[]> {
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/reasonTemplates`)).map(value => {
         return ReasonTemplate.fromObject({
+            id: value[0],
+            ...(value[1] as any),
+        });
+    });
+}
+
+export async function getDatabasePersons(clubId: guid): Promise<Person[]> {
+    return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/persons`)).map(value => {
+        return Person.fromObject({
             id: value[0],
             ...(value[1] as any),
         });

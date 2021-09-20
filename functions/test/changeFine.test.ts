@@ -2,7 +2,7 @@ import {privateKey} from "../src/privateKeys";
 import {guid} from "../src/TypeDefinitions/guid";
 import {auth, callFunction, getDatabaseFines, getDatabaseReasonTemplates, getDatabaseStatisticsPropertiesWithName, signInTestUser} from "./utils";
 import {signOut} from "firebase/auth";
-import {assert, expect} from "chai";
+import {assert, AssertionError, expect} from "chai";
 import {FirebaseError} from "firebase-admin";
 import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
 import {Fine} from "../src/TypeDefinitions/Fine";
@@ -39,6 +39,7 @@ describe("ChangeFine", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if(error instanceof AssertionError) { throw error; }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'clubId'. Expected type 'string', but got undefined or null.");
         }
@@ -54,6 +55,7 @@ describe("ChangeFine", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if(error instanceof AssertionError) { throw error; }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'changeType'. Expected type 'string', but got undefined or null.");
         }
@@ -70,6 +72,7 @@ describe("ChangeFine", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if(error instanceof AssertionError) { throw error; }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse ChangeType, expected 'delete' or 'update', but got invalid instead.");
         }
@@ -85,6 +88,7 @@ describe("ChangeFine", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if(error instanceof AssertionError) { throw error; }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'fine'. Expected type 'object', but got undefined or null.");
         }
@@ -101,6 +105,7 @@ describe("ChangeFine", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if(error instanceof AssertionError) { throw error; }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'fine'. Expected type 'object', but got 'invalid' from type 'string'.");
         }

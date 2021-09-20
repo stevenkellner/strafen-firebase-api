@@ -1,14 +1,14 @@
 import {privateKey} from "../src/privateKeys";
 import {guid} from "../src/TypeDefinitions/guid";
-import {auth, callFunction, getDatabaseReasonTemplates, getDatabaseStatisticsPropertiesWithName, signInTestUser} from "./utils";
+import {auth, callFunction, getDatabasePersons, getDatabaseStatisticsPropertiesWithName, signInTestUser} from "./utils";
 import {signOut} from "firebase/auth";
 import {assert, AssertionError, expect} from "chai";
 import {FirebaseError} from "firebase-admin";
-import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
+import { Person } from "../src/TypeDefinitions/Person";
 
-describe("ChangeReasonTemplate", () => {
+describe("ChangePerson", () => {
 
-    const clubId = guid.fromString("9e00bbc6-c1b4-4e6f-8919-77f01aa10749");
+    const clubId = guid.fromString("c5429fcd-3b4b-437c-83a7-0e5433cc4cac");
 
     beforeEach(async () => {
         await signInTestUser();
@@ -30,11 +30,11 @@ describe("ChangeReasonTemplate", () => {
 
     it("No club id", async () => {
         try {
-            await callFunction("changeReasonTemplate", {
+            await callFunction("changePerson", {
                 privateKey: privateKey,
                 clubLevel: "testing",
                 changeType: "upate",
-                reasonTemplate: "some Fine",
+                fine: "some Person",
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
@@ -46,11 +46,11 @@ describe("ChangeReasonTemplate", () => {
 
     it("No change type", async () => {
         try {
-            await callFunction("changeReasonTemplate", {
+            await callFunction("changePerson", {
                 privateKey: privateKey,
                 clubLevel: "testing",
                 clubId: clubId.guidString,
-                reasonTemplate: "some Reason",
+                person: "some Person",
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
@@ -62,12 +62,12 @@ describe("ChangeReasonTemplate", () => {
 
     it("Invalid change type", async () => {
         try {
-            await callFunction("changeReasonTemplate", {
+            await callFunction("changePerson", {
                 privateKey: privateKey,
                 clubLevel: "testing",
                 clubId: clubId.guidString,
                 changeType: "invalid",
-                reasonTemplate: "some Reason",
+                person: "some Person",
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
@@ -77,9 +77,9 @@ describe("ChangeReasonTemplate", () => {
         }
     });
 
-    it("No reason template", async () => {
+    it("No person", async () => {
         try {
-            await callFunction("changeReasonTemplate", {
+            await callFunction("changePerson", {
                 privateKey: privateKey,
                 clubLevel: "testing",
                 clubId: clubId.guidString,
@@ -89,108 +89,133 @@ describe("ChangeReasonTemplate", () => {
         } catch (error) {
             if(error instanceof AssertionError) { throw error; }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'reasonTemplate'. Expected type 'object', but got undefined or null.");
+            expect((error as FirebaseError).message).to.equal("Couldn't parse 'person'. Expected type 'object', but got undefined or null.");
         }
     });
 
-    it("Invalid reason template", async () => {
+    it("Invalid person", async () => {
         try {
-            await callFunction("changeReasonTemplate", {
+            await callFunction("changePerson", {
                 privateKey: privateKey,
                 clubLevel: "testing",
                 clubId: clubId.guidString,
                 changeType: "update",
-                reasonTemplate: "invalid",
+                person: "invalid",
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
             if(error instanceof AssertionError) { throw error; }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'reasonTemplate'. Expected type 'object', but got 'invalid' from type 'string'.");
+            expect((error as FirebaseError).message).to.equal("Couldn't parse 'person'. Expected type 'object', but got 'invalid' from type 'string'.");
         }
     });
 
-    async function setReasonTemplate(variant: boolean): Promise<ReasonTemplate> {
-        const reasonTemplate = ReasonTemplate.fromObject(variant ? {
-            id: "18ae484f-a1b7-456b-807e-339ff6679ad0",
-            reason: "Reason",
-            amount: 1.50,
-            importance: "high",
+    it("Already signed in", async () => {
+        try {
+            await callFunction("changePerson", {
+                privateKey: privateKey,
+                clubLevel: "testing",
+                clubId: clubId.guidString,
+                changeType: "delete",
+                person: {
+                    id: "76025DDE-6893-46D2-BC34-9864BB5B8DAD",
+                    name: {
+                        first: "some",
+                        last: "name"
+                    }
+                }
+            });
+            assert.fail("A statement above should throw an exception.");
+        } catch (error) {
+            if(error instanceof AssertionError) { throw error; }
+            expect((error as FirebaseError).code).to.equal("functions/unavailable");
+            expect((error as FirebaseError).message).to.equal("Person is already signed in!");
+        }
+    });
+
+    async function setPerson(variant: boolean): Promise<Person> {
+        const person = Person.fromObject(variant ? {
+            id: "61756c29-ac8a-4471-a283-4dde2623a1b9",
+            name: {
+                first: "asdf",
+                last: "jklö"
+            }
         } : {
-            id: "18ae484f-a1b7-456b-807e-339ff6679ad0",
-            reason: "Reason asdf",
-            amount: 150,
-            importance: "medium",
+            id: "61756c29-ac8a-4471-a283-4dde2623a1b9",
+            name: {
+                first: "wgn",
+                last: "jzhtre"
+            }
         });
 
-        // Set reason template
-        await callFunction("changeReasonTemplate", {
+        // Set person
+        await callFunction("changePerson", {
             privateKey: privateKey,
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            reasonTemplate: reasonTemplate.object,
+            person: person.object,
         });
 
-        // Check reason template
-        const reasonTemplateList = await getDatabaseReasonTemplates(clubId);
-        const fetchedReasonTemplate = reasonTemplateList.find(_reasonTemplate => _reasonTemplate.id.equals(reasonTemplate.id));
-        expect(fetchedReasonTemplate).to.deep.equal(reasonTemplate);
+        // Check person
+        const personList = await getDatabasePersons(clubId);
+        const fetchedPerson = personList.find(_person => _person.id.equals(person.id));
+        expect(fetchedPerson).to.deep.equal(person);
 
-        return reasonTemplate;
+        return person;
     }
 
-    it("Reason template set", async () => {
-        const reasonTemplate = await setReasonTemplate(false);
+    it("Person set", async () => {
+        const person = await setPerson(false);
 
         // Check statistic
-        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeReasonTemplate");
+        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson");
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            changedReasonTemplate: reasonTemplate.object,
+            changedPerson: person.object,
         });
     });
 
-    it("Reason template update", async () => {
-        const reasonTemplate1 = await setReasonTemplate(false);
-        const reasonTemplate2 = await setReasonTemplate(true);
+    it("Person update", async () => {
+        const person1 = await setPerson(false);
+        const person2 = await setPerson(true);
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeReasonTemplate");
+        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson");
         statisticsList = statisticsList.filter(statistic => {
-            return statistic.previousReasonTemplate != null;
+            return statistic.previousPerson!= null;
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousReasonTemplate: reasonTemplate1.object,
-            changedReasonTemplate: reasonTemplate2.object,
+            previousPerson: person1.object,
+            changedPerson: person2.object,
         });
     });
 
-    it("Reason template delete", async () => {
-        const reasonTemplate = await setReasonTemplate(true);
+    it("Person delete", async () => {
+        const person = await setPerson(true);
 
-        await callFunction("changeReasonTemplate", {
+        await callFunction("changePerson", {
             privateKey: privateKey,
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "delete",
-            reasonTemplate: reasonTemplate.object,
+            person: person.object,
         });
 
-        // Check reasonTemplate
-        const reasonTemplateList = await getDatabaseReasonTemplates(clubId);
-        const fetchedReasonTemplate = reasonTemplateList.find(_reasonTemplate => _reasonTemplate.id.equals(reasonTemplate.id));
-        expect(fetchedReasonTemplate).to.be.equal(undefined);
+        // Check person
+        const personList = await getDatabasePersons(clubId);
+        const fetchedPerson = personList.find(_person => _person.id.equals(person.id));
+        expect(fetchedPerson).to.be.equal(undefined);
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeReasonTemplate");
+        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson");
         statisticsList = statisticsList.filter(statistic => {
-            return statistic.previousReasonTemplate != null;
+            return statistic.previousPerson != null;
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousReasonTemplate: reasonTemplate.object,
+            previousPerson: person.object,
         });
     });
 });

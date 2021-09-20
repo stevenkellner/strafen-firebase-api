@@ -6,6 +6,7 @@ import {NewTestClubFunction} from "./testingFunctions/NewTestClubFunction";
 import {DeleteTestClubsFunction} from "./testingFunctions/DeleteTestClubsFunction";
 import {ChangeReasonTemplateFunction} from "./regularFunctions/ChangeReasonTemplateFunction";
 import {ChangeFineFunction} from "./regularFunctions/ChangeFineFunction";
+import {ChangePersonFunction} from "./regularFunctions/ChangePersonFunction";
 
 admin.initializeApp();
 
@@ -30,6 +31,14 @@ export const changeReasonTemplate = functions.region("europe-west1").https.onCal
  */
 export const changeFine = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new ChangeFineFunction(data);
+    await firebaseFunction.executeFunction(context.auth);
+});
+
+/**
+ * Changes a element of person list.
+ */
+export const changePerson = functions.region("europe-west1").https.onCall(async (data, context) => {
+    const firebaseFunction = new ChangePersonFunction(data);
     await firebaseFunction.executeFunction(context.auth);
 });
 
