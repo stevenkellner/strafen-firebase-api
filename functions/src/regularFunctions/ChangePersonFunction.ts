@@ -15,7 +15,7 @@ import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParam
 
  interface FunctionStatisticsPropertiesObject {
     previousPerson: PersonObject | null;
-     changedPerson: PersonObject | null;
+    changedPerson: PersonObject | null;
  }
 
 class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
@@ -50,7 +50,7 @@ class FunctionStatisticsProperties implements StatisticsProperties<FunctionStati
  *  - clubLevel ({@link ClubLevel}): level of the club change
  *  - clubId ({@link guid}): id of the club to force sign out the person
  *  - changeType ({@link ChangeType}}): type of the change
- *  - person ({@link Person}): person to change or null if change type is `delete`
+ *  - person ({@link Person}): person to change
  *
  * @throws
  *  - {@link functions.https.HttpsError}:

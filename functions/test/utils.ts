@@ -6,7 +6,7 @@ import {firebaseConfig} from "./firebaseConfig";
 import {Fine} from "../src/TypeDefinitions/Fine";
 import {guid} from "../src/TypeDefinitions/guid";
 import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
-import { Person } from "../src/TypeDefinitions/Person";
+import {Person} from "../src/TypeDefinitions/Person";
 
 const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app, "europe-west1");

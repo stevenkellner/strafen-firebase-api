@@ -50,7 +50,7 @@ class FunctionStatisticsProperties implements StatisticsProperties<FunctionStati
  *  - clubLevel ({@link ClubLevel}): level of the club change
  *  - clubId ({@link guid}): id of the club to force sign out the person
  *  - changeType ({@link ChangeType}}): type of the change
- *  - fine ({@link Fine}): fine to change or null if change type is `delete`
+ *  - fine ({@link Fine}): fine to change
  *
  * @throws
  *  - {@link functions.https.HttpsError}:

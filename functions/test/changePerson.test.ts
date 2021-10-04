@@ -4,7 +4,7 @@ import {auth, callFunction, getDatabasePersons, getDatabaseStatisticsPropertiesW
 import {signOut} from "firebase/auth";
 import {assert, AssertionError, expect} from "chai";
 import {FirebaseError} from "firebase-admin";
-import { Person } from "../src/TypeDefinitions/Person";
+import {Person} from "../src/TypeDefinitions/Person";
 
 describe("ChangePerson", () => {
 
@@ -34,11 +34,13 @@ describe("ChangePerson", () => {
                 privateKey: privateKey,
                 clubLevel: "testing",
                 changeType: "upate",
-                fine: "some Person",
+                person: "some Person",
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'clubId'. Expected type 'string', but got undefined or null.");
         }
@@ -54,7 +56,9 @@ describe("ChangePerson", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'changeType'. Expected type 'string', but got undefined or null.");
         }
@@ -71,7 +75,9 @@ describe("ChangePerson", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse ChangeType, expected 'delete' or 'update', but got invalid instead.");
         }
@@ -87,7 +93,9 @@ describe("ChangePerson", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'person'. Expected type 'object', but got undefined or null.");
         }
@@ -104,7 +112,9 @@ describe("ChangePerson", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'person'. Expected type 'object', but got 'invalid' from type 'string'.");
         }
@@ -121,13 +131,15 @@ describe("ChangePerson", () => {
                     id: "76025DDE-6893-46D2-BC34-9864BB5B8DAD",
                     name: {
                         first: "some",
-                        last: "name"
-                    }
-                }
+                        last: "name",
+                    },
+                },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/unavailable");
             expect((error as FirebaseError).message).to.equal("Person is already signed in!");
         }
@@ -138,14 +150,14 @@ describe("ChangePerson", () => {
             id: "61756c29-ac8a-4471-a283-4dde2623a1b9",
             name: {
                 first: "asdf",
-                last: "jklö"
-            }
+                last: "jklö",
+            },
         } : {
             id: "61756c29-ac8a-4471-a283-4dde2623a1b9",
             name: {
                 first: "wgn",
-                last: "jzhtre"
-            }
+                last: "jzhtre",
+            },
         });
 
         // Set person

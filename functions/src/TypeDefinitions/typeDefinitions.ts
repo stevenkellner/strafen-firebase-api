@@ -45,32 +45,6 @@ export interface FineProperties {
     reason: FineReason;
 }
 
-// Period of a time
-export interface TimePeriod {
-
-    // Value of the time period
-    value: number;
-
-    // Unit of the time period
-    unit: "day" | "month" | "year";
-}
-
-// Late payement interest
-export interface LatePaymentInterest {
-
-    // Interest free timeinterval
-    interestFreePeriod: TimePeriod;
-
-    // Interest timeinterval
-    interestPeriod: TimePeriod;
-
-    // Rate of the interest
-    interestRate: number;
-
-    // Indicates whether compound interest is active
-    compoundInterest: boolean;
-}
-
 export interface ClubProperties {
     identifier: string;
     name: string;

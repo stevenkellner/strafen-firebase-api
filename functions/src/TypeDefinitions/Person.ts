@@ -86,7 +86,6 @@ export class Person {
         return Person.fromObject(container.getParameter(parameterName, "object"));
     }
 
-
     /**
      * Returns person as object without id.
      * @return {PersonObjectWithoutId} Person as object without id

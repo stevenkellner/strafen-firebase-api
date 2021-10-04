@@ -42,7 +42,9 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'clubId'. Expected type 'string', but got undefined or null.");
         }
@@ -60,7 +62,9 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'fineId'. Expected type 'string', but got undefined or null.");
         }
@@ -76,7 +80,9 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'state'. Expected type 'object', but got undefined or null.");
         }
@@ -95,7 +101,9 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse PayedState parameter 'state'. Expected values 'payed', 'settled' or 'unpayed' from type 'string', but got 'invalid state' from type 'string'.");
         }
@@ -114,7 +122,9 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse PayedState since state is 'payed' but payDate or inApp is null.");
         }
@@ -134,7 +144,9 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse PayedState since state is 'payed' but payDate or inApp is null.");
         }
@@ -153,7 +165,9 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse Fine since no data exists in snapshot.");
         }
@@ -495,7 +509,9 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse Person since no data exists in snapshot.");
         }
@@ -519,7 +535,9 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if(error instanceof AssertionError) { throw error; }
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse ReasonTemplate since no data exists in snapshot.");
         }

@@ -1,6 +1,6 @@
 import {FirebaseError} from "@firebase/app";
 import {signOut} from "@firebase/auth";
-import {expect, assert} from "chai";
+import {expect, assert, AssertionError} from "chai";
 import {privateKey} from "../src/privateKeys";
 import {guid} from "../src/TypeDefinitions/guid";
 import {callFunction, signInTestUser, auth} from "./utils";
@@ -15,8 +15,11 @@ describe("General", () => {
     it("No parameters", async () => {
         try {
             await callFunction("changeFinePayed", null);
-            expect(false, "A statement above should throw an exception.").to.be.true;
+            assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'privateKey'. No parameters specified to this function.");
         }
@@ -25,8 +28,11 @@ describe("General", () => {
     it("No private key", async () => {
         try {
             await callFunction("changeFinePayed", {});
-            expect(false, "A statement above should throw an exception.").to.be.true;
+            assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse 'privateKey'. Expected type 'string', but got undefined or null.");
         }
@@ -43,8 +49,11 @@ describe("General", () => {
                     state: "unpayed",
                 },
             });
-            expect(false, "A statement above should throw an exception.").to.be.true;
+            assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse ClubLevel, expected 'regular', 'debug' or 'testing', but got invalid level instead.");
         }
@@ -61,8 +70,11 @@ describe("General", () => {
                     state: "unpayed",
                 },
             });
-            expect(false, "A statement above should throw an exception.").to.be.true;
+            assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
             expect((error as FirebaseError).message).to.equal("Couldn't parse Guid, guid string isn't a valid Guid: invalid guid");
         }
@@ -79,8 +91,11 @@ describe("General", () => {
                     state: "unpayed",
                 },
             });
-            expect(false, "A statement above should throw an exception.").to.be.true;
+            assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/permission-denied");
             expect((error as FirebaseError).message).to.equal("Private key is invalid.");
         }
@@ -97,8 +112,11 @@ describe("General", () => {
                     state: "unpayed",
                 },
             });
-            expect(false, "A statement above should throw an exception.").to.be.true;
+            assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/permission-denied");
             expect((error as FirebaseError).message).to.equal("The function must be called while authenticated, nobody signed in.");
         }
@@ -116,8 +134,11 @@ describe("General", () => {
                     state: "unpayed",
                 },
             });
-            expect(false, "A statement above should throw an exception.").to.be.true;
+            assert.fail("A statement above should throw an exception.");
         } catch (error) {
+            if (error instanceof AssertionError) {
+                throw error;
+            }
             expect((error as FirebaseError).code).to.equal("functions/permission-denied");
             expect((error as FirebaseError).message).to.equal("The function must be called while authenticated, person not in club.");
         }

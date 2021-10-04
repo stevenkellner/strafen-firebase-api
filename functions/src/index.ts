@@ -7,6 +7,7 @@ import {DeleteTestClubsFunction} from "./testingFunctions/DeleteTestClubsFunctio
 import {ChangeReasonTemplateFunction} from "./regularFunctions/ChangeReasonTemplateFunction";
 import {ChangeFineFunction} from "./regularFunctions/ChangeFineFunction";
 import {ChangePersonFunction} from "./regularFunctions/ChangePersonFunction";
+import {ChangeLatePaymentInterestFunction} from "./regularFunctions/ChangeLatePaymentInterestFunction";
 
 admin.initializeApp();
 
@@ -39,6 +40,14 @@ export const changeFine = functions.region("europe-west1").https.onCall(async (d
  */
 export const changePerson = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new ChangePersonFunction(data);
+    await firebaseFunction.executeFunction(context.auth);
+});
+
+/**
+ * Changes the late payment interest.
+ */
+export const changeLatePaymentInterest = functions.region("europe-west1").https.onCall(async (data, context) => {
+    const firebaseFunction = new ChangeLatePaymentInterestFunction(data);
     await firebaseFunction.executeFunction(context.auth);
 });
 
