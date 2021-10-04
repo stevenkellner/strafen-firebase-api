@@ -4,7 +4,6 @@ import {auth, callFunction, signInTestUser} from "./utils";
 import {signOut} from "firebase/auth";
 import {assert, AssertionError, expect} from "chai";
 import {FirebaseError} from "firebase-admin";
-import { LatePaymentInterest } from "../src/TypeDefinitions/LatePaymentInterest";
 
 describe("ChangeLatePaymentInterest", () => {
 
@@ -120,9 +119,9 @@ describe("ChangeLatePaymentInterest", () => {
         }
     });
 
-    /*async function setInterest(variant: boolean): Promise<LatePaymentInterest> {
+    /* async function setInterest(variant: boolean): Promise<LatePaymentInterest> {
         const interest = LatePaymentInterest.fromObject(variant ? {
-            
+
         } : {
 
         });
@@ -137,7 +136,7 @@ describe("ChangeLatePaymentInterest", () => {
         });
 
         // TOOD: Check interest
-       
+
         return interest;
     }*/
 });

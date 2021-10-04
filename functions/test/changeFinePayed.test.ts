@@ -39,14 +39,18 @@ describe("ChangeFinePayed", () => {
                 state: {
                     state: "unpayed",
                 },
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
             if (error instanceof AssertionError) {
                 throw error;
             }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'clubId'. Expected type 'string', but got undefined or null.");
+            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.be.equal("Couldn't parse 'clubId'. Expected type 'string', but got undefined or null.");
         }
     });
 
@@ -59,14 +63,18 @@ describe("ChangeFinePayed", () => {
                 state: {
                     state: "unpayed",
                 },
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
             if (error instanceof AssertionError) {
                 throw error;
             }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'fineId'. Expected type 'string', but got undefined or null.");
+            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.be.equal("Couldn't parse 'fineId'. Expected type 'string', but got undefined or null.");
         }
     });
 
@@ -77,14 +85,18 @@ describe("ChangeFinePayed", () => {
                 clubLevel: "testing",
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
             if (error instanceof AssertionError) {
                 throw error;
             }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'state'. Expected type 'object', but got undefined or null.");
+            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.be.equal("Couldn't parse 'state'. Expected type 'object', but got undefined or null.");
         }
     });
 
@@ -98,14 +110,18 @@ describe("ChangeFinePayed", () => {
                 state: {
                     state: "invalid state",
                 },
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
             if (error instanceof AssertionError) {
                 throw error;
             }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse PayedState parameter 'state'. Expected values 'payed', 'settled' or 'unpayed' from type 'string', but got 'invalid state' from type 'string'.");
+            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.be.equal("Couldn't parse PayedState parameter 'state'. Expected values 'payed', 'settled' or 'unpayed' from type 'string', but got 'invalid state' from type 'string'.");
         }
     });
 
@@ -119,14 +135,18 @@ describe("ChangeFinePayed", () => {
                 state: {
                     state: "payed",
                 },
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
             if (error instanceof AssertionError) {
                 throw error;
             }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse PayedState since state is 'payed' but payDate or inApp is null.");
+            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.be.equal("Couldn't parse PayedState since state is 'payed' but payDate or inApp is null.");
         }
     });
 
@@ -141,14 +161,65 @@ describe("ChangeFinePayed", () => {
                     state: "payed",
                     payDate: 123456789,
                 },
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
             if (error instanceof AssertionError) {
                 throw error;
             }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse PayedState since state is 'payed' but payDate or inApp is null.");
+            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.be.equal("Couldn't parse PayedState since state is 'payed' but payDate or inApp is null.");
+        }
+    });
+
+    it("No update properties", async () => {
+        try {
+            await callFunction("changeFinePayed", {
+                privateKey: privateKey,
+                clubLevel: "testing",
+                clubId: guid.newGuid().guidString,
+                fineId: guid.newGuid().guidString,
+                state: {
+                    state: "payed",
+                    payDate: 123456789,
+                    inApp: false,
+                },
+            });
+            assert.fail("A statement above should throw an exception.");
+        } catch (error) {
+            if (error instanceof AssertionError) {
+                throw error;
+            }
+            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.be.equal("Couldn't parse payed state parameter 'updateProperties', expected type object but got 'undefined' from type 'undefined'.");
+        }
+    });
+
+    it("Invalid update properties", async () => {
+        try {
+            await callFunction("changeFinePayed", {
+                privateKey: privateKey,
+                clubLevel: "testing",
+                clubId: guid.newGuid().guidString,
+                fineId: guid.newGuid().guidString,
+                state: {
+                    state: "payed",
+                    payDate: 123456789,
+                    inApp: false,
+                    updateProperties: "invalid",
+                },
+            });
+            assert.fail("A statement above should throw an exception.");
+        } catch (error) {
+            if (error instanceof AssertionError) {
+                throw error;
+            }
+            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.be.equal("Couldn't parse payed state parameter 'updateProperties', expected type object but got 'invalid' from type 'string'.");
         }
     });
 
@@ -161,6 +232,10 @@ describe("ChangeFinePayed", () => {
                 fineId: guid.newGuid().guidString,
                 state: {
                     state: "unpayed",
+                    updateProperties: {
+                        timestamp: 123456,
+                        personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                    },
                 },
             });
             assert.fail("A statement above should throw an exception.");
@@ -168,8 +243,8 @@ describe("ChangeFinePayed", () => {
             if (error instanceof AssertionError) {
                 throw error;
             }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse Fine since no data exists in snapshot.");
+            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
+            expect((error as FirebaseError).message).to.be.equal("Couldn't parse Fine since no data exists in snapshot.");
         }
     });
 
@@ -182,10 +257,18 @@ describe("ChangeFinePayed", () => {
             date: 9284765,
             payedState: {
                 state: "unpayed",
+                updateProperties: {
+                    timestamp: 123455,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
             number: 2,
             fineReason: {
                 reasonTemplateId: guid.fromString("9d0681f0-2045-4a1d-abbc-6bb289934ff9").guidString,
+            },
+            updateProperties: {
+                timestamp: 123455,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         });
         const reason = ReasonTemplate.fromObject({
@@ -201,6 +284,10 @@ describe("ChangeFinePayed", () => {
                 clubId: clubId.guidString,
                 changeType: "update",
                 reasonTemplate: reason.object,
+                updateProperties: {
+                    timestamp: 123455,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             });
         }
 
@@ -210,7 +297,11 @@ describe("ChangeFinePayed", () => {
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            fine: fine1.object,
+            fine: fine1.serverObject,
+            updateProperties: {
+                timestamp: 123455,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         });
 
         // Add fine with custom reason
@@ -222,6 +313,10 @@ describe("ChangeFinePayed", () => {
                 state: "payed",
                 inApp: false,
                 payDate: 234689,
+                updateProperties: {
+                    timestamp: 123455,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
             number: 10,
             fineReason: {
@@ -229,13 +324,21 @@ describe("ChangeFinePayed", () => {
                 amount: 1.50,
                 importance: "high",
             },
+            updateProperties: {
+                timestamp: 123455,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         });
         await callFunction("changeFine", {
             privateKey: privateKey,
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            fine: fine2.object,
+            fine: fine2.serverObject,
+            updateProperties: {
+                timestamp: 123455,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         });
 
         // Check fines and reason
@@ -268,16 +371,24 @@ describe("ChangeFinePayed", () => {
                 state: "payed",
                 payDate: 12345,
                 inApp: false,
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
         });
 
         // Check fine payed
         const fineList = await getDatabaseFines(clubId);
         const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
-        expect(fetchedFine?.payedState.object).to.deep.equal({
+        expect(fetchedFine?.payedState.serverObject).to.deep.equal({
             state: "payed",
             payDate: 12345,
             inApp: false,
+            updateProperties: {
+                timestamp: 123456,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         });
 
         // Check statistic
@@ -329,16 +440,24 @@ describe("ChangeFinePayed", () => {
                 state: "payed",
                 payDate: 54321,
                 inApp: true,
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
         });
 
         // Check fine payed
         const fineList = await getDatabaseFines(clubId);
         const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
-        expect(fetchedFine?.payedState.object).to.deep.equal({
+        expect(fetchedFine?.payedState.serverObject).to.deep.equal({
             state: "payed",
             payDate: 54321,
             inApp: true,
+            updateProperties: {
+                timestamp: 123456,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         });
 
         // Check statistic
@@ -389,16 +508,24 @@ describe("ChangeFinePayed", () => {
             fineId: fineId.guidString,
             state: {
                 state: "unpayed",
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
         });
 
         // Check fine payed
         const fineList = await getDatabaseFines(clubId);
         const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
-        expect(fetchedFine?.payedState.object).to.deep.equal({
+        expect(fetchedFine?.payedState.serverObject).to.deep.equal({
             state: "unpayed",
             inApp: null,
             payDate: null,
+            updateProperties: {
+                timestamp: 123456,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         });
 
         // Check statistic
@@ -447,16 +574,24 @@ describe("ChangeFinePayed", () => {
             fineId: fineId.guidString,
             state: {
                 state: "settled",
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
         });
 
         // Check fine payed
         const fineList = await getDatabaseFines(clubId);
         const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
-        expect(fetchedFine?.payedState.object).to.deep.equal({
+        expect(fetchedFine?.payedState.serverObject).to.deep.equal({
             state: "settled",
             inApp: null,
             payDate: null,
+            updateProperties: {
+                timestamp: 123456,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         });
 
         // Check statistic
@@ -489,58 +624,5 @@ describe("ChangeFinePayed", () => {
                 },
             },
         ]);
-    });
-
-    it("No person for statistic", async () => {
-
-        // Add fines and reason
-        await addFinesAndReason(guid.fromString("ae7d6187-A0E2-4091-AC7E-CB2C23F708D9"));
-
-        try {
-            const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba");
-            await callFunction("changeFinePayed", {
-                privateKey: privateKey,
-                clubLevel: "testing",
-                clubId: clubId.guidString,
-                fineId: fineId.guidString,
-                state: {
-                    state: "unpayed",
-                },
-            });
-            assert.fail("A statement above should throw an exception.");
-        } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse Person since no data exists in snapshot.");
-        }
-    });
-
-    it("No reason for statistic", async () => {
-
-        // Add fines and reason
-        await addFinesAndReason(undefined, false);
-
-        try {
-            const fineId = guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba");
-            await callFunction("changeFinePayed", {
-                privateKey: privateKey,
-                clubLevel: "testing",
-                clubId: clubId.guidString,
-                fineId: fineId.guidString,
-                state: {
-                    state: "unpayed",
-                },
-            });
-            assert.fail("A statement above should throw an exception.");
-        } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse ReasonTemplate since no data exists in snapshot.");
-        }
-
     });
 });

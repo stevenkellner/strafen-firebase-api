@@ -5,10 +5,18 @@ export const defaultTestClub = {
             "number": 1,
             "payedState": {
                 "state": "unpayed",
+                "updateProperties": {
+                    "timestamp": 12345,
+                    "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
             "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             "fineReason": {
                 "reasonTemplateId": "062FB0CB-F730-497B-BCF5-A4F907A6DCD5",
+            },
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
         "0B5F958E-9D7D-46E1-8AEE-F52F4370A95A": {
@@ -18,12 +26,20 @@ export const defaultTestClub = {
                 "payDate": 6.30160103445665E8,
                 "state": "payed",
                 "inApp": false,
+                "updateProperties": {
+                    "timestamp": 12345,
+                    "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
             "personId": "76025DDE-6893-46D2-BC34-9864BB5B8DAD",
             "fineReason": {
                 "amount": 1.1,
                 "importance": "medium",
                 "reason": "Das ist ein Test",
+            },
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
         "1B5F958E-9D7D-46E1-8AEE-F52F4370A95A": {
@@ -33,6 +49,10 @@ export const defaultTestClub = {
                 "payDate": 6.30160103445665E8,
                 "state": "payed",
                 "inApp": true,
+                "updateProperties": {
+                    "timestamp": 12345,
+                    "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
             "personId": "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9",
             "fineReason": {
@@ -40,12 +60,19 @@ export const defaultTestClub = {
                 "importance": "medium",
                 "reason": "Das ist ein Test",
             },
-
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         },
     },
     "identifier": "demo-team",
     "inAppPaymentActive": true,
     "name": "Neuer Verein",
+    "updateProperties": {
+        "timestamp": 12345,
+        "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+    },
     "personUserIds": {
         "asdnfl": "76025DDE-6893-46D2-BC34-9864BB5B8DAD",
         "LpAaeCz0BQfDHVYw02KiCyoTMS13": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
@@ -61,6 +88,10 @@ export const defaultTestClub = {
                 "signInDate": 6.30095493619915E8,
                 "userId": "asdnfl",
             },
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         },
         "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7": {
             "creditCard": "( »\u0013MÏè¨òÄU\r{\u0000,Ô¢6v\u000FWÖGV¡5<Ù$ÄìYòFm¹Ó4c\u0018B+´lº©L\u0000î\u0013dðîÖË«9´3¨æW\u0017\u0006°?Isqß\u0010mBZ\u0017Í,\u001E;·E\f_ ÐÀÖF^@­E9»ÎJhU>¨³\u0019\u0005'GZKñ±ÓÎ±",
@@ -73,11 +104,19 @@ export const defaultTestClub = {
                 "signInDate": 6.30095493619915E8,
                 "userId": "LpAaeCz0BQfDHVYw02KiCyoTMS13",
             },
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         },
         "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9": {
             "name": {
                 "first": "John",
                 "last": "Doe",
+            },
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
     },
@@ -86,16 +125,28 @@ export const defaultTestClub = {
             "amount": 10,
             "importance": "high",
             "reason": "Gelbe Karte Unsportlichkeit",
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         },
         "16805D21-5E8D-43E9-BB5C-7B4A790F0CE7": {
             "amount": 2,
             "importance": "low",
             "reason": "Mit Stutzen Auslaufen",
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         },
         "23A3412E-87DE-4A23-A08F-67214B8A8541": {
             "amount": 3,
             "importance": "medium",
             "reason": "Spiel Ausrüstung Vergessen",
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         },
     },
     "regionCode": "DE",
@@ -109,12 +160,20 @@ export const defaultTestClub = {
             },
             "payDate": 6.37601313257926E8,
             "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         },
         "7RQYM2DQ": {
             "approved": false,
             "fineIds": ["02462A8B-107F-4BAE-A85B-EFF1F727C00F"],
             "payDate": 6.37599817777474E8,
             "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            "updateProperties": {
+                "timestamp": 12345,
+                "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         },
     },
 };

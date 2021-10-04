@@ -3,6 +3,7 @@ import * as admin from "firebase-admin";
 import {privateKey} from "./privateKeys";
 import {guid} from "./TypeDefinitions/guid";
 import {ClubLevel} from "./TypeDefinitions/ClubLevel";
+import {ParameterContainer} from "./TypeDefinitions/ParameterContainer";
 
 /**
  * Checks prerequirements for firebase function:
@@ -30,6 +31,19 @@ export async function checkPrerequirements(parameter: FunctionDefaultParameters,
         if (!await existsData(ref))
             throw new functions.https.HttpsError("permission-denied", "The function must be called while authenticated, person not in club.");
     }
+}
+
+export async function checkUpdateTimestamp(updatePropertiesPath: string, functionUpdateProperties: UpdateProperties) {
+
+    // Get server update properties
+    const updatePropertiesRef = admin.database().ref(updatePropertiesPath);
+    const snapshot = await updatePropertiesRef.once("value");
+    if (!snapshot.exists()) return;
+    const serverUpdateProperties = UpdateProperties.fromObject(snapshot.val());
+
+    // Check timestamp
+    if (functionUpdateProperties.timestamp <= serverUpdateProperties.timestamp)
+        throw new functions.https.HttpsError("cancelled", `Server value is newer or same old than updated value:\n\t- Server  : ${serverUpdateProperties.timestamp}\n\t- Function: ${functionUpdateProperties.timestamp}`);
 }
 
 /**
@@ -97,6 +111,59 @@ export interface FirebaseFunction {
     executeFunction(auth?: { uid: string }): Promise<any>;
 }
 
+export interface UpdatePropertiesObject {
+    timestamp: number;
+    personId: string;
+}
+
+export class UpdateProperties {
+    readonly timestamp: number;
+    readonly personId: guid;
+
+    constructor(timestamp: number, personId: guid) {
+        this.timestamp = timestamp;
+        this.personId = personId;
+    }
+
+    static fromObject(object: { [key: string]: any }): UpdateProperties {
+
+        // Check if person id is string
+        if (typeof object.personId !== "string")
+            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse UpdateProperties parameter 'personId', expected type string but got '${object.personId}' from type ${typeof object.personId}`);
+        const personId = guid.fromString(object.personId);
+
+        // Check if timestamp is a positive number
+        if (typeof object.timestamp !== "number" || object.timestamp < 0)
+            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse UpdateProperties parameter 'timestamp', expected positive number but got '${object.timestamp}' from type ${typeof object.timestamp}`);
+
+        return new UpdateProperties(object.timestamp, personId);
+    }
+
+    static fromSnapshot(snapshot: PrimitveDataSnapshot): UpdateProperties {
+
+        // Check if data exists in snapshot
+        if (!snapshot.exists())
+            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse UpdateProperties since no data exists in snapshot.");
+
+        const data = snapshot.val();
+        if (typeof data !== "object")
+            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse UpdateProperties from snapshot since data isn't an object: ${data}`);
+
+        return UpdateProperties.fromObject(data);
+    }
+
+    static fromParameterContainer(container: ParameterContainer, parameterName: string): UpdateProperties {
+        return UpdateProperties.fromObject(container.getParameter(parameterName, "object"));
+    }
+
+    get ["object"](): UpdatePropertiesObject {
+        return {
+            timestamp: this.timestamp,
+            personId: this.personId.guidString,
+        };
+    }
+}
+
 /**
  * Default parameters for firebase function with private key and club level.
  */
@@ -117,4 +184,5 @@ export interface PrimitveDataSnapshot {
     exists(): boolean,
     key: string | null,
     val(): any
+    child(path: string): PrimitveDataSnapshot
 }

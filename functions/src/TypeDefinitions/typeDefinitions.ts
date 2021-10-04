@@ -1,4 +1,4 @@
-import {StatisticsFineObject} from "./Fine";
+import { Fine } from "./Fine";
 import {FineReason} from "./FineReason";
 import {PayedState} from "./PayedState";
 import {Person} from "./Person";
@@ -91,7 +91,7 @@ export interface StatisticsTransaction {
     approved: boolean;
 
     // Ids of fines payed by the transaction
-    fines: StatisticsFineObject[];
+    fines: Fine.Statistic.ServerObject[];
 
     // Name of the person payed the transaction
     name?: OptionalPersonName;

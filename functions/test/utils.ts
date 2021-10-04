@@ -3,7 +3,7 @@ import {getFunctions, httpsCallable, HttpsCallableResult} from "firebase/functio
 import {getDatabase, ref, onValue} from "firebase/database";
 import {getAuth, signInWithEmailAndPassword, UserCredential} from "firebase/auth";
 import {firebaseConfig} from "./firebaseConfig";
-import {Fine} from "../src/TypeDefinitions/Fine";
+import { Fine } from "../src/TypeDefinitions/Fine";
 import {guid} from "../src/TypeDefinitions/guid";
 import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
 import {Person} from "../src/TypeDefinitions/Person";

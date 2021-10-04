@@ -5,13 +5,13 @@ import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import {Reference} from "@firebase/database-types";
-import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, saveStatistic, StatisticsProperties} from "../utils";
+import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, saveStatistic, StatisticsProperties, UpdateProperties} from "../utils";
 import {LatePaymentInterest} from "../TypeDefinitions/LatePaymentInterest";
 
 /**
  * Type of Parameters for ChangeLatePayementInterestFunction
  */
- type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, interest: LatePaymentInterest }
+ type FunctionParameters = FunctionDefaultParameters & { updateProperties: UpdateProperties, clubId: guid, changeType: ChangeType, interest: LatePaymentInterest }
 
  interface FunctionStatisticsPropertiesObject {
     previousInterest: LatePaymentInterest | null;
@@ -86,6 +86,7 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
             clubId: guid.fromParameterContainer(container, "clubId"),
             changeType: ChangeType.fromParameterContainer(container, "changeType"),
             interest: LatePaymentInterest.fromParameterContainer(container, "interest"),
+            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties"),
         };
     }
 

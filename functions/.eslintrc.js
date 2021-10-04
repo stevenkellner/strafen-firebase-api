@@ -39,5 +39,8 @@ module.exports = {
         "new-cap": "off",
         "prefer-rest-params": "off",
         "no-caller": "off",
+        "@typescript-eslint/no-namespace": "off",
+        "object-curly-spacing": "off",
+        "import/export": "off",
     },
 };

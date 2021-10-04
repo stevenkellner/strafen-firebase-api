@@ -1,4 +1,4 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull} from "../utils";
+import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull, UpdateProperties} from "../utils";
 import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import {guid} from "../TypeDefinitions/guid";
 import {ClubLevel} from "../TypeDefinitions/ClubLevel";
@@ -6,31 +6,31 @@ import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import {ChangeType} from "../TypeDefinitions/ChangeType";
 import {Reference} from "@firebase/database-types";
-import {Fine, StatisticsFine, StatisticsFineObject} from "../TypeDefinitions/Fine";
+import {Fine} from "../TypeDefinitions/Fine";
 
 /**
  * Type of Parameters for ChangeFineFunction
  */
-type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, fine: Fine }
+type FunctionParameters = FunctionDefaultParameters & { updateProperties: UpdateProperties, clubId: guid, changeType: ChangeType, fine: Fine }
 
 interface FunctionStatisticsPropertiesObject {
-    previousFine: StatisticsFineObject | null;
-    changedFine: StatisticsFineObject | null;
+    previousFine: Fine.Statistic.ServerObject | null;
+    changedFine: Fine.Statistic.ServerObject | null;
 }
 
 class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
-    readonly previousFine: StatisticsFine | null;
-    readonly changedFine: StatisticsFine | null;
+    readonly previousFine: Fine.Statistic | null;
+    readonly changedFine: Fine.Statistic | null;
 
-    constructor(previousFine: StatisticsFine | null, changedFine: StatisticsFine | null) {
+    constructor(previousFine: Fine.Statistic | null, changedFine: Fine.Statistic | null) {
         this.previousFine = previousFine;
         this.changedFine = changedFine;
     }
 
     get ["object"](): FunctionStatisticsPropertiesObject {
         return {
-            previousFine: undefinedAsNull(this.previousFine?.object),
-            changedFine: undefinedAsNull(this.changedFine?.object),
+            previousFine: undefinedAsNull(this.previousFine?.serverObject),
+            changedFine: undefinedAsNull(this.changedFine?.serverObject),
         };
     }
 }
@@ -86,6 +86,7 @@ export class ChangeFineFunction implements FirebaseFunction {
             clubId: guid.fromParameterContainer(container, "clubId"),
             changeType: ChangeType.fromParameterContainer(container, "changeType"),
             fine: Fine.fromParameterContainer(container, "fine"),
+            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties"),
         };
     }
 
@@ -108,12 +109,12 @@ export class ChangeFineFunction implements FirebaseFunction {
         // Get previous fine
         const fineRef = this.getFineRef();
         const fineSnapshot = await fineRef.once("value");
-        let previousFine: StatisticsFine | null = null;
+        let previousFine: Fine.Statistic | null = null;
         if (fineSnapshot.exists())
             previousFine = await Fine.fromSnapshot(fineSnapshot).forStatistics(clubPath);
 
         // Change fine
-        let changedFine: StatisticsFine | null = null;
+        let changedFine: Fine.Statistic | null = null;
         switch (this.parameters.changeType.value) {
         case "delete":
             await this.deleteItem();
@@ -144,7 +145,7 @@ export class ChangeFineFunction implements FirebaseFunction {
 
     private async updateItem(): Promise<void> {
         const fineRef = this.getFineRef();
-        await fineRef.set(this.parameters.fine?.objectWithoutId, error => {
+        await fineRef.set(this.parameters.fine?.serverObjectWithoutId, error => {
             if (error != null)
                 throw new functions.https.HttpsError("internal", `Couldn't update fine, underlying error: ${error.name}, ${error.message}`);
         });

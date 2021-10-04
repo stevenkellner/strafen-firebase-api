@@ -1,74 +1,29 @@
-import {ParameterContainer} from "./ParameterContainer";
 import * as functions from "firebase-functions";
-import {PayedState, PayedStateObject} from "./PayedState";
-import {guid} from "./guid";
-import {FineReason, FineReasonObject, StatisticsFineReason, StatisticsFineReasonObject} from "./FineReason";
-import {PrimitveDataSnapshot} from "../utils";
-import {Person, PersonObject} from "./Person";
 import * as admin from "firebase-admin";
+import { ParameterContainer } from "./ParameterContainer";
+import { guid} from "./guid";
+import { FineReason, FineReasonObject, StatisticsFineReason, StatisticsFineReasonObject } from "./FineReason";
+import { PrimitveDataSnapshot, UpdateProperties, UpdatePropertiesObject } from "../utils";
+import { Person, PersonObject } from "./Person";
+import { PayedState } from "./PayedState";
 
-export interface FineObject {
-    id: string;
-    personId: string;
-    payedState: PayedStateObject;
-    number: number;
-    date: number;
-    fineReason: FineReasonObject;
-}
-
-interface FineObjectWithoutId {
-    personId: string;
-    payedState: PayedStateObject;
-    number: number;
-    date: number;
-    fineReason: FineReasonObject;
-}
-
-/**
- * Contains all porperties of a fine in statistics
- */
 export class Fine {
 
-    /**
-     * Id of the fine
-     */
-    readonly id: guid;
+    private constructor(
+        public readonly id: guid,
+        public readonly personId: guid,
+        public readonly payedState: PayedState,
+        public readonly number: number,
+        public readonly date: number,
+        public readonly fineReason: FineReason,
+        public readonly updateProperties: UpdateProperties
+    ) {}
 
-    /**
-     *  Id of associated person of the fine
-     */
-    readonly personId: guid;
+    public static fromObject(object: any): Fine {
 
-    /**
-     * State of payement
-     */
-    readonly payedState: PayedState;
-
-    /**
-     * Number of fines
-     */
-    readonly number: number;
-
-    /**
-     * Date when fine was created
-     */
-    readonly date: number;
-
-    /**
-     * Reason of fine
-     */
-    readonly fineReason: FineReason;
-
-    private constructor(id: guid, personId: guid, payedState: PayedState, number: number, date: number, fineReason: FineReason) {
-        this.id = id;
-        this.personId = personId;
-        this.payedState = payedState;
-        this.number = number;
-        this.date = date;
-        this.fineReason = fineReason;
-    }
-
-    static fromObject(object: { [key: string]: any }): Fine {
+        // Check if object is from type object
+        if (typeof object !== "object")
+            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine, expected type 'object', but bot ${object} from type '${typeof object}'`);
 
         // Check if id is string
         if (typeof object.id !== "string")
@@ -98,10 +53,16 @@ export class Fine {
             throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine parameter 'fineReason', expected type object but got '${object.fineReason}' from type ${typeof object.fineReason}`);
         const fineReason = FineReason.fromObject(object.fineReason);
 
-        return new Fine(id, personId, payedState, object.number, object.date, fineReason);
+        // Check if update properties is object
+        if (typeof object.updateProperties !== "object")
+            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine parameter 'updateProperties', expected type object but got '${object.updateProperties}' from type ${typeof object.updateProperties}`);
+        const updateProperties = UpdateProperties.fromObject(object.updateProperties);
+
+        // Return fine
+        return new Fine(id, personId, payedState, object.number, object.date, fineReason, updateProperties);
     }
 
-    static fromSnapshot(snapshot: PrimitveDataSnapshot): Fine {
+    public static fromSnapshot(snapshot: PrimitveDataSnapshot): Fine {
 
         // Check if data exists in snapshot
         if (!snapshot.exists())
@@ -112,96 +73,116 @@ export class Fine {
         if (idString == null)
             throw new functions.https.HttpsError("invalid-argument", "Couldn't parse Fine since snapshot has an invalid key.");
 
+        // Get data from snapshot
         const data = snapshot.val();
         if (typeof data !== "object")
             throw new functions.https.HttpsError("invalid-argument", `Couldn't parse Fine from snapshot since data isn't an object: ${data}`);
 
+        // Return fine
         return Fine.fromObject({
             id: idString,
             ...data,
         });
     }
 
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): Fine {
+    public static fromParameterContainer(container: ParameterContainer, parameterName: string): Fine {
         return Fine.fromObject(container.getParameter(parameterName, "object"));
     }
 
-    /**
-     * Returns fine as object without id.
-     * @return {FineObjectWithoutId} Fine as object without id
-     */
-    get ["objectWithoutId"](): FineObjectWithoutId {
-        return {
-            personId: this.personId.guidString,
-            payedState: this.payedState.object,
-            number: this.number,
-            date: this.date,
-            fineReason: this.fineReason.object,
-        };
+    public get ["serverObjectWithoutId"](): Fine.ServerObjectWithoutId {
+        return Fine.ServerObjectWithoutId.fromFine(this);
     }
 
-    /**
-     * Returns fine as object.
-     * @return {FineObject} Fine as object
-     */
-    get ["object"](): FineObject {
-        return {
-            id: this.id.guidString,
-            ...this.objectWithoutId,
-        };
+    public get ["serverObject"](): Fine.ServerObject {
+        return Fine.ServerObject.fromFine(this);
     }
 
-    async forStatistics(clubPath: string): Promise<StatisticsFine> {
-        return await StatisticsFine.fromFine(this, clubPath);
+    public async forStatistics(clubPath: string): Promise<Fine.Statistic> {
+        return await Fine.Statistic.fromFine(this, clubPath);
     }
 }
 
-export interface StatisticsFineObject {
-    id: string;
-    person: PersonObject;
-    payedState: PayedStateObject;
-    number: number;
-    date: number;
-    fineReason: StatisticsFineReasonObject;
-}
+export namespace Fine {
 
-export class StatisticsFine {
-    readonly id: guid;
-    readonly person: Person;
-    readonly payedState: PayedState;
-    readonly number: number;
-    readonly date: number;
-    readonly fineReason: StatisticsFineReason;
+    export class ServerObject {
 
-    private constructor(id: guid, person: Person, payedState: PayedState, number: number, date: number, fineReason: StatisticsFineReason) {
-        this.id = id;
-        this.person = person;
-        this.payedState = payedState;
-        this.number = number;
-        this.date = date;
-        this.fineReason = fineReason;
+        private constructor(
+            public readonly id: string,
+            public readonly personId: string,
+            public readonly payedState: PayedState.ServerObject,
+            public readonly number: number,
+            public readonly date: number,
+            public readonly fineReason: FineReasonObject,
+            public readonly updateProperties: UpdatePropertiesObject
+        ) {}
+
+        public static fromFine(fine: Fine): ServerObject {
+            return new ServerObject(fine.id.guidString, fine.personId.guidString, fine.payedState.serverObject, fine.number, fine.date, fine.fineReason.object, fine.updateProperties.object);
+        }
     }
 
-    static async fromFine(fine: Fine, clubPath: string): Promise<StatisticsFine> {
+    export class ServerObjectWithoutId {
 
-        // Get statistic person
-        const personRef = admin.database().ref(`${clubPath}/persons/${fine.personId.guidString}`);
-        const personSnapshot = await personRef.once("value");
-        const person = Person.fromSnapshot(personSnapshot);
+        private constructor(
+            public readonly personId: string,
+            public readonly payedState: PayedState.ServerObject,
+            public readonly number: number,
+            public readonly date: number,
+            public readonly fineReason: FineReasonObject,
+            public readonly updateProperties: UpdatePropertiesObject
+        ) {}
 
-        // Get statistic fine reason
-        const fineReason = await fine.fineReason.forStatistics(clubPath);
-
-        return new StatisticsFine(fine.id, person, fine.payedState, fine.number, fine.date, fineReason);
+        public static fromFine(fine: Fine): ServerObjectWithoutId {
+            return new ServerObjectWithoutId(fine.personId.guidString, fine.payedState.serverObject, fine.number, fine.date, fine.fineReason.object, fine.updateProperties.object);
+        }
     }
-    get ["object"](): StatisticsFineObject {
-        return {
-            id: this.id.guidString,
-            person: this.person.object,
-            payedState: this.payedState.object,
-            number: this.number,
-            date: this.date,
-            fineReason: this.fineReason.object,
-        };
+
+    export class Statistic {
+
+        private constructor(
+            public readonly id: guid,
+            public readonly person: Person,
+            public readonly payedState: PayedState,
+            public readonly number: number,
+            public readonly date: number,
+            public readonly fineReason: StatisticsFineReason
+        ) {}
+
+        public static async fromFine(fine: Fine, clubPath: string): Promise<Statistic> {
+
+            // Get statistic person
+            const personRef = admin.database().ref(`${clubPath}/persons/${fine.personId.guidString}`);
+            const personSnapshot = await personRef.once("value");
+            const person = Person.fromSnapshot(personSnapshot);
+
+            // Get statistic fine reason
+            const fineReason = await fine.fineReason.forStatistics(clubPath);
+
+            // Return statistic
+            return new Statistic(fine.id, person, fine.payedState, fine.number, fine.date, fineReason);
+        }
+
+        public get ["serverObject"](): Statistic.ServerObject {
+            return Statistic.ServerObject.fromStatistic(this);
+        }
+    }
+
+    export namespace Statistic {
+
+        export class ServerObject {
+
+            private constructor(
+                public readonly id: string,
+                public readonly person: PersonObject,
+                public readonly payedState: PayedState.ServerObjectWithoutUpdateProperties,
+                public readonly number: number,
+                public readonly date: number,
+                public readonly fineReason: StatisticsFineReasonObject,
+            ) {}
+
+            public static fromStatistic(statistic: Statistic): ServerObject {
+                return new ServerObject(statistic.id.guidString, statistic.person.object, statistic.payedState.serverObjectWithoutUpdateProperties, statistic.number, statistic.date, statistic.fineReason.object);
+            }
+        }
     }
 }

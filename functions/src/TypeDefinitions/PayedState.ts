@@ -1,51 +1,21 @@
 import * as functions from "firebase-functions";
-import {undefinedAsNull} from "../utils";
-import {ParameterContainer} from "./ParameterContainer";
+import { PrimitveDataSnapshot, undefinedAsNull, UpdateProperties, UpdatePropertiesObject } from "../utils";
+import { ParameterContainer } from "./ParameterContainer";
 
-interface PayedStateValuePayed {
-    state: "payed";
-    payDate: number;
-    inApp: boolean;
-}
-
-interface PayedStateValueUnpayed {
-    state: "unpayed";
-}
-
-interface PayedStateValueSettled {
-    state: "settled";
-}
-
-type PayedStateValue = PayedStateValuePayed | PayedStateValueUnpayed | PayedStateValueSettled;
-
-export interface PayedStateObject {
-    state: "payed" | "unpayed" | "settled";
-    payDate: number;
-    inApp: boolean;
-}
-
-/**
- * State of fine payment, can be payed, settled or unpayed. Contains extra properties
- * for pay date and in app payment if state is payed.
- */
 export class PayedState {
 
-    private readonly value: PayedStateValue;
+    private constructor(
+        public readonly state: "payed" | "unpayed" | "settled",
+        public readonly payDate: number | null,
+        public readonly inApp: boolean | null,
+        public readonly updateProperties: UpdateProperties
+    ) {}
 
-    /**
-     * Initializes PayedState with a state, optional pay date and in app payment.
-     * @param {PayedStateValue} value Value of the payment of the fine.
-     */
-    private constructor(value: PayedStateValue) {
-        this.value = value;
-    }
+    public static fromObject(object: any): PayedState {
 
-    /**
-     * Constructs PayedState from an object or throws a HttpsError if parsing failed.
-     * @param {any} object Object to parse PayedState from.
-     * @return {PayedState} Parsed PayedState from specified object.
-     */
-    static fromObject(object: any): PayedState {
+        // Check if object is from type object
+        if (typeof object !== "object")
+            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse PayedState, expected type 'object', but bot ${object} from type '${typeof object}'`);
 
         // Check if type of state is a string and the value either 'payed', 'settled' or 'unpayed'.
         if (typeof object.state !== "string" || (object.state != "payed" && object.state != "settled" && object.state != "unpayed"))
@@ -63,30 +33,67 @@ export class PayedState {
         if (object.state == "payed" && (object.payDate == null || object.inApp == null))
             throw new functions.https.HttpsError("invalid-argument", "Couldn't parse PayedState since state is 'payed' but payDate or inApp is null.");
 
+        // Check if update properties is object
+        if (typeof object.updateProperties !== "object")
+            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse payed state parameter 'updateProperties', expected type object but got '${object.updateProperties}' from type '${typeof object.updateProperties}'.`);
+        const updateProperties = UpdateProperties.fromObject(object.updateProperties);
+
         // Return payed state
-        return new PayedState({state: object.state, payDate: object.payDate, inApp: object.inApp});
+        return new PayedState(object.state, undefinedAsNull(object.payDate), undefinedAsNull(object.inApp), updateProperties);
     }
 
-    /**
-     * Constructs PayedState from parameter of parameter container with specified parameter name
-     * or throws a HttpsError if parsing failed.
-     * @param {ParameterContainer} container Parameter container to get parameter from.
-     * @param {string} parameterName Name of parameter from parameter container.
-     * @return {PayedState} Parsed PayedState from specified parameter.
-     */
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): PayedState {
+    public static fromSnapshot(snapshot: PrimitveDataSnapshot): PayedState {
+
+        // Check if data exists in snapshot
+        if (!snapshot.exists())
+            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse PayedState since no data exists in snapshot.");
+
+        // Get data from snapshot
+        const data = snapshot.val();
+        if (typeof data !== "object")
+            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse PayedState from snapshot since data isn't an object: ${data}`);
+
+        // Return payed state
+        return PayedState.fromObject(data);
+    }
+
+    public static fromParameterContainer(container: ParameterContainer, parameterName: string): PayedState {
         return PayedState.fromObject(container.getParameter(parameterName, "object"));
     }
 
-    /**
-     * Returns payed state as object.
-     * @return {any} Payed state as object
-     */
-    get ["object"](): PayedStateObject {
-        return {
-            state: this.value.state,
-            inApp: undefinedAsNull((this.value as any).inApp),
-            payDate: undefinedAsNull((this.value as any).payDate),
-        };
+    public get ["serverObject"](): PayedState.ServerObject {
+        return PayedState.ServerObject.fromPayedState(this);
+    }
+
+    public get ["serverObjectWithoutUpdateProperties"](): PayedState.ServerObjectWithoutUpdateProperties {
+        return PayedState.ServerObjectWithoutUpdateProperties.fromPayedState(this);
+    }
+}
+
+export namespace PayedState {
+
+    export class ServerObject {
+        private constructor(
+            public readonly state: "payed" | "unpayed" | "settled",
+            public readonly payDate: number | null,
+            public readonly inApp: boolean | null,
+            public readonly updateProperties: UpdatePropertiesObject
+        ) {}
+
+        public static fromPayedState(payedState: PayedState): ServerObject {
+            return new ServerObject(payedState.state, payedState.payDate, payedState.inApp, payedState.updateProperties.object);
+        }
+    }
+
+    export class ServerObjectWithoutUpdateProperties {
+        private constructor(
+            public readonly state: "payed" | "unpayed" | "settled",
+            public readonly payDate: number | null,
+            public readonly inApp: boolean | null,
+        ) {}
+
+        public static fromPayedState(payedState: PayedState): ServerObjectWithoutUpdateProperties {
+            return new ServerObjectWithoutUpdateProperties(payedState.state, payedState.payDate, payedState.inApp);
+        }
     }
 }

@@ -6,12 +6,12 @@ import {Person, PersonObject} from "../TypeDefinitions/Person";
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
 import {Reference} from "@firebase/database-types";
-import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, saveStatistic, StatisticsProperties, undefinedAsNull} from "../utils";
+import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, saveStatistic, StatisticsProperties, undefinedAsNull, UpdateProperties} from "../utils";
 
 /**
  * Type of Parameters for ChangePersonFunction
  */
- type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, person: Person }
+ type FunctionParameters = FunctionDefaultParameters & { updateProperties: UpdateProperties, clubId: guid, changeType: ChangeType, person: Person }
 
  interface FunctionStatisticsPropertiesObject {
     previousPerson: PersonObject | null;
@@ -87,6 +87,7 @@ export class ChangePersonFunction implements FirebaseFunction {
             clubId: guid.fromParameterContainer(container, "clubId"),
             changeType: ChangeType.fromParameterContainer(container, "changeType"),
             person: Person.fromParameterContainer(container, "person"),
+            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties"),
         };
     }
 

@@ -1,4 +1,4 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull} from "../utils";
+import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull, UpdateProperties} from "../utils";
 import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import {guid} from "../TypeDefinitions/guid";
 import {ClubLevel} from "../TypeDefinitions/ClubLevel";
@@ -12,7 +12,7 @@ import {DataSnapshot} from "firebase/database";
 /**
  * Type of Parameters for ChangeReasonTemplateFunction
  */
-type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, reasonTemplate: ReasonTemplate }
+type FunctionParameters = FunctionDefaultParameters & { updateProperties: UpdateProperties, clubId: guid, changeType: ChangeType, reasonTemplate: ReasonTemplate }
 
 interface FunctionStatisticsPropertiesObject {
     previousReasonTemplate: ReasonTemplateObject | null;
@@ -87,6 +87,7 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
             clubId: guid.fromParameterContainer(container, "clubId"),
             changeType: ChangeType.fromParameterContainer(container, "changeType"),
             reasonTemplate: ReasonTemplate.fromParameterContainer(container, "reasonTemplate"),
+            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties"),
         };
     }
 

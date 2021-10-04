@@ -169,7 +169,7 @@ describe("ChangeFine", () => {
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            fine: fine.object,
+            fine: fine.serverObject,
         });
 
         // Check fine
@@ -346,7 +346,7 @@ describe("ChangeFine", () => {
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "delete",
-            fine: fine.object,
+            fine: fine.serverObject,
         });
 
         // Check fine

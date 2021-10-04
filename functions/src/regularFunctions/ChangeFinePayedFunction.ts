@@ -1,12 +1,11 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, saveStatistic, StatisticsProperties} from "../utils";
-import {PayedState, PayedStateObject} from "../TypeDefinitions/PayedState";
+import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, saveStatistic, StatisticsProperties, checkUpdateTimestamp} from "../utils";
+import {PayedState} from "../TypeDefinitions/PayedState";
 import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import {guid} from "../TypeDefinitions/guid";
 import {ClubLevel} from "../TypeDefinitions/ClubLevel";
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import {Fine, StatisticsFineObject} from "../TypeDefinitions/Fine";
-import {Person} from "../TypeDefinitions/Person";
+import {Fine} from "../TypeDefinitions/Fine";
 
 /**
  * Type of Parameters for ChangeFinePayedFunction
@@ -14,23 +13,23 @@ import {Person} from "../TypeDefinitions/Person";
 type FunctionParameters = FunctionDefaultParameters & { clubId: guid, fineId: guid, state: PayedState }
 
 interface FunctionStatisticsPropertiesObject {
-    previousFine: StatisticsFineObject;
-    changedState: PayedStateObject;
+    previousFine: Fine.Statistic.ServerObject;
+    changedState: PayedState.ServerObjectWithoutUpdateProperties;
 }
 
 class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
-    readonly previousFine: StatisticsFineObject;
+    readonly previousFine: Fine.Statistic;
     readonly changedState: PayedState;
 
-    constructor(previousFine: StatisticsFineObject, changedState: PayedState) {
+    constructor(previousFine: Fine.Statistic, changedState: PayedState) {
         this.previousFine = previousFine;
         this.changedState = changedState;
     }
 
     get ["object"](): FunctionStatisticsPropertiesObject {
         return {
-            previousFine: this.previousFine,
-            changedState: this.changedState.object,
+            previousFine: this.previousFine.serverObject,
+            changedState: this.changedState.serverObjectWithoutUpdateProperties,
         };
     }
 }
@@ -103,11 +102,17 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
         const payedPath = `${clubPath}/fines/${this.parameters.fineId.guidString}/payedState`;
         const payedRef = admin.database().ref(payedPath);
 
+        // Check update timestamp
+        await checkUpdateTimestamp(`${payedPath}/updateProperties`, this.parameters.state.updateProperties);
+
         // Get statistics fine
         const statisticsFine = await this.getStatisticsFine();
 
         // Set payed state
-        await payedRef.set(this.parameters.state.object, error => {
+        await payedRef.set({
+            ...this.parameters.state.serverObject,
+            updateProperties: this.parameters.state.updateProperties.object,
+        }, error => {
             if (error != null)
                 throw new functions.https.HttpsError("internal", `Couldn't update payed state, underlying error: ${error.name}, ${error.message}`);
         });
@@ -123,31 +128,11 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
      * Gets previous fine for statistics.
      * @return {Promise<StatisticsFine>} Fine for statistics.
      */
-    private async getStatisticsFine(): Promise<StatisticsFineObject> {
-
-        // Get previous payed state
+    private async getStatisticsFine(): Promise<Fine.Statistic> {
         const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
         const finePath = `${clubPath}/fines/${this.parameters.fineId.guidString}`;
         const fineRef = admin.database().ref(finePath);
         const payedSnapshot = await fineRef.once("value");
-        const previousFine = Fine.fromSnapshot(payedSnapshot);
-
-        // Set person of previous fine
-        const personRef = admin.database().ref(`${clubPath}/persons/${previousFine.personId.guidString}`);
-        const personSnapshot = await personRef.once("value");
-        const person = Person.fromSnapshot(personSnapshot);
-
-        // Set reason of previous fine if fine has template id
-        const statisticsFineReason = await previousFine.fineReason.forStatistics(clubPath);
-
-        // Get statistics fine
-        return {
-            id: this.parameters.fineId.guidString,
-            person: person.object,
-            payedState: previousFine.payedState.object,
-            number: previousFine.number,
-            date: previousFine.date,
-            fineReason: statisticsFineReason.object,
-        };
+        return Fine.fromSnapshot(payedSnapshot).forStatistics(clubPath);
     }
 }
