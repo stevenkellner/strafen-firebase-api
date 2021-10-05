@@ -9,7 +9,7 @@ import {Fine} from "../src/TypeDefinitions/Fine";
 
 describe("ChangeFine", () => {
 
-    const clubId = guid.fromString("6fff234d-756b-4b53-9ae4-0f356ef189d1");
+    const clubId = guid.fromString("6fff234d-756b-4b53-9ae4-0f356ef189d1", undefined);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -129,7 +129,7 @@ describe("ChangeFine", () => {
             reason: "Test Reason 1",
             amount: 2.50,
             importance: "low",
-        });
+        }, undefined);
         await callFunction("changeReasonTemplate", {
             privateKey: privateKey,
             clubLevel: "testing",
@@ -162,7 +162,7 @@ describe("ChangeFine", () => {
                 amount: 1.50,
                 importance: "high",
             },
-        });
+        }, undefined);
 
         await callFunction("changeFine", {
             privateKey: privateKey,
@@ -339,7 +339,7 @@ describe("ChangeFine", () => {
                 amount: 1.50,
                 importance: "high",
             },
-        });
+        }, undefined);
 
         await callFunction("changeFine", {
             privateKey: privateKey,

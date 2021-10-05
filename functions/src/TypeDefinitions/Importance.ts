@@ -1,5 +1,6 @@
+import { httpsError } from "../utils";
+import { LoggingProperties } from "./LoggingProperties";
 import {ParameterContainer} from "./ParameterContainer";
-import * as functions from "firebase-functions";
 
 /**
  * Importance of a fine
@@ -24,10 +25,11 @@ export class Importance {
      * @param {string} value Value of the importance.
      * @return {Importance} Parsed importance.
      */
-    static fromString(value: string): Importance {
+    static fromString(value: string, loggingProperties?: LoggingProperties): Importance {
+        loggingProperties?.append("Importance.fromString", {value: value});
         if (value == "high" || value == "medium" || value == "low")
             return new Importance(value);
-        throw new functions.https.HttpsError("invalid-argument", `Couldn't parse Importance, expected 'high', 'medium' or 'low', but got ${value} instead.`);
+        throw httpsError("invalid-argument", `Couldn't parse Importance, expected 'high', 'medium' or 'low', but got ${value} instead.`, loggingProperties?.nextIndent);
     }
 
     /**
@@ -37,7 +39,8 @@ export class Importance {
      * @param {string} parameterName Name of parameter from parameter container.
      * @return {Importance} Parsed importance.
      */
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): Importance {
-        return Importance.fromString(container.getParameter(parameterName, "string"));
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Importance {
+        loggingProperties?.append("Importance.fromParameterContainer", {container: container, parameterName: parameterName});
+        return Importance.fromString(container.getParameter(parameterName, "string", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
     }
 }

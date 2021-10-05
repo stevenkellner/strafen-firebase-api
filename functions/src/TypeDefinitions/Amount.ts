@@ -1,5 +1,6 @@
 import {ParameterContainer} from "./ParameterContainer";
-import * as functions from "firebase-functions";
+import { httpsError } from "../utils";
+import { LoggingProperties } from "./LoggingProperties";
 
 export class Amount {
 
@@ -17,11 +18,12 @@ export class Amount {
      * @param {any} amountValue Object to parse Amount from.
      * @return {Amount} Parsed Amount from specified object.
      */
-    static fromNumber(amountValue: number): Amount {
+    static fromNumber(amountValue: number, loggingProperties?: LoggingProperties): Amount {
+        loggingProperties?.append("Amount.fromNumber", {amountValue: amountValue});
 
         // Check if number is positiv
         if (amountValue < 0)
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse Amount since value is negative: ${amountValue}`);
+            throw httpsError("invalid-argument", "Couldn't parse Amount since value is negative.", loggingProperties?.nextIndent);
 
         const value = Math.floor(amountValue);
         const subUnitValue = (amountValue - value) * 100;
@@ -36,8 +38,9 @@ export class Amount {
      * @param {string} parameterName Name of parameter from parameter container.
      * @return {Amount} Parsed Amount from specified parameter.
      */
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): Amount {
-        return Amount.fromNumber(container.getParameter(parameterName, "number"));
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Amount {
+        loggingProperties?.append("Amount.fromParameterContainer", {container: container, parameterName: parameterName});
+        return Amount.fromNumber(container.getParameter(parameterName, "number", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
     }
 
     get ["numberValue"](): number {

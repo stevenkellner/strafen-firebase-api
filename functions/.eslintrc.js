@@ -42,5 +42,7 @@ module.exports = {
         "@typescript-eslint/no-namespace": "off",
         "object-curly-spacing": "off",
         "import/export": "off",
+        "no-extend-native": "off",
+        "valid-jsdoc": "off",
     },
 };

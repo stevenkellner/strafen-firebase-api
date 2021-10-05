@@ -41,7 +41,7 @@ export async function getDatabaseFines(clubId: guid): Promise<Fine[]> {
         return Fine.fromObject({
             id: value[0],
             ...(value[1] as any),
-        });
+        }, undefined);
     });
 }
 
@@ -50,7 +50,7 @@ export async function getDatabaseReasonTemplates(clubId: guid): Promise<ReasonTe
         return ReasonTemplate.fromObject({
             id: value[0],
             ...(value[1] as any),
-        });
+        }, undefined);
     });
 }
 
@@ -59,14 +59,14 @@ export async function getDatabasePersons(clubId: guid): Promise<Person[]> {
         return Person.fromObject({
             id: value[0],
             ...(value[1] as any),
-        });
+        }, undefined);
     });
 }
 
 export async function getDatabaseStatistics(clubId: guid): Promise<{id: guid, name: string, timestamp: number, properties: any}[]> {
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/statistics`)).map(value => {
         return {
-            id: guid.fromString(value[0]),
+            id: guid.fromString(value[0], undefined),
             name: (value[1] as any).name,
             timestamp: (value[1] as any).timestamp,
             properties: (value[1] as any).properties,

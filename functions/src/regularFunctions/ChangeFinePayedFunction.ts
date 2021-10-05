@@ -1,11 +1,11 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, saveStatistic, StatisticsProperties, checkUpdateTimestamp} from "../utils";
+import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, saveStatistic, StatisticsProperties, checkUpdateTimestamp, httpsError} from "../utils";
 import {PayedState} from "../TypeDefinitions/PayedState";
 import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import {guid} from "../TypeDefinitions/guid";
 import {ClubLevel} from "../TypeDefinitions/ClubLevel";
-import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import {Fine} from "../TypeDefinitions/Fine";
+import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 
 /**
  * Type of Parameters for ChangeFinePayedFunction
@@ -65,13 +65,16 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
      */
     private parameters: FunctionParameters;
 
+    private loggingProperties: LoggingProperties;
+
     /**
      * Initilizes function with given over data.
      * @param {any} data Data to get parameters from.
      */
     constructor(data: any) {
         const parameterContainer = new ParameterContainer(data);
-        this.parameters = ChangeFinePayedFunction.parseParameters(parameterContainer);
+        this.loggingProperties = LoggingProperties.withFirst(parameterContainer, "ChangeFinePayedFunction.constructor", {data: data}, "notice");
+        this.parameters = ChangeFinePayedFunction.parseParameters(parameterContainer, this.loggingProperties.nextIndent);
     }
 
     /**
@@ -79,13 +82,14 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
      * @param {ParameterContainer} container Parameter container to get parameters from.
      * @return {FunctionParameters} Parsed parameters for this function.
      */
-    private static parseParameters(container: ParameterContainer): FunctionParameters {
+    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): FunctionParameters {
+        loggingProperties?.append("ChangeFinePayedFunction.parseParameter", {container: container});
         return {
-            privateKey: container.getParameter("privateKey", "string"),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel"),
-            clubId: guid.fromParameterContainer(container, "clubId"),
-            fineId: guid.fromParameterContainer(container, "fineId"),
-            state: PayedState.fromParameterContainer(container, "state"),
+            privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
+            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
+            fineId: guid.fromParameterContainer(container, "fineId", loggingProperties?.nextIndent),
+            state: PayedState.fromParameterContainer(container, "state", loggingProperties?.nextIndent),
         };
     }
 
@@ -94,16 +98,17 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
      * @param {{uid: string} | undefined} auth Authentication state.
      */
     async executeFunction(auth?: { uid: string }): Promise<void> {
+        this.loggingProperties?.append("ChangeFinePayedFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements and get a reference to payed state of the fine
-        await checkPrerequirements(this.parameters, auth, this.parameters.clubId);
+        await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
 
         const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
         const payedPath = `${clubPath}/fines/${this.parameters.fineId.guidString}/payedState`;
         const payedRef = admin.database().ref(payedPath);
 
         // Check update timestamp
-        await checkUpdateTimestamp(`${payedPath}/updateProperties`, this.parameters.state.updateProperties);
+        await checkUpdateTimestamp(`${payedPath}/updateProperties`, this.parameters.state.updateProperties, this.loggingProperties.nextIndent);
 
         // Get statistics fine
         const statisticsFine = await this.getStatisticsFine();
@@ -114,14 +119,14 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
             updateProperties: this.parameters.state.updateProperties.object,
         }, error => {
             if (error != null)
-                throw new functions.https.HttpsError("internal", `Couldn't update payed state, underlying error: ${error.name}, ${error.message}`);
+                throw httpsError("internal", `Couldn't update payed state, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
         });
 
         // Save statistic
         await saveStatistic(clubPath, {
             name: "changeFinePayed",
             properties: new FunctionStatisticsProperties(statisticsFine, this.parameters.state),
-        });
+        }, this.loggingProperties.nextIndent);
     }
 
     /**
@@ -129,10 +134,11 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
      * @return {Promise<StatisticsFine>} Fine for statistics.
      */
     private async getStatisticsFine(): Promise<Fine.Statistic> {
+        this.loggingProperties?.append("ChangeFinePayedFunction.getStatisticsFine");
         const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
         const finePath = `${clubPath}/fines/${this.parameters.fineId.guidString}`;
         const fineRef = admin.database().ref(finePath);
         const payedSnapshot = await fineRef.once("value");
-        return Fine.fromSnapshot(payedSnapshot).forStatistics(clubPath);
+        return Fine.fromSnapshot(payedSnapshot, this.loggingProperties.nextIndent).forStatistics(clubPath, this.loggingProperties.nextIndent);
     }
 }

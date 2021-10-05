@@ -1,11 +1,11 @@
-import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { ParameterContainer } from "./ParameterContainer";
 import { guid} from "./guid";
 import { FineReason, FineReasonObject, StatisticsFineReason, StatisticsFineReasonObject } from "./FineReason";
-import { PrimitveDataSnapshot, UpdateProperties, UpdatePropertiesObject } from "../utils";
+import { httpsError, PrimitveDataSnapshot, UpdateProperties, UpdatePropertiesObject } from "../utils";
 import { Person, PersonObject } from "./Person";
 import { PayedState } from "./PayedState";
+import { LoggingProperties } from "./LoggingProperties";
 
 export class Fine {
 
@@ -19,74 +19,77 @@ export class Fine {
         public readonly updateProperties: UpdateProperties
     ) {}
 
-    public static fromObject(object: any): Fine {
+    public static fromObject(object: any, loggingProperties?: LoggingProperties): Fine {
+        loggingProperties?.append("Fine.fromObject", {object: object});
 
         // Check if object is from type object
         if (typeof object !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine, expected type 'object', but bot ${object} from type '${typeof object}'`);
+            throw httpsError("invalid-argument", `Couldn't parse fine, expected type 'object', but bot ${object} from type '${typeof object}'`, loggingProperties?.nextIndent);
 
         // Check if id is string
         if (typeof object.id !== "string")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine parameter 'id', expected type string but got '${object.id}' from type ${typeof object.id}`);
-        const id = guid.fromString(object.id);
+            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'id', expected type string but got '${object.id}' from type ${typeof object.id}`, loggingProperties?.nextIndent);
+        const id = guid.fromString(object.id, loggingProperties?.nextIndent);
 
         // Check if person id is string
         if (typeof object.personId !== "string")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine parameter 'personId', expected type string but got '${object.personId}' from type ${typeof object.personId}`);
-        const personId = guid.fromString(object.personId);
+            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'personId', expected type string but got '${object.personId}' from type ${typeof object.personId}`, loggingProperties?.nextIndent);
+        const personId = guid.fromString(object.personId, loggingProperties?.nextIndent);
 
         // Check if payed state is object
         if (typeof object.payedState !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine parameter 'payedState', expected type object but got '${object.payedState}' from type ${typeof object.payedState}`);
-        const payedState = PayedState.fromObject(object.payedState);
+            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'payedState', expected type object but got '${object.payedState}' from type ${typeof object.payedState}`, loggingProperties?.nextIndent);
+        const payedState = PayedState.fromObject(object.payedState, loggingProperties?.nextIndent);
 
         // Check if number is a positive number
         if (typeof object.number !== "number" || object.number < 0)
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine parameter 'number', expected positive number but got '${object.number}' from type ${typeof object.number}`);
+            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'number', expected positive number but got '${object.number}' from type ${typeof object.number}`, loggingProperties?.nextIndent);
 
         // Check if date is a positive number
         if (typeof object.date !== "number" || object.date < 0)
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine parameter 'date', expected positive number but got '${object.date}' from type ${typeof object.date}`);
+            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'date', expected positive number but got '${object.date}' from type ${typeof object.date}`, loggingProperties?.nextIndent);
 
         // Check if fine reason is object
         if (typeof object.fineReason !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine parameter 'fineReason', expected type object but got '${object.fineReason}' from type ${typeof object.fineReason}`);
-        const fineReason = FineReason.fromObject(object.fineReason);
+            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'fineReason', expected type object but got '${object.fineReason}' from type ${typeof object.fineReason}`, loggingProperties?.nextIndent);
+        const fineReason = FineReason.fromObject(object.fineReason, loggingProperties?.nextIndent);
 
         // Check if update properties is object
         if (typeof object.updateProperties !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine parameter 'updateProperties', expected type object but got '${object.updateProperties}' from type ${typeof object.updateProperties}`);
-        const updateProperties = UpdateProperties.fromObject(object.updateProperties);
+            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'updateProperties', expected type object but got '${object.updateProperties}' from type ${typeof object.updateProperties}`, loggingProperties?.nextIndent);
+        const updateProperties = UpdateProperties.fromObject(object.updateProperties, loggingProperties?.nextIndent);
 
         // Return fine
         return new Fine(id, personId, payedState, object.number, object.date, fineReason, updateProperties);
     }
 
-    public static fromSnapshot(snapshot: PrimitveDataSnapshot): Fine {
+    public static fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties?: LoggingProperties): Fine {
+        loggingProperties?.append("Fine.fromSnapshot", {snapshot: snapshot});
 
         // Check if data exists in snapshot
         if (!snapshot.exists())
-            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse Fine since no data exists in snapshot.");
+            throw httpsError("invalid-argument", "Couldn't parse Fine since no data exists in snapshot.", loggingProperties?.nextIndent);
 
         // Get id
         const idString = snapshot.key;
         if (idString == null)
-            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse Fine since snapshot has an invalid key.");
+            throw httpsError("invalid-argument", "Couldn't parse Fine since snapshot has an invalid key.", loggingProperties?.nextIndent);
 
         // Get data from snapshot
         const data = snapshot.val();
         if (typeof data !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse Fine from snapshot since data isn't an object: ${data}`);
+            throw httpsError("invalid-argument", `Couldn't parse Fine from snapshot since data isn't an object: ${data}`, loggingProperties?.nextIndent);
 
         // Return fine
         return Fine.fromObject({
             id: idString,
             ...data,
-        });
+        }, loggingProperties?.nextIndent);
     }
 
-    public static fromParameterContainer(container: ParameterContainer, parameterName: string): Fine {
-        return Fine.fromObject(container.getParameter(parameterName, "object"));
+    public static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Fine {
+        loggingProperties?.append("Fine.fromParameterContainer", {container: container, parameterName: parameterName});
+        return Fine.fromObject(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
     }
 
     public get ["serverObjectWithoutId"](): Fine.ServerObjectWithoutId {
@@ -97,8 +100,8 @@ export class Fine {
         return Fine.ServerObject.fromFine(this);
     }
 
-    public async forStatistics(clubPath: string): Promise<Fine.Statistic> {
-        return await Fine.Statistic.fromFine(this, clubPath);
+    public async forStatistics(clubPath: string, loggingProperties?: LoggingProperties): Promise<Fine.Statistic> {
+        return await Fine.Statistic.fromFine(this, clubPath, loggingProperties?.nextIndent);
     }
 }
 
@@ -148,15 +151,16 @@ export namespace Fine {
             public readonly fineReason: StatisticsFineReason
         ) {}
 
-        public static async fromFine(fine: Fine, clubPath: string): Promise<Statistic> {
+        public static async fromFine(fine: Fine, clubPath: string, loggingProperties?: LoggingProperties): Promise<Statistic> {
+            loggingProperties?.append("Fine.Statistic.fromFine", {fine: fine, clubPath: clubPath});
 
             // Get statistic person
             const personRef = admin.database().ref(`${clubPath}/persons/${fine.personId.guidString}`);
             const personSnapshot = await personRef.once("value");
-            const person = Person.fromSnapshot(personSnapshot);
+            const person = Person.fromSnapshot(personSnapshot, loggingProperties?.nextIndent);
 
             // Get statistic fine reason
-            const fineReason = await fine.fineReason.forStatistics(clubPath);
+            const fineReason = await fine.fineReason.forStatistics(clubPath, loggingProperties?.nextIndent);
 
             // Return statistic
             return new Statistic(fine.id, person, fine.payedState, fine.number, fine.date, fineReason);

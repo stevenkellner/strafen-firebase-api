@@ -8,7 +8,7 @@ import {Person} from "../src/TypeDefinitions/Person";
 
 describe("ChangePerson", () => {
 
-    const clubId = guid.fromString("c5429fcd-3b4b-437c-83a7-0e5433cc4cac");
+    const clubId = guid.fromString("c5429fcd-3b4b-437c-83a7-0e5433cc4cac", undefined);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -158,7 +158,7 @@ describe("ChangePerson", () => {
                 first: "wgn",
                 last: "jzhtre",
             },
-        });
+        }, undefined);
 
         // Set person
         await callFunction("changePerson", {

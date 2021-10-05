@@ -1,4 +1,5 @@
-import * as functions from "firebase-functions";
+import { httpsError } from "../utils";
+import { LoggingProperties } from "./LoggingProperties";
 
 /**
  * All valid parameter types: string, number, bigint, boolean or object.
@@ -29,14 +30,15 @@ export class ParameterContainer {
      * @param {ValidParameterTypes} expectedType Expected type of the parameter.
      * @return {any | null} Parameter with specified name.
      */
-    getOptionalParameter(parameterName: string, expectedType: ValidParameterTypes): any | null {
+    getOptionalParameter(parameterName: string, expectedType: ValidParameterTypes, loggingProperties?: LoggingProperties): any | null {
+        loggingProperties?.append("ParameterContainer.getOptionalParameter", {parameterName: parameterName, expectedType: expectedType});
         if (this.data == null)
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse '${parameterName}'. No parameters specified to this function.`);
+            throw httpsError("invalid-argument", `Couldn't parse '${parameterName}'. No parameters specified to this function.`, loggingProperties?.nextIndent);
         const parameter = this.data[parameterName];
         if (parameter === null || parameter === undefined)
             return null;
         if (typeof parameter !== expectedType)
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse '${parameterName}'. Expected type '${expectedType}', but got '${parameter}' from type '${typeof parameter}'.`);
+            throw httpsError("invalid-argument", `Couldn't parse '${parameterName}'. Expected type '${expectedType}', but got '${parameter}' from type '${typeof parameter}'.`, loggingProperties?.nextIndent);
         return parameter;
     }
 
@@ -46,10 +48,11 @@ export class ParameterContainer {
      * @param {ValidParameterTypes} expectedType Expected type of the parameter.
      * @return {any} Parameter with specified name.
      */
-    getParameter(parameterName: string, expectedType: ValidParameterTypes): any {
-        const value = this.getOptionalParameter(parameterName, expectedType);
+    getParameter(parameterName: string, expectedType: ValidParameterTypes, loggingProperties?: LoggingProperties): any {
+        loggingProperties?.append("ParameterContainer.getParameter", {parameterName: parameterName, expectedType: expectedType});
+        const value = this.getOptionalParameter(parameterName, expectedType, loggingProperties?.nextIndent);
         if (value == null)
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse '${parameterName}'. Expected type '${expectedType}', but got undefined or null.`);
+            throw httpsError("invalid-argument", `Couldn't parse '${parameterName}'. Expected type '${expectedType}', but got undefined or null.`, loggingProperties?.nextIndent);
         return value;
     }
 }

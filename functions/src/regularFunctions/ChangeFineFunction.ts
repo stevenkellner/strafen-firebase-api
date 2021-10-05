@@ -1,12 +1,12 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull, UpdateProperties} from "../utils";
+import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull, UpdateProperties, httpsError} from "../utils";
 import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import {guid} from "../TypeDefinitions/guid";
 import {ClubLevel} from "../TypeDefinitions/ClubLevel";
 import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
 import {ChangeType} from "../TypeDefinitions/ChangeType";
 import {Reference} from "@firebase/database-types";
 import {Fine} from "../TypeDefinitions/Fine";
+import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 
 /**
  * Type of Parameters for ChangeFineFunction
@@ -65,13 +65,16 @@ export class ChangeFineFunction implements FirebaseFunction {
      */
     private parameters: FunctionParameters;
 
+    private loggingProperties: LoggingProperties;
+
     /**
      * Initilizes function with given over data.
      * @param {any} data Data to get parameters from.
      */
     constructor(data: any) {
         const parameterContainer = new ParameterContainer(data);
-        this.parameters = ChangeFineFunction.parseParameters(parameterContainer);
+        this.loggingProperties = LoggingProperties.withFirst(parameterContainer, "ChangeFineFunction.constructor", {data: data}, "notice");
+        this.parameters = ChangeFineFunction.parseParameters(parameterContainer, this.loggingProperties.nextIndent);
     }
 
     /**
@@ -79,14 +82,15 @@ export class ChangeFineFunction implements FirebaseFunction {
      * @param {ParameterContainer} container Parameter container to get parameters from.
      * @return {FunctionParameters} Parsed parameters for this function.
      */
-    private static parseParameters(container: ParameterContainer): FunctionParameters {
+    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): FunctionParameters {
+        loggingProperties?.append("ChangeFineFunction.parseParameter", {container: container});
         return {
-            privateKey: container.getParameter("privateKey", "string"),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel"),
-            clubId: guid.fromParameterContainer(container, "clubId"),
-            changeType: ChangeType.fromParameterContainer(container, "changeType"),
-            fine: Fine.fromParameterContainer(container, "fine"),
-            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties"),
+            privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
+            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
+            changeType: ChangeType.fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
+            fine: Fine.fromParameterContainer(container, "fine", loggingProperties?.nextIndent),
+            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties", loggingProperties?.nextIndent),
         };
     }
 
@@ -101,17 +105,18 @@ export class ChangeFineFunction implements FirebaseFunction {
      * @param {{uid: string} | undefined} auth Authentication state.
      */
     async executeFunction(auth?: { uid: string }): Promise<void> {
+        this.loggingProperties?.append("ChangeFineFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements
         const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
-        await checkPrerequirements(this.parameters, auth, this.parameters.clubId);
+        await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
 
         // Get previous fine
         const fineRef = this.getFineRef();
         const fineSnapshot = await fineRef.once("value");
         let previousFine: Fine.Statistic | null = null;
         if (fineSnapshot.exists())
-            previousFine = await Fine.fromSnapshot(fineSnapshot).forStatistics(clubPath);
+            previousFine = await Fine.fromSnapshot(fineSnapshot, this.loggingProperties.nextIndent).forStatistics(clubPath, this.loggingProperties.nextIndent);
 
         // Change fine
         let changedFine: Fine.Statistic | null = null;
@@ -122,7 +127,7 @@ export class ChangeFineFunction implements FirebaseFunction {
 
         case "update":
             await this.updateItem();
-            changedFine = await this.parameters.fine.forStatistics(clubPath);
+            changedFine = await this.parameters.fine.forStatistics(clubPath, this.loggingProperties.nextIndent);
             break;
         }
 
@@ -130,24 +135,26 @@ export class ChangeFineFunction implements FirebaseFunction {
         await saveStatistic(clubPath, {
             name: "changeFine",
             properties: new FunctionStatisticsProperties(previousFine, changedFine),
-        });
+        }, this.loggingProperties.nextIndent);
     }
 
     private async deleteItem(): Promise<void> {
+        this.loggingProperties?.append("ChangeFineFunction.deleteItem");
         const fineRef = this.getFineRef();
         if (await existsData(fineRef)) {
             await fineRef.remove(error => {
                 if (error != null)
-                    throw new functions.https.HttpsError("internal", `Couldn't delete fine, underlying error: ${error.name}, ${error.message}`);
+                    throw httpsError("internal", `Couldn't delete fine, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
             });
         }
     }
 
     private async updateItem(): Promise<void> {
+        this.loggingProperties?.append("ChangeFineFunction.updateItem");
         const fineRef = this.getFineRef();
         await fineRef.set(this.parameters.fine?.serverObjectWithoutId, error => {
             if (error != null)
-                throw new functions.https.HttpsError("internal", `Couldn't update fine, underlying error: ${error.name}, ${error.message}`);
+                throw httpsError("internal", `Couldn't update fine, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
         });
     }
 }

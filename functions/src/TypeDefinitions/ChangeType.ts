@@ -1,5 +1,6 @@
 import {ParameterContainer} from "./ParameterContainer";
-import * as functions from "firebase-functions";
+import { httpsError } from "../utils";
+import { LoggingProperties } from "./LoggingProperties";
 
 /**
  * Types of list item change
@@ -24,10 +25,11 @@ export class ChangeType {
      * @param {string} value Value of the change type.
      * @return {ChangeType} Parsed change type.
      */
-    static fromString(value: string): ChangeType {
+    static fromString(value: string, loggingProperties?: LoggingProperties): ChangeType {
+        loggingProperties?.append("ChangeType.fromString", {value: value});
         if (value == "delete" || value == "update")
             return new ChangeType(value);
-        throw new functions.https.HttpsError("invalid-argument", `Couldn't parse ChangeType, expected 'delete' or 'update', but got ${value} instead.`);
+        throw httpsError("invalid-argument", `Couldn't parse ChangeType, expected 'delete' or 'update', but got ${value} instead.`, loggingProperties?.nextIndent);
     }
 
     /**
@@ -37,7 +39,8 @@ export class ChangeType {
      * @param {string} parameterName Name of parameter from parameter container.
      * @return {ChangeType} Parsed change type.
      */
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): ChangeType {
-        return ChangeType.fromString(container.getParameter(parameterName, "string"));
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): ChangeType {
+        loggingProperties?.append("ChangeType.fromParameterContainer", {container: container, parameterName: parameterName});
+        return ChangeType.fromString(container.getParameter(parameterName, "string", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
     }
 }

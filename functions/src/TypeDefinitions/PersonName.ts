@@ -1,4 +1,5 @@
-import * as functions from "firebase-functions";
+import { httpsError } from "../utils";
+import { LoggingProperties } from "./LoggingProperties";
 
 export interface PersonNameObject {
     first: string;
@@ -19,15 +20,16 @@ export class PersonName {
         this.last = last;
     }
 
-    static fromObject(object: any): PersonName {
+    static fromObject(object: any, loggingProperties?: LoggingProperties): PersonName {
+        loggingProperties?.append("PersonName.fromObject", {object: object});
 
         // Check if type of first is string
         if (typeof object.first !== "string")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse PersonName parameter 'first'. Expected type 'string', but got '${object.first}' from type '${typeof object.first}'.`);
+            throw httpsError("invalid-argument", `Couldn't parse PersonName parameter 'first'. Expected type 'string', but got '${object.first}' from type '${typeof object.first}'.`, loggingProperties?.nextIndent);
 
         // Check if type of last is string
         if (typeof object.last !== "string")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse PersonName parameter 'last'. Expected type 'string', but got '${object.last}' from type '${typeof object.last}'.`);
+            throw httpsError("invalid-argument", `Couldn't parse PersonName parameter 'last'. Expected type 'string', but got '${object.last}' from type '${typeof object.last}'.`, loggingProperties?.nextIndent);
 
         // Return person name
         return new PersonName(object.first, object.last);

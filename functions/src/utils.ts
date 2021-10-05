@@ -1,9 +1,10 @@
-import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import * as functions from "firebase-functions";
 import {privateKey} from "./privateKeys";
 import {guid} from "./TypeDefinitions/guid";
 import {ClubLevel} from "./TypeDefinitions/ClubLevel";
 import {ParameterContainer} from "./TypeDefinitions/ParameterContainer";
+import { LoggingProperties } from "./TypeDefinitions/LoggingProperties";
 
 /**
  * Checks prerequirements for firebase function:
@@ -14,36 +15,38 @@ import {ParameterContainer} from "./TypeDefinitions/ParameterContainer";
  * @param {{ uid: string } | undefined} auth Authentication state.
  * @param {guid | undefined } clubId Id of club to check if person is in that club.
  */
-export async function checkPrerequirements(parameter: FunctionDefaultParameters, auth?: { uid: string }, clubId?: guid) {
+export async function checkPrerequirements(parameter: FunctionDefaultParameters, loggingProperties?: LoggingProperties, auth?: { uid: string }, clubId?: guid) {
+    loggingProperties?.append("checkPrerequirements", {parameter: parameter, auth: auth, clubId: clubId});
 
     // Check if key is valid
     if (parameter.privateKey != privateKey)
-        throw new functions.https.HttpsError("permission-denied", "Private key is invalid.");
+        throw httpsError("permission-denied", "Private key is invalid.", loggingProperties?.nextIndent);
 
     // Check if user is authorized to call a function
     if (auth == null)
-        throw new functions.https.HttpsError("permission-denied", "The function must be called while authenticated, nobody signed in.");
+        throw httpsError("permission-denied", "The function must be called while authenticated, nobody signed in.", loggingProperties?.nextIndent);
 
     // Check if person is sign in to club
     if (clubId != null) {
         const path = `${parameter.clubLevel.getClubComponent()}/${clubId.guidString}/personUserIds/${auth.uid}`;
         const ref = admin.database().ref(path);
         if (!await existsData(ref))
-            throw new functions.https.HttpsError("permission-denied", "The function must be called while authenticated, person not in club.");
+            throw httpsError("permission-denied", "The function must be called while authenticated, person not in club.", loggingProperties?.nextIndent);
     }
 }
 
-export async function checkUpdateTimestamp(updatePropertiesPath: string, functionUpdateProperties: UpdateProperties) {
+export async function checkUpdateTimestamp(updatePropertiesPath: string, functionUpdateProperties: UpdateProperties, loggingProperties?: LoggingProperties) {
+    loggingProperties?.append("checkUpdateTimestamp", {updatePropertiesPath: updatePropertiesPath, functionUpdateProperties: functionUpdateProperties});
 
     // Get server update properties
     const updatePropertiesRef = admin.database().ref(updatePropertiesPath);
     const snapshot = await updatePropertiesRef.once("value");
     if (!snapshot.exists()) return;
-    const serverUpdateProperties = UpdateProperties.fromObject(snapshot.val());
+    const serverUpdateProperties = UpdateProperties.fromObject(snapshot.val(), loggingProperties?.nextIndent);
 
     // Check timestamp
     if (functionUpdateProperties.timestamp <= serverUpdateProperties.timestamp)
-        throw new functions.https.HttpsError("cancelled", `Server value is newer or same old than updated value:\n\t- Server  : ${serverUpdateProperties.timestamp}\n\t- Function: ${functionUpdateProperties.timestamp}`);
+        throw httpsError("cancelled", "Server value is newer or same old than updated value.", loggingProperties?.nextIndent);
 }
 
 /**
@@ -89,7 +92,8 @@ export interface StatisticsProperties<StatisticsPropertiesObject> {
  * @param {string} clubPath Path of club to save statistic to.
  * @param {Statistic} statistic Properties of statistic to save.
  */
-export async function saveStatistic<Properties extends StatisticsProperties<StatisticsPropertiesObject>, StatisticsPropertiesObject>(clubPath: string, statistic: Statistic<Properties, StatisticsPropertiesObject>) {
+export async function saveStatistic<Properties extends StatisticsProperties<StatisticsPropertiesObject>, StatisticsPropertiesObject>(clubPath: string, statistic: Statistic<Properties, StatisticsPropertiesObject>, loggingProperties?: LoggingProperties) {
+    loggingProperties?.append("saveStatistic", {clubPath: clubPath, statistic: statistic});
     const path = `${clubPath}/statistics/${guid.newGuid().guidString}`;
     const reference = admin.database().ref(path);
     await reference.set({
@@ -125,35 +129,42 @@ export class UpdateProperties {
         this.personId = personId;
     }
 
-    static fromObject(object: { [key: string]: any }): UpdateProperties {
+    static fromObject(object: any, loggingProperties?: LoggingProperties): UpdateProperties {
+        loggingProperties?.append("UpdateProperties.fromObject", {object: object});
+
+        // Check if object is from type object
+        if (typeof object !== "object")
+            throw httpsError("invalid-argument", `Couldn't parse update properties, expected type 'object', but bot ${object} from type '${typeof object}'`, loggingProperties?.nextIndent);
 
         // Check if person id is string
         if (typeof object.personId !== "string")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse UpdateProperties parameter 'personId', expected type string but got '${object.personId}' from type ${typeof object.personId}`);
-        const personId = guid.fromString(object.personId);
+            throw httpsError("invalid-argument", `Couldn't parse UpdateProperties parameter 'personId', expected type string but got '${object.personId}' from type ${typeof object.personId}`, loggingProperties?.nextIndent);
+        const personId = guid.fromString(object.personId, loggingProperties?.nextIndent);
 
         // Check if timestamp is a positive number
         if (typeof object.timestamp !== "number" || object.timestamp < 0)
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse UpdateProperties parameter 'timestamp', expected positive number but got '${object.timestamp}' from type ${typeof object.timestamp}`);
+            throw httpsError("invalid-argument", `Couldn't parse UpdateProperties parameter 'timestamp', expected positive number but got '${object.timestamp}' from type ${typeof object.timestamp}`, loggingProperties?.nextIndent);
 
         return new UpdateProperties(object.timestamp, personId);
     }
 
-    static fromSnapshot(snapshot: PrimitveDataSnapshot): UpdateProperties {
+    static fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties?: LoggingProperties): UpdateProperties {
+        loggingProperties?.append("UpdateProperties.fromSnapshot", {snapshot: snapshot});
 
         // Check if data exists in snapshot
         if (!snapshot.exists())
-            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse UpdateProperties since no data exists in snapshot.");
+            throw httpsError("invalid-argument", "Couldn't parse UpdateProperties since no data exists in snapshot.", loggingProperties?.nextIndent);
 
         const data = snapshot.val();
         if (typeof data !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse UpdateProperties from snapshot since data isn't an object: ${data}`);
+            throw httpsError("invalid-argument", `Couldn't parse UpdateProperties from snapshot since data isn't an object: ${data}`, loggingProperties?.nextIndent);
 
-        return UpdateProperties.fromObject(data);
+        return UpdateProperties.fromObject(data, loggingProperties?.nextIndent);
     }
 
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): UpdateProperties {
-        return UpdateProperties.fromObject(container.getParameter(parameterName, "object"));
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): UpdateProperties {
+        loggingProperties?.append("UpdateProperties.fromParameterContainer", {container: container, parameterName: parameterName});
+        return UpdateProperties.fromObject(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
     }
 
     get ["object"](): UpdatePropertiesObject {
@@ -185,4 +196,8 @@ export interface PrimitveDataSnapshot {
     key: string | null,
     val(): any
     child(path: string): PrimitveDataSnapshot
+}
+
+export function httpsError(code: functions.https.FunctionsErrorCode, message: string, properties?: LoggingProperties): functions.https.HttpsError {
+    return new functions.https.HttpsError(code, message, properties?.joinedMessages);
 }

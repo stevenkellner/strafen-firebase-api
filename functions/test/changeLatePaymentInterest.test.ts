@@ -7,7 +7,7 @@ import {FirebaseError} from "firebase-admin";
 
 describe("ChangeLatePaymentInterest", () => {
 
-    const clubId = guid.fromString("36cf0982-d1de-4316-ba67-a38ce64712fd");
+    const clubId = guid.fromString("36cf0982-d1de-4316-ba67-a38ce64712fd", undefined);
 
     beforeEach(async () => {
         await signInTestUser();

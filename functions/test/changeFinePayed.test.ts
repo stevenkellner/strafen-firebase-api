@@ -10,7 +10,7 @@ import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
 
 describe("ChangeFinePayed", () => {
 
-    const clubId = guid.fromString("1992af26-8b42-4452-a564-7e376b6401db");
+    const clubId = guid.fromString("1992af26-8b42-4452-a564-7e376b6401db", undefined);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -248,12 +248,12 @@ describe("ChangeFinePayed", () => {
         }
     });
 
-    async function addFinesAndReason(fine2PersonId: guid = guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9"), addReason = true) {
+    async function addFinesAndReason(fine2PersonId: guid = guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9", undefined), addReason = true) {
 
         // Add reason
         const fine1 = Fine.fromObject({
-            id: guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba").guidString,
-            personId: guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9").guidString,
+            id: guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined).guidString,
+            personId: guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9", undefined).guidString,
             date: 9284765,
             payedState: {
                 state: "unpayed",
@@ -264,19 +264,19 @@ describe("ChangeFinePayed", () => {
             },
             number: 2,
             fineReason: {
-                reasonTemplateId: guid.fromString("9d0681f0-2045-4a1d-abbc-6bb289934ff9").guidString,
+                reasonTemplateId: guid.fromString("9d0681f0-2045-4a1d-abbc-6bb289934ff9", undefined).guidString,
             },
             updateProperties: {
                 timestamp: 123455,
                 personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
-        });
+        }, undefined);
         const reason = ReasonTemplate.fromObject({
             id: (fine1.fineReason.value as FineReasonTemplate).reasonTemplateId.guidString,
             reason: "asldkfj",
             importance: "low",
             amount: 12.98,
-        });
+        }, undefined);
         if (addReason) {
             await callFunction("changeReasonTemplate", {
                 privateKey: privateKey,
@@ -306,7 +306,7 @@ describe("ChangeFinePayed", () => {
 
         // Add fine with custom reason
         const fine2 = Fine.fromObject({
-            id: guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba").guidString,
+            id: guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined).guidString,
             personId: fine2PersonId.guidString,
             date: 9284765,
             payedState: {
@@ -328,7 +328,7 @@ describe("ChangeFinePayed", () => {
                 timestamp: 123455,
                 personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
-        });
+        }, undefined);
         await callFunction("changeFine", {
             privateKey: privateKey,
             clubLevel: "testing",
@@ -361,7 +361,7 @@ describe("ChangeFinePayed", () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba");
+        const fineId = guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined);
         await callFunction("changeFinePayed", {
             privateKey: privateKey,
             clubLevel: "testing",
@@ -430,7 +430,7 @@ describe("ChangeFinePayed", () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba");
+        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined);
         await callFunction("changeFinePayed", {
             privateKey: privateKey,
             clubLevel: "testing",
@@ -500,7 +500,7 @@ describe("ChangeFinePayed", () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba");
+        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined);
         await callFunction("changeFinePayed", {
             privateKey: privateKey,
             clubLevel: "testing",
@@ -566,7 +566,7 @@ describe("ChangeFinePayed", () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba");
+        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined);
         await callFunction("changeFinePayed", {
             privateKey: privateKey,
             clubLevel: "testing",

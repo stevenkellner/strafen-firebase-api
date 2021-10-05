@@ -8,7 +8,7 @@ import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
 
 describe("ChangeReasonTemplate", () => {
 
-    const clubId = guid.fromString("9e00bbc6-c1b4-4e6f-8919-77f01aa10749");
+    const clubId = guid.fromString("9e00bbc6-c1b4-4e6f-8919-77f01aa10749", undefined);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -131,7 +131,7 @@ describe("ChangeReasonTemplate", () => {
             reason: "Reason asdf",
             amount: 150,
             importance: "medium",
-        });
+        }, undefined);
 
         // Set reason template
         await callFunction("changeReasonTemplate", {

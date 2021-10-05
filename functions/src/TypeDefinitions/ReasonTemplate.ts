@@ -1,9 +1,9 @@
 import {Importance} from "./Importance";
 import {ParameterContainer} from "./ParameterContainer";
-import * as functions from "firebase-functions";
 import {Amount} from "./Amount";
 import {guid} from "./guid";
-import {PrimitveDataSnapshot} from "../utils";
+import {httpsError, PrimitveDataSnapshot} from "../utils";
+import { LoggingProperties } from "./LoggingProperties";
 
 export interface ReasonTemplateObject {
     id: string;
@@ -55,50 +55,52 @@ export class ReasonTemplate {
      * @param {any} object Object to parse ReasonTemplate from.
      * @return {ReasonTemplate} Parsed ReasonTemplate from specified object.
      */
-    static fromObject(object: any): ReasonTemplate {
+    static fromObject(object: any, loggingProperties?: LoggingProperties): ReasonTemplate {
+        loggingProperties?.append("ReasonTemplate.fromObject", {object: object});
 
         // Check if type of id is string
         if (typeof object.id !== "string")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '${object.id}' from type '${typeof object.id}'.`);
-        const id = guid.fromString(object.id);
+            throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '${object.id}' from type '${typeof object.id}'.`, loggingProperties?.nextIndent);
+        const id = guid.fromString(object.id, loggingProperties?.nextIndent);
 
         // Check if type of reason is string
         if (typeof object.reason !== "string")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'reason'. Expected type 'string', but got '${object.reason}' from type '${typeof object.reason}'.`);
+            throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'reason'. Expected type 'string', but got '${object.reason}' from type '${typeof object.reason}'.`, loggingProperties?.nextIndent);
 
         // Check if type of amount is number
         if (typeof object.amount !== "number")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'amount'. Expected type 'number', but got '${object.amount}' from type '${typeof object.amount}'.`);
-        const amount = Amount.fromNumber(object.amount);
+            throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'amount'. Expected type 'number', but got '${object.amount}' from type '${typeof object.amount}'.`, loggingProperties?.nextIndent);
+        const amount = Amount.fromNumber(object.amount, loggingProperties?.nextIndent);
 
         // Check if type of importance is string
         if (typeof object.importance !== "string")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'importance'. Expected type 'string', but got '${object.importance}' from type '${typeof object.importance}'.`);
-        const importance = Importance.fromString(object.importance);
+            throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'importance'. Expected type 'string', but got '${object.importance}' from type '${typeof object.importance}'.`, loggingProperties?.nextIndent);
+        const importance = Importance.fromString(object.importance, loggingProperties?.nextIndent);
 
         // Return reason template
         return new ReasonTemplate(id, object.reason, amount, importance);
     }
 
-    static fromSnapshot(snapshot: PrimitveDataSnapshot): ReasonTemplate {
+    static fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties?: LoggingProperties): ReasonTemplate {
+        loggingProperties?.append("ReasonTemplate.fromSnapshot", {snapshot: snapshot});
 
         // Check if data exists in snapshot
         if (!snapshot.exists())
-            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse ReasonTemplate since no data exists in snapshot.");
+            throw httpsError("invalid-argument", "Couldn't parse ReasonTemplate since no data exists in snapshot.", loggingProperties?.nextIndent);
 
         // Get id
         const idString = snapshot.key;
         if (idString == null)
-            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse ReasonTemplate since snapshot has an invalid key.");
+            throw httpsError("invalid-argument", "Couldn't parse ReasonTemplate since snapshot has an invalid key.", loggingProperties?.nextIndent);
 
         const data = snapshot.val();
         if (typeof data !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse ReasonTemplate from snapshot since data isn't an object: ${data}`);
+            throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate from snapshot since data isn't an object: ${data}`, loggingProperties?.nextIndent);
 
         return ReasonTemplate.fromObject({
             id: idString,
             ...data,
-        });
+        }, loggingProperties?.nextIndent);
     }
 
     /**
@@ -108,8 +110,9 @@ export class ReasonTemplate {
      * @param {string} parameterName Name of parameter from parameter container.
      * @return {ReasonTemplate} Parsed ReasonTemplate from specified parameter.
      */
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): ReasonTemplate {
-        return ReasonTemplate.fromObject(container.getParameter(parameterName, "object"));
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): ReasonTemplate {
+        loggingProperties?.append("ReasonTemplate.fromParameterContainer", {container: container, parameterName: parameterName});
+        return ReasonTemplate.fromObject(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
     }
 
 

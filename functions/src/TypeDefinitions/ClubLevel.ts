@@ -1,4 +1,5 @@
-import * as functions from "firebase-functions";
+import { httpsError } from "../utils";
+import { LoggingProperties } from "./LoggingProperties";
 import {ParameterContainer} from "./ParameterContainer";
 
 /**
@@ -24,10 +25,11 @@ export class ClubLevel {
      * @param {string} value Value of the club level.
      * @return {ClubLevel} Parsed club level.
      */
-    static fromString(value: string): ClubLevel {
+    static fromString(value: string, loggingProperties?: LoggingProperties): ClubLevel {
+        loggingProperties?.append("ClubLevel.fromString", {value: value});
         if (value == "regular" || value == "debug" || value == "testing")
             return new ClubLevel(value);
-        throw new functions.https.HttpsError("invalid-argument", `Couldn't parse ClubLevel, expected 'regular', 'debug' or 'testing', but got ${value} instead.`);
+        throw httpsError("invalid-argument", `Couldn't parse ClubLevel, expected 'regular', 'debug' or 'testing', but got ${value} instead.`, loggingProperties?.nextIndent);
     }
 
     /**
@@ -37,8 +39,9 @@ export class ClubLevel {
      * @param {string} parameterName Name of parameter from parameter container.
      * @return {ClubLevel} Parsed club level.
      */
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): ClubLevel {
-        return ClubLevel.fromString(container.getParameter(parameterName, "string"));
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): ClubLevel {
+        loggingProperties?.append("ClubLevel.fromParameterContainer", {container: container, parameterName: parameterName});
+        return ClubLevel.fromString(container.getParameter(parameterName, "string", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
     }
 
     /**

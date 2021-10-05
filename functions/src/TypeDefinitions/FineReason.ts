@@ -1,11 +1,11 @@
 import {ParameterContainer} from "./ParameterContainer";
-import * as functions from "firebase-functions";
 import {Amount} from "./Amount";
 import {Importance} from "./Importance";
 import {guid} from "./guid";
 import * as admin from "firebase-admin";
 import {ReasonTemplate} from "./ReasonTemplate";
-import {undefinedAsNull} from "../utils";
+import {httpsError, undefinedAsNull} from "../utils";
+import { LoggingProperties } from "./LoggingProperties";
 
 /**
  * Fine reason with template id
@@ -112,21 +112,23 @@ export class FineReason {
         this.value = value;
     }
 
-    static fromObject(object: any): FineReason {
+    static fromObject(object: any, loggingProperties?: LoggingProperties): FineReason {
+        loggingProperties?.append("FineReason.fromObject", {object: object});
 
         // Check if object has reason template id
         if (typeof object.reasonTemplateId === "string")
-            return new FineReason(new FineReasonTemplate(guid.fromString(object.reasonTemplateId)));
+            return new FineReason(new FineReasonTemplate(guid.fromString(object.reasonTemplateId, loggingProperties?.nextIndent)));
 
         // Check if object has reason, amount and importance
         if (typeof object.reason == "string" && typeof object.amount === "number" && typeof object.importance === "string")
-            return new FineReason(new FineReasonCustom(object.reason, Amount.fromNumber(object.amount), Importance.fromString(object.importance)));
+            return new FineReason(new FineReasonCustom(object.reason, Amount.fromNumber(object.amount, loggingProperties?.nextIndent), Importance.fromString(object.importance, loggingProperties?.nextIndent)));
 
-        throw new functions.https.HttpsError("invalid-argument", `Couldn't parse fine reason, no fine reason with reason template id and no custom fine reason given, got instead: ${JSON.stringify(object)}`);
+        throw httpsError("invalid-argument", `Couldn't parse fine reason, no fine reason with reason template id and no custom fine reason given, got instead: ${JSON.stringify(object)}`, loggingProperties?.nextIndent);
     }
 
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): FineReason {
-        return FineReason.fromObject(container.getParameter(parameterName, "object"));
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): FineReason {
+        loggingProperties?.append("FineReason.fromObject", {container: container, parameterName: parameterName});
+        return FineReason.fromObject(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
     }
 
     get ["object"](): FineReasonObject {
@@ -141,12 +143,13 @@ export class FineReason {
         };
     }
 
-    async forStatistics(clubPath: string): Promise<StatisticsFineReason> {
+    async forStatistics(clubPath: string, loggingProperties?: LoggingProperties): Promise<StatisticsFineReason> {
+        loggingProperties?.append("FineReason.forStatistics", {clubPath: clubPath});
         if (this.value instanceof FineReasonCustom)
             return this.value.forStatistics;
         const reasonTemplateRef = admin.database().ref(`${clubPath}/reasonTemplates/${this.value.reasonTemplateId.guidString}`);
         const reasonTemplateSnapshot = await reasonTemplateRef.once("value");
-        const reasonTemplate = ReasonTemplate.fromSnapshot(reasonTemplateSnapshot);
+        const reasonTemplate = ReasonTemplate.fromSnapshot(reasonTemplateSnapshot, loggingProperties?.nextIndent);
         return new StatisticsFineReason(reasonTemplate.id, reasonTemplate.reason, reasonTemplate.amount, reasonTemplate.importance);
     }
 }

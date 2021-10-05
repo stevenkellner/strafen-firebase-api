@@ -1,8 +1,8 @@
 import {guid} from "./guid";
-import * as functions from "firebase-functions";
-import {PrimitveDataSnapshot} from "../utils";
+import {httpsError, PrimitveDataSnapshot} from "../utils";
 import {ParameterContainer} from "./ParameterContainer";
 import {PersonName, PersonNameObject} from "./PersonName";
+import { LoggingProperties } from "./LoggingProperties";
 
 export interface PersonObject {
     id: string;
@@ -38,41 +38,43 @@ export class Person {
      * @param {any} object Object to parse Person from.
      * @return {Person} Parsed Person from specified object.
      */
-    static fromObject(object: any): Person {
+    static fromObject(object: any, loggingProperties?: LoggingProperties): Person {
+        loggingProperties?.append("Person.fromObject", {object: object});
 
         // Check if type of id is string
         if (typeof object.id !== "string")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse Person parameter 'id'. Expected type 'string', but got '${object.id}' from type '${typeof object.id}'.`);
-        const id = guid.fromString(object.id);
+            throw httpsError("invalid-argument", `Couldn't parse Person parameter 'id'. Expected type 'string', but got '${object.id}' from type '${typeof object.id}'.`, loggingProperties?.nextIndent);
+        const id = guid.fromString(object.id, loggingProperties?.nextIndent);
 
         // Check if type of name is object
         if (typeof object.name !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse Person parameter 'name'. Expected type 'object', but got '${object.name}' from type '${typeof object.name}'.`);
-        const name = PersonName.fromObject(object.name);
+            throw httpsError("invalid-argument", `Couldn't parse Person parameter 'name'. Expected type 'object', but got '${object.name}' from type '${typeof object.name}'.`, loggingProperties?.nextIndent);
+        const name = PersonName.fromObject(object.name, loggingProperties?.nextIndent);
 
         // Return person
         return new Person(id, name);
     }
 
-    static fromSnapshot(snapshot: PrimitveDataSnapshot): Person {
+    static fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties?: LoggingProperties): Person {
+        loggingProperties?.append("Person.fromSnapshot", {snapshot: snapshot});
 
         // Check if data exists in snapshot
         if (!snapshot.exists())
-            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse Person since no data exists in snapshot.");
+            throw httpsError("invalid-argument", "Couldn't parse Person since no data exists in snapshot.", loggingProperties?.nextIndent);
 
         // Get id
         const idString = snapshot.key;
         if (idString == null)
-            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse Person since snapshot has an invalid key.");
+            throw httpsError("invalid-argument", "Couldn't parse Person since snapshot has an invalid key.", loggingProperties?.nextIndent);
 
         const data = snapshot.val();
         if (typeof data !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse Person from snapshot since data isn't an object: ${data}`);
+            throw httpsError("invalid-argument", `Couldn't parse Person from snapshot since data isn't an object: ${data}`, loggingProperties?.nextIndent);
 
         return Person.fromObject({
             id: idString,
             ...data,
-        });
+        }, loggingProperties?.nextIndent);
     }
 
     /**
@@ -82,8 +84,9 @@ export class Person {
      * @param {string} parameterName Name of parameter from parameter container.
      * @return {Person} Parsed Person from specified parameter.
      */
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): Person {
-        return Person.fromObject(container.getParameter(parameterName, "object"));
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Person {
+        loggingProperties?.append("Person.fromParameterContainer", {container: container, parameterName: parameterName});
+        return Person.fromObject(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
     }
 
     /**

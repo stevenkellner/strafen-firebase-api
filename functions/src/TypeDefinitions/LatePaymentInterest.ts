@@ -1,6 +1,6 @@
 import {ParameterContainer} from "./ParameterContainer";
-import * as functions from "firebase-functions";
-import {PrimitveDataSnapshot} from "../utils";
+import {httpsError, PrimitveDataSnapshot} from "../utils";
+import { LoggingProperties } from "./LoggingProperties";
 
 /*
  * Period of a time
@@ -22,15 +22,16 @@ class TimePeriod {
         this.unit = unit;
     }
 
-    static fromObject(object: any): TimePeriod {
+    static fromObject(object: any, loggingProperties?: LoggingProperties): TimePeriod {
+        loggingProperties?.append("TimePeriod.fromObject", {object: object});
 
         // Check if type of value is number
         if (typeof object.value !== "number")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse TimePeriod parameter 'value'. Expected type 'number', but got '${object.value}' from type '${typeof object.value}'.`);
+            throw httpsError("invalid-argument", `Couldn't parse TimePeriod parameter 'value'. Expected type 'number', but got '${object.value}' from type '${typeof object.value}'.`, loggingProperties?.nextIndent);
 
         // Check if type of unit is boolean
         if (typeof object.unit !== "string" || !(object.unit == "day" || object.unit == "month" || object.unit == "year"))
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse TimePeriod parameter 'unit'. Expected 'day', 'month' or 'year' from type 'string', but got '${object.unit}' from type '${typeof object.unit}'.`);
+            throw httpsError("invalid-argument", `Couldn't parse TimePeriod parameter 'unit'. Expected 'day', 'month' or 'year' from type 'string', but got '${object.unit}' from type '${typeof object.unit}'.`, loggingProperties?.nextIndent);
 
         // Return time period
         return new TimePeriod(object.value, object.unit);
@@ -69,44 +70,47 @@ export class LatePaymentInterest {
         this.compoundInterest = compoundInterest;
     }
 
-    static fromObject(object: any): LatePaymentInterest {
+    static fromObject(object: any, loggingProperties?: LoggingProperties): LatePaymentInterest {
+        loggingProperties?.append("LatePaymentInterest.fromObject", {object: object});
 
         // Check if type of interest free period is time period
         if (typeof object.interestFreePeriod !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse LatePaymentInterest parameter 'interestFreePeriod'. Expected type 'object', but got '${object.interestFreePeriod}' from type '${typeof object.interestFreePeriod}'.`);
-        const interestFreePeriod = TimePeriod.fromObject(object.interestFreePeriod);
+            throw httpsError("invalid-argument", `Couldn't parse LatePaymentInterest parameter 'interestFreePeriod'. Expected type 'object', but got '${object.interestFreePeriod}' from type '${typeof object.interestFreePeriod}'.`, loggingProperties?.nextIndent);
+        const interestFreePeriod = TimePeriod.fromObject(object.interestFreePeriod, loggingProperties?.nextIndent);
 
         // Check if type of interest period is time period
         if (typeof object.interestPeriod !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse LatePaymentInterest parameter 'interestPeriod'. Expected type 'object', but got '${object.interestPeriod}' from type '${typeof object.interestPeriod}'.`);
-        const interestPeriod = TimePeriod.fromObject(object.interestPeriod);
+            throw httpsError("invalid-argument", `Couldn't parse LatePaymentInterest parameter 'interestPeriod'. Expected type 'object', but got '${object.interestPeriod}' from type '${typeof object.interestPeriod}'.`, loggingProperties?.nextIndent);
+        const interestPeriod = TimePeriod.fromObject(object.interestPeriod, loggingProperties?.nextIndent);
 
         // Check if type of interest rate is number
         if (typeof object.interestRate !== "number")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse LatePaymentInterest parameter 'interestRate'. Expected type 'number', but got '${object.interestRate}' from type '${typeof object.interestRate}'.`);
+            throw httpsError("invalid-argument", `Couldn't parse LatePaymentInterest parameter 'interestRate'. Expected type 'number', but got '${object.interestRate}' from type '${typeof object.interestRate}'.`, loggingProperties?.nextIndent);
 
         // Check if type of compound interest is boolean
         if (typeof object.compoundInterest !== "boolean")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse LatePaymentInterest parameter 'compoundInterest'. Expected type 'boolean', but got '${object.compoundInterest}' from type '${typeof object.compoundInterest}'.`);
+            throw httpsError("invalid-argument", `Couldn't parse LatePaymentInterest parameter 'compoundInterest'. Expected type 'boolean', but got '${object.compoundInterest}' from type '${typeof object.compoundInterest}'.`, loggingProperties?.nextIndent);
 
         // Return late payment interest
         return new LatePaymentInterest(interestFreePeriod, interestPeriod, object.interestRate, object.compoundInterest);
     }
 
-    static fromSnapshot(snapshot: PrimitveDataSnapshot): LatePaymentInterest {
+    static fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties?: LoggingProperties): LatePaymentInterest {
+        loggingProperties?.append("LatePaymentInterest.fromSnapshot", {osnapshotject: snapshot});
 
         // Check if data exists in snapshot
         if (!snapshot.exists())
-            throw new functions.https.HttpsError("invalid-argument", "Couldn't parse Person since no data exists in snapshot.");
+            throw httpsError("invalid-argument", "Couldn't parse Person since no data exists in snapshot.", loggingProperties?.nextIndent);
 
         const data = snapshot.val();
         if (typeof data !== "object")
-            throw new functions.https.HttpsError("invalid-argument", `Couldn't parse Person from snapshot since data isn't an object: ${data}`);
+            throw httpsError("invalid-argument", `Couldn't parse Person from snapshot since data isn't an object: ${data}`, loggingProperties?.nextIndent);
 
-        return LatePaymentInterest.fromObject(data);
+        return LatePaymentInterest.fromObject(data, loggingProperties?.nextIndent);
     }
 
-    static fromParameterContainer(container: ParameterContainer, parameterName: string): LatePaymentInterest {
-        return LatePaymentInterest.fromObject(container.getParameter(parameterName, "object"));
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): LatePaymentInterest {
+        loggingProperties?.append("LatePaymentInterest.fromParameterContainer", {container: container, parameterName: parameterName});
+        return LatePaymentInterest.fromObject(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
     }
 }

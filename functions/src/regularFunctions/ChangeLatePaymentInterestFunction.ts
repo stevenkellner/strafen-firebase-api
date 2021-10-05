@@ -3,10 +3,10 @@ import {ClubLevel} from "../TypeDefinitions/ClubLevel";
 import {guid} from "../TypeDefinitions/guid";
 import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
 import {Reference} from "@firebase/database-types";
-import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, saveStatistic, StatisticsProperties, UpdateProperties} from "../utils";
+import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, httpsError, saveStatistic, StatisticsProperties, UpdateProperties} from "../utils";
 import {LatePaymentInterest} from "../TypeDefinitions/LatePaymentInterest";
+import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 
 /**
  * Type of Parameters for ChangeLatePayementInterestFunction
@@ -65,13 +65,16 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
      */
     private parameters: FunctionParameters;
 
+    private loggingProperties: LoggingProperties;
+
     /**
      * Initilizes function with given over data.
      * @param {any} data Data to get parameters from.
      */
     constructor(data: any) {
         const parameterContainer = new ParameterContainer(data);
-        this.parameters = ChangeLatePaymentInterestFunction.parseParameters(parameterContainer);
+        this.loggingProperties = LoggingProperties.withFirst(parameterContainer, "ChangeLatePaymentInterestFunction.constructor", {data: data}, "notice");
+        this.parameters = ChangeLatePaymentInterestFunction.parseParameters(parameterContainer, this.loggingProperties.nextIndent);
     }
 
     /**
@@ -79,14 +82,15 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
      * @param {ParameterContainer} container Parameter container to get parameters from.
      * @return {FunctionParameters} Parsed parameters for this function.
      */
-    private static parseParameters(container: ParameterContainer): FunctionParameters {
+    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): FunctionParameters {
+        loggingProperties?.append("ChangeLatePaymentInterestFunction.parseParameter", {container: container});
         return {
-            privateKey: container.getParameter("privateKey", "string"),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel"),
-            clubId: guid.fromParameterContainer(container, "clubId"),
-            changeType: ChangeType.fromParameterContainer(container, "changeType"),
-            interest: LatePaymentInterest.fromParameterContainer(container, "interest"),
-            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties"),
+            privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
+            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
+            changeType: ChangeType.fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
+            interest: LatePaymentInterest.fromParameterContainer(container, "interest", loggingProperties?.nextIndent),
+            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties", loggingProperties?.nextIndent),
         };
     }
 
@@ -100,17 +104,18 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
      * @param {{uid: string} | undefined} auth Authentication state.
      */
     async executeFunction(auth?: { uid: string }): Promise<void> {
+        this.loggingProperties?.append("ChangeLatePaymentInterestFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements
         const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
-        await checkPrerequirements(this.parameters, auth, this.parameters.clubId);
+        await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
 
         // Get previous interest
         const interestRef = this.getInterestRef();
         const interestSnapshot = await interestRef.once("value");
         let previousInterest: LatePaymentInterest | null = null;
         if (interestSnapshot.exists())
-            previousInterest = LatePaymentInterest.fromSnapshot(interestSnapshot);
+            previousInterest = LatePaymentInterest.fromSnapshot(interestSnapshot, this.loggingProperties.nextIndent);
 
         // Change interest
         let changedInterest: LatePaymentInterest | null = null;
@@ -128,24 +133,26 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
         await saveStatistic(clubPath, {
             name: "changeLatePaymentInterest",
             properties: new FunctionStatisticsProperties(previousInterest, changedInterest),
-        });
+        }, this.loggingProperties.nextIndent);
     }
 
     private async deleteItem(): Promise<void> {
+        this.loggingProperties?.append("ChangeLatePaymentInterestFunction.deleteItem");
         const interestRef = this.getInterestRef();
         if (await existsData(interestRef)) {
             await interestRef.remove(error => {
                 if (error != null)
-                    throw new functions.https.HttpsError("internal", `Couldn't delete late payment interest, underlying error: ${error.name}, ${error.message}`);
+                    throw httpsError("internal", `Couldn't delete late payment interest, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
             });
         }
     }
 
     private async updateItem(): Promise<void> {
+        this.loggingProperties?.append("ChangeLatePaymentInterestFunction.updateItem");
         const interestRef = this.getInterestRef();
         await interestRef.set(this.parameters.interest, error => {
             if (error != null)
-                throw new functions.https.HttpsError("internal", `Couldn't update delete late payment interest, underlying error: ${error.name}, ${error.message}`);
+                throw httpsError("internal", `Couldn't update delete late payment interest, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
         });
     }
 }

@@ -4,9 +4,9 @@ import {guid} from "../TypeDefinitions/guid";
 import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import {Person, PersonObject} from "../TypeDefinitions/Person";
 import * as admin from "firebase-admin";
-import * as functions from "firebase-functions";
 import {Reference} from "@firebase/database-types";
-import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, saveStatistic, StatisticsProperties, undefinedAsNull, UpdateProperties} from "../utils";
+import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, httpsError, saveStatistic, StatisticsProperties, undefinedAsNull, UpdateProperties} from "../utils";
+import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 
 /**
  * Type of Parameters for ChangePersonFunction
@@ -66,13 +66,16 @@ export class ChangePersonFunction implements FirebaseFunction {
      */
     private parameters: FunctionParameters;
 
+    private loggingProperties: LoggingProperties;
+
     /**
      * Initilizes function with given over data.
      * @param {any} data Data to get parameters from.
      */
     constructor(data: any) {
         const parameterContainer = new ParameterContainer(data);
-        this.parameters = ChangePersonFunction.parseParameters(parameterContainer);
+        this.loggingProperties = LoggingProperties.withFirst(parameterContainer, "ChangePersonFunction.constructor", {data: data}, "notice");
+        this.parameters = ChangePersonFunction.parseParameters(parameterContainer, this.loggingProperties.nextIndent);
     }
 
     /**
@@ -80,14 +83,15 @@ export class ChangePersonFunction implements FirebaseFunction {
      * @param {ParameterContainer} container Parameter container to get parameters from.
      * @return {FunctionParameters} Parsed parameters for this function.
      */
-    private static parseParameters(container: ParameterContainer): FunctionParameters {
+    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): FunctionParameters {
+        loggingProperties?.append("ChangePersonFunction.parseParameter", {container: container});
         return {
-            privateKey: container.getParameter("privateKey", "string"),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel"),
-            clubId: guid.fromParameterContainer(container, "clubId"),
-            changeType: ChangeType.fromParameterContainer(container, "changeType"),
-            person: Person.fromParameterContainer(container, "person"),
-            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties"),
+            privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
+            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
+            changeType: ChangeType.fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
+            person: Person.fromParameterContainer(container, "person", loggingProperties?.nextIndent),
+            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties", loggingProperties?.nextIndent),
         };
     }
 
@@ -102,17 +106,18 @@ export class ChangePersonFunction implements FirebaseFunction {
      * @param {{uid: string} | undefined} auth Authentication state.
      */
     async executeFunction(auth?: { uid: string }): Promise<void> {
+        this.loggingProperties?.append("ChangePersonFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements
         const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
-        await checkPrerequirements(this.parameters, auth, this.parameters.clubId);
+        await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
 
         // Get previous person
         const personRef = this.getPersonRef();
         const personSnapshot = await personRef.once("value");
         let previousPerson: Person | null = null;
         if (personSnapshot.exists())
-            previousPerson = Person.fromSnapshot(personSnapshot);
+            previousPerson = Person.fromSnapshot(personSnapshot, this.loggingProperties.nextIndent);
 
         // Change person
         let changedPerson: Person | null = null;
@@ -131,29 +136,31 @@ export class ChangePersonFunction implements FirebaseFunction {
         await saveStatistic(clubPath, {
             name: "changePerson",
             properties: new FunctionStatisticsProperties(previousPerson, changedPerson),
-        });
+        }, this.loggingProperties.nextIndent);
     }
 
     private async deleteItem(): Promise<void> {
+        this.loggingProperties?.append("ChangePersonFunction.deleteItem");
 
         // Check if person to delete is already signed in
         const personRef = this.getPersonRef();
         if (await existsData(personRef.child("signInData")))
-            throw new functions.https.HttpsError("unavailable", "Person is already signed in!");
+            throw httpsError("unavailable", "Person is already signed in!", this.loggingProperties.nextIndent);
 
         if (await existsData(personRef)) {
             await personRef.remove(error => {
                 if (error != null)
-                    throw new functions.https.HttpsError("internal", `Couldn't delete person, underlying error: ${error.name}, ${error.message}`);
+                    throw httpsError("internal", `Couldn't delete person, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
             });
         }
     }
 
     private async updateItem(): Promise<void> {
+        this.loggingProperties?.append("ChangePersonFunction.updateItem");
         const personRef = this.getPersonRef();
         await personRef.set(this.parameters.person?.objectWithoutId, error => {
             if (error != null)
-                throw new functions.https.HttpsError("internal", `Couldn't update person, underlying error: ${error.name}, ${error.message}`);
+                throw httpsError("internal", `Couldn't update person, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
         });
     }
 }
