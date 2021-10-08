@@ -1,8 +1,8 @@
 import { Fine } from "./Fine";
-import {FineReason} from "./FineReason";
-import {PayedState} from "./PayedState";
-import {Person} from "./Person";
-import {PersonName} from "./PersonName";
+import { FineReason } from "./FineReason";
+import { PayedState } from "./PayedState";
+import { Person } from "./Person";
+import { PersonName } from "./PersonName";
 
 // First and last name of a person
 export interface OptionalPersonName {

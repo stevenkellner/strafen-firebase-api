@@ -1,44 +1,47 @@
 import { httpsError } from "../utils";
 import { LoggingProperties } from "./LoggingProperties";
 
-export interface PersonNameObject {
-    first: string;
-    last: string | null;
-}
-
-// First and last name of a person
 export class PersonName {
 
-    // First name
-    readonly first: string;
+    public constructor(
+        public readonly first: string,
+        public readonly last: string | null
+    ) {}
 
-    // Last name (can be null)
-    readonly last: string | null;
-
-    private constructor(first: string, last: string | null) {
-        this.first = first;
-        this.last = last;
-    }
-
-    static fromObject(object: any, loggingProperties?: LoggingProperties): PersonName {
-        loggingProperties?.append("PersonName.fromObject", {object: object});
-
-        // Check if type of first is string
-        if (typeof object.first !== "string")
-            throw httpsError("invalid-argument", `Couldn't parse PersonName parameter 'first'. Expected type 'string', but got '${object.first}' from type '${typeof object.first}'.`, loggingProperties?.nextIndent);
-
-        // Check if type of last is string
-        if (typeof object.last !== "string")
-            throw httpsError("invalid-argument", `Couldn't parse PersonName parameter 'last'. Expected type 'string', but got '${object.last}' from type '${typeof object.last}'.`, loggingProperties?.nextIndent);
-
-        // Return person name
-        return new PersonName(object.first, object.last);
-    }
-
-    get ["object"](): PersonNameObject {
+    get ["serverObject"](): PersonName.ServerObject {
         return {
             first: this.first,
             last: this.last,
         };
+    }
+}
+
+export namespace PersonName {
+
+    export interface ServerObject {
+        first: string;
+        last: string | null;
+    }
+
+    export class Builder {
+
+        public fromValue(value: any, loggingProperties?: LoggingProperties): PersonName {
+            loggingProperties?.append("PersonName.Builder.fromValue", {value: value});
+
+            // Check if value is from type object
+            if (typeof value !== "object")
+                throw httpsError("invalid-argument", `Couldn't parse PersonName, expected type 'object', but bot ${value} from type '${typeof value}'`, loggingProperties);
+
+            // Check if type of first is string
+            if (typeof value.first !== "string")
+                throw httpsError("invalid-argument", `Couldn't parse PersonName parameter 'first'. Expected type 'string', but got '${value.first}' from type '${typeof value.first}'.`, loggingProperties);
+
+            // Check if type of last is string
+            if (typeof value.last !== "string")
+                throw httpsError("invalid-argument", `Couldn't parse PersonName parameter 'last'. Expected type 'string', but got '${value.last}' from type '${typeof value.last}'.`, loggingProperties);
+
+            // Return person name
+            return new PersonName(value.first, value.last);
+        }
     }
 }

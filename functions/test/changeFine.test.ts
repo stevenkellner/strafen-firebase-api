@@ -124,7 +124,7 @@ describe("ChangeFine", () => {
     async function addReasonTemplate() {
 
         // Add reason
-        const reasonTemplate = ReasonTemplate.fromObject({
+        const reasonTemplate = new ReasonTemplate.Builder().fromValue({
             id: "9d0681f0-2045-4a1d-abbc-6bb289934ff9",
             reason: "Test Reason 1",
             amount: 2.50,
@@ -135,7 +135,11 @@ describe("ChangeFine", () => {
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            reasonTemplate: reasonTemplate.object,
+            reasonTemplate: reasonTemplate.serverObject,
+            updateProperties: { // TODO: remove
+                timestamp: 123456,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
         });
 
         // Check reason
@@ -144,15 +148,19 @@ describe("ChangeFine", () => {
         expect(fetchedReason).to.deep.equal(reasonTemplate);
     }
 
-    async function setFine(withTemplate: boolean) {
+    async function setFine(withTemplate: boolean, timestamp: number) {
 
         // Set fine
-        const fine = Fine.fromObject({
+        const fine = new Fine.Builder().fromValue({
             id: "637d6187-68d2-4000-9cb8-7dfc3877d5ba",
             personId: "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9",
             date: 9284765,
             payedState: {
                 state: "unpayed",
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
             number: 2,
             fineReason: withTemplate ? {
@@ -161,6 +169,10 @@ describe("ChangeFine", () => {
                 reason: "Reason",
                 amount: 1.50,
                 importance: "high",
+            },
+            updateProperties: {
+                timestamp: timestamp,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         }, undefined);
 
@@ -180,7 +192,7 @@ describe("ChangeFine", () => {
 
     it("Fine set", async () => {
         await addReasonTemplate();
-        await setFine(true);
+        await setFine(true, 123456);
 
         // Check statistic
         const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine");
@@ -212,8 +224,8 @@ describe("ChangeFine", () => {
 
     it("Fine update custom reason", async () => {
         await addReasonTemplate();
-        await setFine(true);
-        await setFine(false);
+        await setFine(true, 123456);
+        await setFine(false, 123457);
 
         // Check statistic
         let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine");
@@ -268,8 +280,8 @@ describe("ChangeFine", () => {
 
     it("Fine update template id", async () => {
         await addReasonTemplate();
-        await setFine(false);
-        await setFine(true);
+        await setFine(false, 123456);
+        await setFine(true, 123457);
 
         // Check statistic
         let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine");
@@ -324,20 +336,28 @@ describe("ChangeFine", () => {
 
     it("Fine delete", async () => {
         await addReasonTemplate();
-        await setFine(true);
+        await setFine(true, 123456);
 
-        const fine = Fine.fromObject({
+        const fine = new Fine.Builder().fromValue({
             id: "637d6187-68d2-4000-9cb8-7dfc3877d5ba",
             personId: "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9",
             date: 9284765,
             payedState: {
                 state: "unpayed",
+                updateProperties: {
+                    timestamp: 123456,
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
             },
             number: 2,
             fineReason: {
                 reason: "Reason",
                 amount: 1.50,
                 importance: "high",
+            },
+            updateProperties: {
+                timestamp: 123457,
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         }, undefined);
 
@@ -384,4 +404,7 @@ describe("ChangeFine", () => {
             },
         });
     });
+
+    // TODO: update deleted fine with lower timestamp
+    // TODO: update deleted fine
 });

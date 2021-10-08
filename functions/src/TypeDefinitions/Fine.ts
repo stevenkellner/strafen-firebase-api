@@ -1,103 +1,39 @@
 import * as admin from "firebase-admin";
 import { ParameterContainer } from "./ParameterContainer";
 import { guid} from "./guid";
-import { FineReason, FineReasonObject, StatisticsFineReason, StatisticsFineReasonObject } from "./FineReason";
-import { httpsError, PrimitveDataSnapshot, UpdateProperties, UpdatePropertiesObject } from "../utils";
-import { Person, PersonObject } from "./Person";
+import { FineReason } from "./FineReason";
+import { httpsError, PrimitveDataSnapshot } from "../utils";
+import { Person } from "./Person";
 import { PayedState } from "./PayedState";
 import { LoggingProperties } from "./LoggingProperties";
+import { getUpdatable, Updatable, UpdatableWithServerObject } from "./UpdateProperties";
 
 export class Fine {
 
-    private constructor(
+    public constructor(
         public readonly id: guid,
         public readonly personId: guid,
-        public readonly payedState: PayedState,
+        public readonly payedState: UpdatableWithServerObject<PayedState>,
         public readonly number: number,
         public readonly date: number,
-        public readonly fineReason: FineReason,
-        public readonly updateProperties: UpdateProperties
+        public readonly fineReason: FineReason
     ) {}
 
-    public static fromObject(object: any, loggingProperties?: LoggingProperties): Fine {
-        loggingProperties?.append("Fine.fromObject", {object: object});
-
-        // Check if object is from type object
-        if (typeof object !== "object")
-            throw httpsError("invalid-argument", `Couldn't parse fine, expected type 'object', but bot ${object} from type '${typeof object}'`, loggingProperties?.nextIndent);
-
-        // Check if id is string
-        if (typeof object.id !== "string")
-            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'id', expected type string but got '${object.id}' from type ${typeof object.id}`, loggingProperties?.nextIndent);
-        const id = guid.fromString(object.id, loggingProperties?.nextIndent);
-
-        // Check if person id is string
-        if (typeof object.personId !== "string")
-            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'personId', expected type string but got '${object.personId}' from type ${typeof object.personId}`, loggingProperties?.nextIndent);
-        const personId = guid.fromString(object.personId, loggingProperties?.nextIndent);
-
-        // Check if payed state is object
-        if (typeof object.payedState !== "object")
-            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'payedState', expected type object but got '${object.payedState}' from type ${typeof object.payedState}`, loggingProperties?.nextIndent);
-        const payedState = PayedState.fromObject(object.payedState, loggingProperties?.nextIndent);
-
-        // Check if number is a positive number
-        if (typeof object.number !== "number" || object.number < 0)
-            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'number', expected positive number but got '${object.number}' from type ${typeof object.number}`, loggingProperties?.nextIndent);
-
-        // Check if date is a positive number
-        if (typeof object.date !== "number" || object.date < 0)
-            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'date', expected positive number but got '${object.date}' from type ${typeof object.date}`, loggingProperties?.nextIndent);
-
-        // Check if fine reason is object
-        if (typeof object.fineReason !== "object")
-            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'fineReason', expected type object but got '${object.fineReason}' from type ${typeof object.fineReason}`, loggingProperties?.nextIndent);
-        const fineReason = FineReason.fromObject(object.fineReason, loggingProperties?.nextIndent);
-
-        // Check if update properties is object
-        if (typeof object.updateProperties !== "object")
-            throw httpsError("invalid-argument", `Couldn't parse fine parameter 'updateProperties', expected type object but got '${object.updateProperties}' from type ${typeof object.updateProperties}`, loggingProperties?.nextIndent);
-        const updateProperties = UpdateProperties.fromObject(object.updateProperties, loggingProperties?.nextIndent);
-
-        // Return fine
-        return new Fine(id, personId, payedState, object.number, object.date, fineReason, updateProperties);
-    }
-
-    public static fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties?: LoggingProperties): Fine {
-        loggingProperties?.append("Fine.fromSnapshot", {snapshot: snapshot});
-
-        // Check if data exists in snapshot
-        if (!snapshot.exists())
-            throw httpsError("invalid-argument", "Couldn't parse Fine since no data exists in snapshot.", loggingProperties?.nextIndent);
-
-        // Get id
-        const idString = snapshot.key;
-        if (idString == null)
-            throw httpsError("invalid-argument", "Couldn't parse Fine since snapshot has an invalid key.", loggingProperties?.nextIndent);
-
-        // Get data from snapshot
-        const data = snapshot.val();
-        if (typeof data !== "object")
-            throw httpsError("invalid-argument", `Couldn't parse Fine from snapshot since data isn't an object: ${data}`, loggingProperties?.nextIndent);
-
-        // Return fine
-        return Fine.fromObject({
-            id: idString,
-            ...data,
-        }, loggingProperties?.nextIndent);
-    }
-
-    public static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Fine {
-        loggingProperties?.append("Fine.fromParameterContainer", {container: container, parameterName: parameterName});
-        return Fine.fromObject(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
-    }
-
     public get ["serverObjectWithoutId"](): Fine.ServerObjectWithoutId {
-        return Fine.ServerObjectWithoutId.fromFine(this);
+        return {
+            personId: this.personId.guidString,
+            payedState: this.payedState.serverObject,
+            number: this.number,
+            date: this.date,
+            fineReason: this.fineReason.serverObject,
+        };
     }
 
     public get ["serverObject"](): Fine.ServerObject {
-        return Fine.ServerObject.fromFine(this);
+        return {
+            id: this.id.guidString,
+            ...this.serverObjectWithoutId,
+        };
     }
 
     public async forStatistics(clubPath: string, loggingProperties?: LoggingProperties): Promise<Fine.Statistic> {
@@ -107,36 +43,90 @@ export class Fine {
 
 export namespace Fine {
 
-    export class ServerObject {
-
-        private constructor(
-            public readonly id: string,
-            public readonly personId: string,
-            public readonly payedState: PayedState.ServerObject,
-            public readonly number: number,
-            public readonly date: number,
-            public readonly fineReason: FineReasonObject,
-            public readonly updateProperties: UpdatePropertiesObject
-        ) {}
-
-        public static fromFine(fine: Fine): ServerObject {
-            return new ServerObject(fine.id.guidString, fine.personId.guidString, fine.payedState.serverObject, fine.number, fine.date, fine.fineReason.object, fine.updateProperties.object);
-        }
+    export interface ServerObject {
+        id: string,
+        personId: string,
+        payedState: Updatable<PayedState.ServerObject>,
+        number: number,
+        date: number,
+        fineReason: FineReason.ServerObject
     }
 
-    export class ServerObjectWithoutId {
+    export interface ServerObjectWithoutId {
+        personId: string,
+        payedState: Updatable<PayedState.ServerObject>,
+        number: number,
+        date: number,
+        fineReason: FineReason.ServerObject
+    }
 
-        private constructor(
-            public readonly personId: string,
-            public readonly payedState: PayedState.ServerObject,
-            public readonly number: number,
-            public readonly date: number,
-            public readonly fineReason: FineReasonObject,
-            public readonly updateProperties: UpdatePropertiesObject
-        ) {}
+    export class Builder {
+        public fromValue(value: any, loggingProperties?: LoggingProperties): Fine {
+            loggingProperties?.append("Fine.Builder.fromValue", {value: value});
 
-        public static fromFine(fine: Fine): ServerObjectWithoutId {
-            return new ServerObjectWithoutId(fine.personId.guidString, fine.payedState.serverObject, fine.number, fine.date, fine.fineReason.object, fine.updateProperties.object);
+            // Check if value is from type object
+            if (typeof value !== "object")
+                throw httpsError("invalid-argument", `Couldn't parse fine, expected type 'object', but bot ${value} from type '${typeof value}'`, loggingProperties);
+
+            // Check if id is string
+            if (typeof value.id !== "string")
+                throw httpsError("invalid-argument", `Couldn't parse fine parameter 'id', expected type string but got '${value.id}' from type ${typeof value.id}`, loggingProperties);
+            const id = guid.fromString(value.id, loggingProperties?.nextIndent);
+
+            // Check if person id is string
+            if (typeof value.personId !== "string")
+                throw httpsError("invalid-argument", `Couldn't parse fine parameter 'personId', expected type string but got '${value.personId}' from type ${typeof value.personId}`, loggingProperties);
+            const personId = guid.fromString(value.personId, loggingProperties?.nextIndent);
+
+            // Check if payed state is object
+            if (typeof value.payedState !== "object")
+                throw httpsError("invalid-argument", `Couldn't parse fine parameter 'payedState', expected type object but got '${value.payedState}' from type ${typeof value.payedState}`, loggingProperties);
+            const payedState = getUpdatable<PayedState, PayedState.Builder>(value, new PayedState.Builder(), loggingProperties?.nextIndent);
+
+            // Check if number is a positive number
+            if (typeof value.number !== "number" || value.number < 0)
+                throw httpsError("invalid-argument", `Couldn't parse fine parameter 'number', expected positive number but got '${value.number}' from type ${typeof value.number}`, loggingProperties);
+
+            // Check if date is a positive number
+            if (typeof value.date !== "number" || value.date < 0)
+                throw httpsError("invalid-argument", `Couldn't parse fine parameter 'date', expected positive number but got '${value.date}' from type ${typeof value.date}`, loggingProperties);
+
+            // Check if fine reason is object
+            if (typeof value.fineReason !== "object")
+                throw httpsError("invalid-argument", `Couldn't parse fine parameter 'fineReason', expected type object but got '${value.fineReason}' from type ${typeof value.fineReason}`, loggingProperties);
+            const fineReason = new FineReason.Builder().fromValue(value.fineReason, loggingProperties?.nextIndent);
+
+            // Return fine
+            return new Fine(id, personId, payedState, value.number, value.date, fineReason);
+        }
+
+        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties?: LoggingProperties): Fine {
+            loggingProperties?.append("Fine.Builder.fromSnapshot", {snapshot: snapshot});
+
+            // Check if data exists in snapshot
+            if (!snapshot.exists())
+                throw httpsError("invalid-argument", "Couldn't parse Fine since no data exists in snapshot.", loggingProperties);
+
+            // Get id
+            const idString = snapshot.key;
+            if (idString == null)
+                throw httpsError("invalid-argument", "Couldn't parse Fine since snapshot has an invalid key.", loggingProperties);
+
+            // Get data from snapshot
+            const data = snapshot.val();
+            if (typeof data !== "object")
+                throw httpsError("invalid-argument", `Couldn't parse Fine from snapshot since data isn't an object: ${data}`, loggingProperties);
+
+            // Return fine
+            return this.fromValue({
+                id: idString,
+                ...data,
+            }, loggingProperties?.nextIndent);
+        }
+
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Fine {
+            loggingProperties?.append("Fine.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
+            return this.fromValue(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
         }
     }
 
@@ -148,7 +138,7 @@ export namespace Fine {
             public readonly payedState: PayedState,
             public readonly number: number,
             public readonly date: number,
-            public readonly fineReason: StatisticsFineReason
+            public readonly fineReason: FineReason.Statistic
         ) {}
 
         public static async fromFine(fine: Fine, clubPath: string, loggingProperties?: LoggingProperties): Promise<Statistic> {
@@ -157,36 +147,36 @@ export namespace Fine {
             // Get statistic person
             const personRef = admin.database().ref(`${clubPath}/persons/${fine.personId.guidString}`);
             const personSnapshot = await personRef.once("value");
-            const person = Person.fromSnapshot(personSnapshot, loggingProperties?.nextIndent);
+            const person = new Person.Builder().fromSnapshot(personSnapshot, loggingProperties?.nextIndent);
 
             // Get statistic fine reason
             const fineReason = await fine.fineReason.forStatistics(clubPath, loggingProperties?.nextIndent);
 
             // Return statistic
-            return new Statistic(fine.id, person, fine.payedState, fine.number, fine.date, fineReason);
+            return new Statistic(fine.id, person, fine.payedState.property, fine.number, fine.date, fineReason);
         }
 
         public get ["serverObject"](): Statistic.ServerObject {
-            return Statistic.ServerObject.fromStatistic(this);
+            return {
+                id: this.id.guidString,
+                person: this.person.serverObject,
+                payedState: this.payedState.serverObject,
+                number: this.number,
+                date: this.date,
+                fineReason: this.fineReason.serverObject,
+            };
         }
     }
 
     export namespace Statistic {
 
-        export class ServerObject {
-
-            private constructor(
-                public readonly id: string,
-                public readonly person: PersonObject,
-                public readonly payedState: PayedState.ServerObjectWithoutUpdateProperties,
-                public readonly number: number,
-                public readonly date: number,
-                public readonly fineReason: StatisticsFineReasonObject,
-            ) {}
-
-            public static fromStatistic(statistic: Statistic): ServerObject {
-                return new ServerObject(statistic.id.guidString, statistic.person.object, statistic.payedState.serverObjectWithoutUpdateProperties, statistic.number, statistic.date, statistic.fineReason.object);
-            }
+        export interface ServerObject {
+            id: string,
+            person: Person.ServerObject,
+            payedState: PayedState.ServerObject,
+            number: number,
+            date: number,
+            fineReason: FineReason.Statistic.ServerObject
         }
     }
 }

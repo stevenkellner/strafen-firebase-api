@@ -5,7 +5,7 @@ import {assert, AssertionError, expect} from "chai";
 import {signOut} from "firebase/auth";
 import {FirebaseError} from "firebase/app";
 import {Fine} from "../src/TypeDefinitions/Fine";
-import {FineReasonTemplate} from "../src/TypeDefinitions/FineReason";
+import {FineReason} from "../src/TypeDefinitions/FineReason";
 import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
 
 describe("ChangeFinePayed", () => {
@@ -251,7 +251,7 @@ describe("ChangeFinePayed", () => {
     async function addFinesAndReason(fine2PersonId: guid = guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9", undefined), addReason = true) {
 
         // Add reason
-        const fine1 = Fine.fromObject({
+        const fine1 = new Fine.Builder().fromValue({
             id: guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined).guidString,
             personId: guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9", undefined).guidString,
             date: 9284765,
@@ -271,8 +271,8 @@ describe("ChangeFinePayed", () => {
                 personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         }, undefined);
-        const reason = ReasonTemplate.fromObject({
-            id: (fine1.fineReason.value as FineReasonTemplate).reasonTemplateId.guidString,
+        const reason = new ReasonTemplate.Builder().fromValue({
+            id: (fine1.fineReason.value as FineReason.WithTemplate).reasonTemplateId.guidString,
             reason: "asldkfj",
             importance: "low",
             amount: 12.98,
@@ -283,8 +283,8 @@ describe("ChangeFinePayed", () => {
                 clubLevel: "testing",
                 clubId: clubId.guidString,
                 changeType: "update",
-                reasonTemplate: reason.object,
-                updateProperties: {
+                reasonTemplate: reason.serverObject,
+                updateProperties: { // TODO remove
                     timestamp: 123455,
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
@@ -298,14 +298,10 @@ describe("ChangeFinePayed", () => {
             clubId: clubId.guidString,
             changeType: "update",
             fine: fine1.serverObject,
-            updateProperties: {
-                timestamp: 123455,
-                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
-            },
         });
 
         // Add fine with custom reason
-        const fine2 = Fine.fromObject({
+        const fine2 = new Fine.Builder().fromValue({
             id: guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined).guidString,
             personId: fine2PersonId.guidString,
             date: 9284765,
@@ -335,10 +331,6 @@ describe("ChangeFinePayed", () => {
             clubId: clubId.guidString,
             changeType: "update",
             fine: fine2.serverObject,
-            updateProperties: {
-                timestamp: 123455,
-                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
-            },
         });
 
         // Check fines and reason
@@ -625,4 +617,6 @@ describe("ChangeFinePayed", () => {
             },
         ]);
     });
+
+    // TODO: change state of deleted fine
 });

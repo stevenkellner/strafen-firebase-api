@@ -1,7 +1,7 @@
-import {ClubLevel} from "../TypeDefinitions/ClubLevel";
-import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
-import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, httpsError} from "../utils";
 import * as admin from "firebase-admin";
+import { ClubLevel } from "../TypeDefinitions/ClubLevel";
+import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
+import { checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, httpsError } from "../utils";
 import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 
 export class DeleteTestClubsFunction implements FirebaseFunction {
@@ -20,16 +20,16 @@ export class DeleteTestClubsFunction implements FirebaseFunction {
         loggingProperties?.append("DeleteTestClubsFunction.parseParameters", {container: container});
         return {
             privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
         };
     }
 
     async executeFunction(auth?: { uid: string }): Promise<void> {
         this.loggingProperties?.append("DeleteTestClubsFunction.executeFunction", {auth: auth}, "info");
         await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth);
-        if (!this.parameters.clubLevel.isTesting())
-            throw httpsError("failed-precondition", "Function can only be called for testing.", this.loggingProperties.nextIndent);
-        const clubsPath = this.parameters.clubLevel.getClubComponent();
+        if (this.parameters.clubLevel.value !== "testing")
+            throw httpsError("failed-precondition", "Function can only be called for testing.", this.loggingProperties);
+        const clubsPath = this.parameters.clubLevel.clubComponent;
         const clubsRef = admin.database().ref(clubsPath);
         if (await existsData(clubsRef))
             clubsRef.remove(error => {

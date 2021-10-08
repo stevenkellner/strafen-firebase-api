@@ -1,17 +1,17 @@
-import {ChangeType} from "../TypeDefinitions/ChangeType";
-import {ClubLevel} from "../TypeDefinitions/ClubLevel";
-import {guid} from "../TypeDefinitions/guid";
-import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
 import * as admin from "firebase-admin";
-import {Reference} from "@firebase/database-types";
-import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, httpsError, saveStatistic, StatisticsProperties, UpdateProperties} from "../utils";
-import {LatePaymentInterest} from "../TypeDefinitions/LatePaymentInterest";
+import { ChangeType } from "../TypeDefinitions/ChangeType";
+import { ClubLevel } from "../TypeDefinitions/ClubLevel";
+import { guid} from "../TypeDefinitions/guid";
+import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
+import { Reference} from "@firebase/database-types";
+import { checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, httpsError, saveStatistic, StatisticsProperties } from "../utils";
+import { LatePaymentInterest } from "../TypeDefinitions/LatePaymentInterest";
 import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 
 /**
  * Type of Parameters for ChangeLatePayementInterestFunction
  */
- type FunctionParameters = FunctionDefaultParameters & { updateProperties: UpdateProperties, clubId: guid, changeType: ChangeType, interest: LatePaymentInterest }
+ type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, interest: LatePaymentInterest }
 
  interface FunctionStatisticsPropertiesObject {
     previousInterest: LatePaymentInterest | null;
@@ -27,7 +27,7 @@ class FunctionStatisticsProperties implements StatisticsProperties<FunctionStati
          this.changedInterest = changedInterest;
      }
 
-     get ["object"](): FunctionStatisticsPropertiesObject {
+     get ["serverObject"](): FunctionStatisticsPropertiesObject {
          return {
              previousInterest: this.previousInterest,
              changedInterest: this.changedInterest,
@@ -86,16 +86,15 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
         loggingProperties?.append("ChangeLatePaymentInterestFunction.parseParameter", {container: container});
         return {
             privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
             clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
-            changeType: ChangeType.fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
-            interest: LatePaymentInterest.fromParameterContainer(container, "interest", loggingProperties?.nextIndent),
-            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties", loggingProperties?.nextIndent),
+            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
+            interest: new LatePaymentInterest.Builder().fromParameterContainer(container, "interest", loggingProperties?.nextIndent),
         };
     }
 
     private getInterestRef(): Reference {
-        const interestPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}/latePaymentInterest`;
+        const interestPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}/latePaymentInterest`;
         return admin.database().ref(interestPath);
     }
 
@@ -107,7 +106,7 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
         this.loggingProperties?.append("ChangeLatePaymentInterestFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
+        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
         await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
 
         // Get previous interest
@@ -115,7 +114,7 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
         const interestSnapshot = await interestRef.once("value");
         let previousInterest: LatePaymentInterest | null = null;
         if (interestSnapshot.exists())
-            previousInterest = LatePaymentInterest.fromSnapshot(interestSnapshot, this.loggingProperties.nextIndent);
+            previousInterest = new LatePaymentInterest.Builder().fromSnapshot(interestSnapshot, this.loggingProperties.nextIndent);
 
         // Change interest
         let changedInterest: LatePaymentInterest | null = null;
@@ -142,7 +141,7 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
         if (await existsData(interestRef)) {
             await interestRef.remove(error => {
                 if (error != null)
-                    throw httpsError("internal", `Couldn't delete late payment interest, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
+                    throw httpsError("internal", `Couldn't delete late payment interest, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
             });
         }
     }
@@ -152,7 +151,7 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
         const interestRef = this.getInterestRef();
         await interestRef.set(this.parameters.interest, error => {
             if (error != null)
-                throw httpsError("internal", `Couldn't update delete late payment interest, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
+                throw httpsError("internal", `Couldn't update delete late payment interest, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
         });
     }
 }

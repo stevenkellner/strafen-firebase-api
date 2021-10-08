@@ -146,7 +146,7 @@ describe("ChangePerson", () => {
     });
 
     async function setPerson(variant: boolean): Promise<Person> {
-        const person = Person.fromObject(variant ? {
+        const person = new Person.Builder().fromValue(variant ? {
             id: "61756c29-ac8a-4471-a283-4dde2623a1b9",
             name: {
                 first: "asdf",
@@ -166,7 +166,7 @@ describe("ChangePerson", () => {
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            person: person.object,
+            person: person.serverObject,
         });
 
         // Check person
@@ -184,7 +184,7 @@ describe("ChangePerson", () => {
         const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson");
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            changedPerson: person.object,
+            changedPerson: person.serverObject,
         });
     });
 
@@ -199,8 +199,8 @@ describe("ChangePerson", () => {
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousPerson: person1.object,
-            changedPerson: person2.object,
+            previousPerson: person1.serverObject,
+            changedPerson: person2.serverObject,
         });
     });
 
@@ -212,7 +212,7 @@ describe("ChangePerson", () => {
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "delete",
-            person: person.object,
+            person: person.serverObject,
         });
 
         // Check person
@@ -227,7 +227,7 @@ describe("ChangePerson", () => {
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousPerson: person.object,
+            previousPerson: person.serverObject,
         });
     });
 });

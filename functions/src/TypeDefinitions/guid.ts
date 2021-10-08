@@ -1,6 +1,6 @@
 import { httpsError } from "../utils";
 import { LoggingProperties } from "./LoggingProperties";
-import {ParameterContainer} from "./ParameterContainer";
+import { ParameterContainer } from "./ParameterContainer";
 
 /**
  * Represents a guid; used to generate a new guid.
@@ -29,7 +29,7 @@ export class guid {
         loggingProperties?.append("guid.fromString", {guidString: guidString});
         const regex = new RegExp("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
         if (!regex.test(guidString))
-            throw httpsError("invalid-argument", `Couldn't parse Guid, guid string isn't a valid Guid: ${guidString}`, loggingProperties?.nextIndent);
+            throw httpsError("invalid-argument", `Couldn't parse Guid, guid string isn't a valid Guid: ${guidString}`, loggingProperties);
         return new guid(guidString.toUpperCase());
     }
 

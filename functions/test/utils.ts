@@ -38,7 +38,7 @@ export async function getDatabaseValue(referencePath: string): Promise<any> {
 
 export async function getDatabaseFines(clubId: guid): Promise<Fine[]> {
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/fines`)).map(value => {
-        return Fine.fromObject({
+        return new Fine.Builder().fromValue({
             id: value[0],
             ...(value[1] as any),
         }, undefined);
@@ -47,7 +47,7 @@ export async function getDatabaseFines(clubId: guid): Promise<Fine[]> {
 
 export async function getDatabaseReasonTemplates(clubId: guid): Promise<ReasonTemplate[]> {
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/reasonTemplates`)).map(value => {
-        return ReasonTemplate.fromObject({
+        return new ReasonTemplate.Builder().fromValue({
             id: value[0],
             ...(value[1] as any),
         }, undefined);
@@ -56,7 +56,7 @@ export async function getDatabaseReasonTemplates(clubId: guid): Promise<ReasonTe
 
 export async function getDatabasePersons(clubId: guid): Promise<Person[]> {
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/persons`)).map(value => {
-        return Person.fromObject({
+        return new Person.Builder().fromValue({
             id: value[0],
             ...(value[1] as any),
         }, undefined);

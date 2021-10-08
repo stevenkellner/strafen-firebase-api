@@ -1,46 +1,37 @@
 import { httpsError } from "../utils";
 import { LoggingProperties } from "./LoggingProperties";
-import {ParameterContainer} from "./ParameterContainer";
+import { ParameterContainer } from "./ParameterContainer";
 
 /**
  * Importance of a fine
  */
 export class Importance {
 
-    /**
-     * Value of importance.
-     */
-    readonly value: "high" | "medium" | "low";
+    public constructor(
+        public readonly value: "high" | "medium" | "low"
+    ) {}
+}
 
-    /**
-     * Initializes importance with string value.
-     * @param {"high" | "medium" | "low"} value Value of the importance.
-     */
-    private constructor(value: "high" | "medium" | "low") {
-        this.value = value;
-    }
+export namespace Importance {
+    export class Builder {
 
-    /**
-     * Constructs importance from an string or throws a HttpsError if parsing failed.
-     * @param {string} value Value of the importance.
-     * @return {Importance} Parsed importance.
-     */
-    static fromString(value: string, loggingProperties?: LoggingProperties): Importance {
-        loggingProperties?.append("Importance.fromString", {value: value});
-        if (value == "high" || value == "medium" || value == "low")
+        public fromValue(value: any, loggingProperties?: LoggingProperties): Importance {
+            loggingProperties?.append("Importance.Builder.fromValue", {value: value});
+
+            // Check if value is from type string
+            if (typeof value !== "string")
+                throw httpsError("invalid-argument", `Couldn't parse Importance, expected type 'string', but bot ${value} from type '${typeof value}'`, loggingProperties);
+
+            // Check if value is high, medium or low
+            if (value !== "high" && value !== "medium" && value !== "low")
+                throw httpsError("invalid-argument", `Couldn't parse Importance, expected 'high', 'medium' or 'low', but got ${value} instead.`, loggingProperties);
+
             return new Importance(value);
-        throw httpsError("invalid-argument", `Couldn't parse Importance, expected 'high', 'medium' or 'low', but got ${value} instead.`, loggingProperties?.nextIndent);
-    }
+        }
 
-    /**
-     * Constructs importance from parameter of parameter container with specified parameter name
-     * or throws a HttpsError if parsing failed.
-     * @param {ParameterContainer} container Parameter container to get parameter from.
-     * @param {string} parameterName Name of parameter from parameter container.
-     * @return {Importance} Parsed importance.
-     */
-    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Importance {
-        loggingProperties?.append("Importance.fromParameterContainer", {container: container, parameterName: parameterName});
-        return Importance.fromString(container.getParameter(parameterName, "string", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Importance {
+            loggingProperties?.append("Importance.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
+            return this.fromValue(container.getParameter(parameterName, "string", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+        }
     }
 }

@@ -1,39 +1,13 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull, UpdateProperties, httpsError} from "../utils";
-import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
-import {guid} from "../TypeDefinitions/guid";
-import {ClubLevel} from "../TypeDefinitions/ClubLevel";
 import * as admin from "firebase-admin";
-import {ChangeType} from "../TypeDefinitions/ChangeType";
-import {Reference} from "@firebase/database-types";
-import {Fine} from "../TypeDefinitions/Fine";
+import { checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull, httpsError, checkUpdateTimestamp } from "../utils";
+import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
+import { guid } from "../TypeDefinitions/guid";
+import { ClubLevel } from "../TypeDefinitions/ClubLevel";
+import { ChangeType } from "../TypeDefinitions/ChangeType";
+import { Reference } from "@firebase/database-types";
+import { Fine} from "../TypeDefinitions/Fine";
 import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
-
-/**
- * Type of Parameters for ChangeFineFunction
- */
-type FunctionParameters = FunctionDefaultParameters & { updateProperties: UpdateProperties, clubId: guid, changeType: ChangeType, fine: Fine }
-
-interface FunctionStatisticsPropertiesObject {
-    previousFine: Fine.Statistic.ServerObject | null;
-    changedFine: Fine.Statistic.ServerObject | null;
-}
-
-class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
-    readonly previousFine: Fine.Statistic | null;
-    readonly changedFine: Fine.Statistic | null;
-
-    constructor(previousFine: Fine.Statistic | null, changedFine: Fine.Statistic | null) {
-        this.previousFine = previousFine;
-        this.changedFine = changedFine;
-    }
-
-    get ["object"](): FunctionStatisticsPropertiesObject {
-        return {
-            previousFine: undefinedAsNull(this.previousFine?.serverObject),
-            changedFine: undefinedAsNull(this.changedFine?.serverObject),
-        };
-    }
-}
+import { getUpdatable, UpdatableWithServerObject } from "../TypeDefinitions/UpdateProperties";
 
 /**
  * @summary
@@ -63,7 +37,7 @@ export class ChangeFineFunction implements FirebaseFunction {
     /**
      * Parameters needed for this function.
      */
-    private parameters: FunctionParameters;
+    private parameters: ChangeFineFunction.Parameters;
 
     private loggingProperties: LoggingProperties;
 
@@ -82,21 +56,20 @@ export class ChangeFineFunction implements FirebaseFunction {
      * @param {ParameterContainer} container Parameter container to get parameters from.
      * @return {FunctionParameters} Parsed parameters for this function.
      */
-    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): FunctionParameters {
+    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): ChangeFineFunction.Parameters {
         loggingProperties?.append("ChangeFineFunction.parseParameter", {container: container});
         return {
             privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
             clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
-            changeType: ChangeType.fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
-            fine: Fine.fromParameterContainer(container, "fine", loggingProperties?.nextIndent),
-            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties", loggingProperties?.nextIndent),
+            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
+            updatableFine: getUpdatable<Fine, Fine.Builder>(container.getParameter("fine", "object", loggingProperties?.nextIndent), new Fine.Builder(), loggingProperties?.nextIndent),
         };
     }
 
     private getFineRef(): Reference {
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
-        const finePath = `${clubPath}/fines/${this.parameters.fine.id.guidString}`;
+        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
+        const finePath = `${clubPath}/fines/${this.parameters.updatableFine.property.id.guidString}`;
         return admin.database().ref(finePath);
     }
 
@@ -108,15 +81,18 @@ export class ChangeFineFunction implements FirebaseFunction {
         this.loggingProperties?.append("ChangeFineFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
+        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
         await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
+
+        // Check update timestamp
+        await checkUpdateTimestamp(`${clubPath}/fines/${this.parameters.updatableFine.property.id.guidString}/updateProperties`, this.parameters.updatableFine.updateProperties, this.loggingProperties.nextIndent);
 
         // Get previous fine
         const fineRef = this.getFineRef();
         const fineSnapshot = await fineRef.once("value");
         let previousFine: Fine.Statistic | null = null;
         if (fineSnapshot.exists())
-            previousFine = await Fine.fromSnapshot(fineSnapshot, this.loggingProperties.nextIndent).forStatistics(clubPath, this.loggingProperties.nextIndent);
+            previousFine = await new Fine.Builder().fromSnapshot(fineSnapshot, this.loggingProperties.nextIndent).forStatistics(clubPath, this.loggingProperties.nextIndent);
 
         // Change fine
         let changedFine: Fine.Statistic | null = null;
@@ -127,14 +103,14 @@ export class ChangeFineFunction implements FirebaseFunction {
 
         case "update":
             await this.updateItem();
-            changedFine = await this.parameters.fine.forStatistics(clubPath, this.loggingProperties.nextIndent);
+            changedFine = await this.parameters.updatableFine.property.forStatistics(clubPath, this.loggingProperties.nextIndent);
             break;
         }
 
         // Save statistic
         await saveStatistic(clubPath, {
             name: "changeFine",
-            properties: new FunctionStatisticsProperties(previousFine, changedFine),
+            properties: new ChangeFineFunction.Statistic(previousFine, changedFine),
         }, this.loggingProperties.nextIndent);
     }
 
@@ -142,9 +118,12 @@ export class ChangeFineFunction implements FirebaseFunction {
         this.loggingProperties?.append("ChangeFineFunction.deleteItem");
         const fineRef = this.getFineRef();
         if (await existsData(fineRef)) {
-            await fineRef.remove(error => {
+            await fineRef.set({
+                deleted: true,
+                updateProperties: this.parameters.updatableFine.updateProperties.serverObject,
+            }, error => {
                 if (error != null)
-                    throw httpsError("internal", `Couldn't delete fine, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
+                    throw httpsError("internal", `Couldn't delete fine, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
             });
         }
     }
@@ -152,9 +131,37 @@ export class ChangeFineFunction implements FirebaseFunction {
     private async updateItem(): Promise<void> {
         this.loggingProperties?.append("ChangeFineFunction.updateItem");
         const fineRef = this.getFineRef();
-        await fineRef.set(this.parameters.fine?.serverObjectWithoutId, error => {
+        await fineRef.set(this.parameters.updatableFine.serverObject, error => {
             if (error != null)
-                throw httpsError("internal", `Couldn't update fine, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
+                throw httpsError("internal", `Couldn't update fine, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
         });
+    }
+}
+
+export namespace ChangeFineFunction {
+
+    export type Parameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, updatableFine: UpdatableWithServerObject<Fine> }
+
+    export class Statistic implements StatisticsProperties<Statistic.ServerObject> {
+
+        public constructor(
+            public readonly previousFine: Fine.Statistic | null,
+            public readonly changedFine: Fine.Statistic | null
+        ) {}
+
+        public get ["serverObject"](): Statistic.ServerObject {
+            return {
+                previousFine: undefinedAsNull(this.previousFine?.serverObject),
+                changedFine: undefinedAsNull(this.changedFine?.serverObject),
+            };
+        }
+    }
+
+    export namespace Statistic {
+
+        export interface ServerObject {
+            previousFine: Fine.Statistic.ServerObject | null;
+            changedFine: Fine.Statistic.ServerObject | null;
+        }
     }
 }

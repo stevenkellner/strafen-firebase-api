@@ -1,9 +1,9 @@
-import {ClubLevel} from "../TypeDefinitions/ClubLevel";
-import {guid} from "../TypeDefinitions/guid";
-import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
-import {checkPrerequirements, FirebaseFunction, FunctionDefaultParameters, httpsError} from "../utils";
 import * as admin from "firebase-admin";
-import {defaultTestClub} from "./testClubs/default";
+import { ClubLevel } from "../TypeDefinitions/ClubLevel";
+import { guid } from "../TypeDefinitions/guid";
+import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
+import { checkPrerequirements, FirebaseFunction, FunctionDefaultParameters, httpsError } from "../utils";
+import { defaultTestClub } from "./testClubs/default";
 import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 
 type FunctionParameters = FunctionDefaultParameters & { clubId: guid, testClubType: TestClubType }
@@ -24,7 +24,7 @@ export class NewTestClubFunction implements FirebaseFunction {
         loggingProperties?.append("NewTestClubFunction.parseParameters", {container: container});
         return {
             privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
             clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
             testClubType: TestClubType.fromParameterContainer(container, "testClubType", loggingProperties?.nextIndent),
         };
@@ -33,9 +33,9 @@ export class NewTestClubFunction implements FirebaseFunction {
     async executeFunction(auth?: { uid: string }): Promise<void> {
         this.loggingProperties?.append("NewTestClubFunction.executeFunction", {auth: auth}, "info");
         await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth);
-        if (!this.parameters.clubLevel.isTesting())
-            throw httpsError("failed-precondition", "Function can only be called for testing.", this.loggingProperties.nextIndent);
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
+        if (this.parameters.clubLevel.value !== "testing")
+            throw httpsError("failed-precondition", "Function can only be called for testing.", this.loggingProperties);
+        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
         const clubRef = admin.database().ref(clubPath);
         const testClub = this.parameters.testClubType.getTestClub();
         await clubRef.set(testClub, error => {
@@ -56,7 +56,7 @@ class TestClubType {
     static fromString(value: string, loggingProperties?: LoggingProperties): TestClubType {
         loggingProperties?.append("TestClubType.fromString", {value: value});
         if (value != "default")
-            throw httpsError("invalid-argument", `Couldn't parse TestClubType, invalid type: ${value}`, loggingProperties?.nextIndent);
+            throw httpsError("invalid-argument", `Couldn't parse TestClubType, invalid type: ${value}`, loggingProperties);
         return new TestClubType(value);
     }
     static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): TestClubType {

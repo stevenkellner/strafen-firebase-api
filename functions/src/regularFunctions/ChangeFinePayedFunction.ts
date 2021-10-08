@@ -1,38 +1,12 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, saveStatistic, StatisticsProperties, checkUpdateTimestamp, httpsError} from "../utils";
-import {PayedState} from "../TypeDefinitions/PayedState";
-import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
-import {guid} from "../TypeDefinitions/guid";
-import {ClubLevel} from "../TypeDefinitions/ClubLevel";
 import * as admin from "firebase-admin";
-import {Fine} from "../TypeDefinitions/Fine";
+import { checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, saveStatistic, StatisticsProperties, checkUpdateTimestamp, httpsError } from "../utils";
+import { PayedState } from "../TypeDefinitions/PayedState";
+import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
+import { guid } from "../TypeDefinitions/guid";
+import { ClubLevel } from "../TypeDefinitions/ClubLevel";
+import { Fine } from "../TypeDefinitions/Fine";
 import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
-
-/**
- * Type of Parameters for ChangeFinePayedFunction
- */
-type FunctionParameters = FunctionDefaultParameters & { clubId: guid, fineId: guid, state: PayedState }
-
-interface FunctionStatisticsPropertiesObject {
-    previousFine: Fine.Statistic.ServerObject;
-    changedState: PayedState.ServerObjectWithoutUpdateProperties;
-}
-
-class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
-    readonly previousFine: Fine.Statistic;
-    readonly changedState: PayedState;
-
-    constructor(previousFine: Fine.Statistic, changedState: PayedState) {
-        this.previousFine = previousFine;
-        this.changedState = changedState;
-    }
-
-    get ["object"](): FunctionStatisticsPropertiesObject {
-        return {
-            previousFine: this.previousFine.serverObject,
-            changedState: this.changedState.serverObjectWithoutUpdateProperties,
-        };
-    }
-}
+import { getUpdatable, UpdatableWithServerObject } from "../TypeDefinitions/UpdateProperties";
 
 /**
  * @summary
@@ -63,7 +37,7 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
     /**
      * Parameters needed for this function.
      */
-    private parameters: FunctionParameters;
+    private parameters: ChangeFinePayedFunction.Parameters;
 
     private loggingProperties: LoggingProperties;
 
@@ -82,14 +56,14 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
      * @param {ParameterContainer} container Parameter container to get parameters from.
      * @return {FunctionParameters} Parsed parameters for this function.
      */
-    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): FunctionParameters {
+    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): ChangeFinePayedFunction.Parameters {
         loggingProperties?.append("ChangeFinePayedFunction.parseParameter", {container: container});
         return {
             privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
             clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
             fineId: guid.fromParameterContainer(container, "fineId", loggingProperties?.nextIndent),
-            state: PayedState.fromParameterContainer(container, "state", loggingProperties?.nextIndent),
+            state: getUpdatable<PayedState, PayedState.Builder>(container.getParameter("state", "object", loggingProperties?.nextIndent), new PayedState.Builder(), loggingProperties?.nextIndent),
         };
     }
 
@@ -103,7 +77,7 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
         // Check prerequirements and get a reference to payed state of the fine
         await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
 
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
+        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
         const payedPath = `${clubPath}/fines/${this.parameters.fineId.guidString}/payedState`;
         const payedRef = admin.database().ref(payedPath);
 
@@ -114,18 +88,15 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
         const statisticsFine = await this.getStatisticsFine();
 
         // Set payed state
-        await payedRef.set({
-            ...this.parameters.state.serverObject,
-            updateProperties: this.parameters.state.updateProperties.object,
-        }, error => {
+        await payedRef.set(this.parameters.state.serverObject, error => {
             if (error != null)
-                throw httpsError("internal", `Couldn't update payed state, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
+                throw httpsError("internal", `Couldn't update payed state, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
         });
 
         // Save statistic
         await saveStatistic(clubPath, {
             name: "changeFinePayed",
-            properties: new FunctionStatisticsProperties(statisticsFine, this.parameters.state),
+            properties: new ChangeFinePayedFunction.Statistic(statisticsFine, this.parameters.state.property),
         }, this.loggingProperties.nextIndent);
     }
 
@@ -135,10 +106,37 @@ export class ChangeFinePayedFunction implements FirebaseFunction {
      */
     private async getStatisticsFine(): Promise<Fine.Statistic> {
         this.loggingProperties?.append("ChangeFinePayedFunction.getStatisticsFine");
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
+        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
         const finePath = `${clubPath}/fines/${this.parameters.fineId.guidString}`;
         const fineRef = admin.database().ref(finePath);
         const payedSnapshot = await fineRef.once("value");
-        return Fine.fromSnapshot(payedSnapshot, this.loggingProperties.nextIndent).forStatistics(clubPath, this.loggingProperties.nextIndent);
+        return new Fine.Builder().fromSnapshot(payedSnapshot, this.loggingProperties.nextIndent).forStatistics(clubPath, this.loggingProperties.nextIndent);
+    }
+}
+
+export namespace ChangeFinePayedFunction {
+
+    export type Parameters = FunctionDefaultParameters & { clubId: guid, fineId: guid, state: UpdatableWithServerObject<PayedState> }
+
+    export class Statistic implements StatisticsProperties<Statistic.ServerObject> {
+
+        public constructor(
+            public readonly previousFine: Fine.Statistic,
+            public readonly changedState: PayedState
+        ) {}
+
+        public get ["serverObject"](): Statistic.ServerObject {
+            return {
+                previousFine: this.previousFine.serverObject,
+                changedState: this.changedState.serverObject,
+            };
+        }
+    }
+
+    export namespace Statistic {
+        export interface ServerObject {
+            previousFine: Fine.Statistic.ServerObject;
+            changedState: PayedState.ServerObject;
+        }
     }
 }

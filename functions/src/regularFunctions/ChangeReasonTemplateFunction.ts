@@ -1,22 +1,22 @@
-import {checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull, UpdateProperties, httpsError} from "../utils";
-import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
-import {guid} from "../TypeDefinitions/guid";
-import {ClubLevel} from "../TypeDefinitions/ClubLevel";
 import * as admin from "firebase-admin";
-import {ReasonTemplate, ReasonTemplateObject} from "../TypeDefinitions/ReasonTemplate";
-import {ChangeType} from "../TypeDefinitions/ChangeType";
-import {Reference} from "@firebase/database-types";
-import {DataSnapshot} from "firebase/database";
+import { checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull, httpsError } from "../utils";
+import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
+import { guid } from "../TypeDefinitions/guid";
+import { ClubLevel } from "../TypeDefinitions/ClubLevel";
+import { ReasonTemplate } from "../TypeDefinitions/ReasonTemplate";
+import { ChangeType } from "../TypeDefinitions/ChangeType";
+import { Reference } from "@firebase/database-types";
+import { DataSnapshot } from "firebase/database";
 import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 
 /**
  * Type of Parameters for ChangeReasonTemplateFunction
  */
-type FunctionParameters = FunctionDefaultParameters & { updateProperties: UpdateProperties, clubId: guid, changeType: ChangeType, reasonTemplate: ReasonTemplate }
+type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, reasonTemplate: ReasonTemplate }
 
 interface FunctionStatisticsPropertiesObject {
-    previousReasonTemplate: ReasonTemplateObject | null;
-    changedReasonTemplate: ReasonTemplateObject | null;
+    previousReasonTemplate: ReasonTemplate.ServerObject | null;
+    changedReasonTemplate: ReasonTemplate.ServerObject | null;
 }
 
 class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
@@ -28,10 +28,10 @@ class FunctionStatisticsProperties implements StatisticsProperties<FunctionStati
         this.changedReasonTemplate = changedReasonTemplate;
     }
 
-    get ["object"](): FunctionStatisticsPropertiesObject {
+    get ["serverObject"](): FunctionStatisticsPropertiesObject {
         return {
-            previousReasonTemplate: undefinedAsNull(this.previousReasonTemplate?.object),
-            changedReasonTemplate: undefinedAsNull(this.changedReasonTemplate?.object),
+            previousReasonTemplate: undefinedAsNull(this.previousReasonTemplate?.serverObject),
+            changedReasonTemplate: undefinedAsNull(this.changedReasonTemplate?.serverObject),
         };
     }
 }
@@ -87,16 +87,15 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
         loggingProperties?.append("ChangeReasonTemplateFunction.parseParameter", {container: container});
         return {
             privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
             clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
-            changeType: ChangeType.fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
-            reasonTemplate: ReasonTemplate.fromParameterContainer(container, "reasonTemplate", loggingProperties?.nextIndent),
-            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties", loggingProperties?.nextIndent),
+            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
+            reasonTemplate: new ReasonTemplate.Builder().fromParameterContainer(container, "reasonTemplate", loggingProperties?.nextIndent),
         };
     }
 
     private getReasonTemplateRef(): Reference {
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
+        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
         const reasonTemplatePath = `${clubPath}/reasonTemplates/${this.parameters.reasonTemplate.id.guidString}`;
         return admin.database().ref(reasonTemplatePath);
     }
@@ -116,7 +115,7 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
         const reasonTemplateSnapshot = await reasonTemplateRef.once("value");
         let previousReasonTemplate: ReasonTemplate | null = null;
         if (reasonTemplateSnapshot.exists())
-            previousReasonTemplate = ReasonTemplate.fromSnapshot(reasonTemplateSnapshot as unknown as DataSnapshot, this.loggingProperties.nextIndent);
+            previousReasonTemplate = new ReasonTemplate.Builder().fromSnapshot(reasonTemplateSnapshot as unknown as DataSnapshot, this.loggingProperties.nextIndent);
 
         // Change reason template
         let changedReasonTemplate: ReasonTemplate | null = null;
@@ -132,7 +131,7 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
         }
 
         // Save statistic
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
+        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
         await saveStatistic(clubPath, {
             name: "changeReasonTemplate",
             properties: new FunctionStatisticsProperties(previousReasonTemplate, changedReasonTemplate),
@@ -145,7 +144,7 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
         if (await existsData(reasonTemplateRef)) {
             await reasonTemplateRef.remove(error => {
                 if (error != null)
-                    throw httpsError("internal", `Couldn't delete reason template, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
+                    throw httpsError("internal", `Couldn't delete reason template, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
             });
         }
     }
@@ -153,9 +152,9 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
     private async updateItem(): Promise<void> {
         this.loggingProperties?.append("ChangeReasonTemplateFunction.updateItem");
         const reasonTemplateRef = this.getReasonTemplateRef();
-        await reasonTemplateRef.set(this.parameters.reasonTemplate?.objectWithoutId, error => {
+        await reasonTemplateRef.set(this.parameters.reasonTemplate?.serverObjectWithoutId, error => {
             if (error != null)
-                throw httpsError("internal", `Couldn't update reason template, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
+                throw httpsError("internal", `Couldn't update reason template, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
         });
     }
 }

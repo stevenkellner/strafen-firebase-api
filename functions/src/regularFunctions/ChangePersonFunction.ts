@@ -1,21 +1,21 @@
-import {ChangeType} from "../TypeDefinitions/ChangeType";
-import {ClubLevel} from "../TypeDefinitions/ClubLevel";
-import {guid} from "../TypeDefinitions/guid";
-import {ParameterContainer} from "../TypeDefinitions/ParameterContainer";
-import {Person, PersonObject} from "../TypeDefinitions/Person";
 import * as admin from "firebase-admin";
-import {Reference} from "@firebase/database-types";
-import {checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, httpsError, saveStatistic, StatisticsProperties, undefinedAsNull, UpdateProperties} from "../utils";
+import { ChangeType } from "../TypeDefinitions/ChangeType";
+import { ClubLevel } from "../TypeDefinitions/ClubLevel";
+import { guid } from "../TypeDefinitions/guid";
+import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
+import { Person } from "../TypeDefinitions/Person";
+import { Reference } from "@firebase/database-types";
+import { checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultParameters, httpsError, saveStatistic, StatisticsProperties, undefinedAsNull } from "../utils";
 import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 
 /**
  * Type of Parameters for ChangePersonFunction
  */
- type FunctionParameters = FunctionDefaultParameters & { updateProperties: UpdateProperties, clubId: guid, changeType: ChangeType, person: Person }
+ type FunctionParameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, person: Person }
 
  interface FunctionStatisticsPropertiesObject {
-    previousPerson: PersonObject | null;
-    changedPerson: PersonObject | null;
+    previousPerson: Person.ServerObject | null;
+    changedPerson: Person.ServerObject | null;
  }
 
 class FunctionStatisticsProperties implements StatisticsProperties<FunctionStatisticsPropertiesObject> {
@@ -27,10 +27,10 @@ class FunctionStatisticsProperties implements StatisticsProperties<FunctionStati
          this.changedPerson = changedPerson;
      }
 
-     get ["object"](): FunctionStatisticsPropertiesObject {
+     get ["serverObject"](): FunctionStatisticsPropertiesObject {
          return {
-             previousPerson: undefinedAsNull(this.previousPerson?.object),
-             changedPerson: undefinedAsNull(this.changedPerson?.object),
+             previousPerson: undefinedAsNull(this.previousPerson?.serverObject),
+             changedPerson: undefinedAsNull(this.changedPerson?.serverObject),
          };
      }
 }
@@ -87,16 +87,15 @@ export class ChangePersonFunction implements FirebaseFunction {
         loggingProperties?.append("ChangePersonFunction.parseParameter", {container: container});
         return {
             privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: ClubLevel.fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
             clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
-            changeType: ChangeType.fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
-            person: Person.fromParameterContainer(container, "person", loggingProperties?.nextIndent),
-            updateProperties: UpdateProperties.fromParameterContainer(container, "updateProperties", loggingProperties?.nextIndent),
+            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
+            person: new Person.Builder().fromParameterContainer(container, "person", loggingProperties?.nextIndent),
         };
     }
 
     private getPersonRef(): Reference {
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
+        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
         const personPath = `${clubPath}/persons/${this.parameters.person.id.guidString}`;
         return admin.database().ref(personPath);
     }
@@ -109,7 +108,7 @@ export class ChangePersonFunction implements FirebaseFunction {
         this.loggingProperties?.append("ChangePersonFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements
-        const clubPath = `${this.parameters.clubLevel.getClubComponent()}/${this.parameters.clubId.guidString}`;
+        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
         await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
 
         // Get previous person
@@ -117,7 +116,7 @@ export class ChangePersonFunction implements FirebaseFunction {
         const personSnapshot = await personRef.once("value");
         let previousPerson: Person | null = null;
         if (personSnapshot.exists())
-            previousPerson = Person.fromSnapshot(personSnapshot, this.loggingProperties.nextIndent);
+            previousPerson = new Person.Builder().fromSnapshot(personSnapshot, this.loggingProperties.nextIndent);
 
         // Change person
         let changedPerson: Person | null = null;
@@ -145,12 +144,12 @@ export class ChangePersonFunction implements FirebaseFunction {
         // Check if person to delete is already signed in
         const personRef = this.getPersonRef();
         if (await existsData(personRef.child("signInData")))
-            throw httpsError("unavailable", "Person is already signed in!", this.loggingProperties.nextIndent);
+            throw httpsError("unavailable", "Person is already signed in!", this.loggingProperties);
 
         if (await existsData(personRef)) {
             await personRef.remove(error => {
                 if (error != null)
-                    throw httpsError("internal", `Couldn't delete person, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
+                    throw httpsError("internal", `Couldn't delete person, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
             });
         }
     }
@@ -158,9 +157,9 @@ export class ChangePersonFunction implements FirebaseFunction {
     private async updateItem(): Promise<void> {
         this.loggingProperties?.append("ChangePersonFunction.updateItem");
         const personRef = this.getPersonRef();
-        await personRef.set(this.parameters.person?.objectWithoutId, error => {
+        await personRef.set(this.parameters.person?.serverObjectWithoutId, error => {
             if (error != null)
-                throw httpsError("internal", `Couldn't update person, underlying error: ${error.name}, ${error.message}`, this.loggingProperties.nextIndent);
+                throw httpsError("internal", `Couldn't update person, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
         });
     }
 }

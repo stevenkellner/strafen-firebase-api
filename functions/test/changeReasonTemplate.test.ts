@@ -121,7 +121,7 @@ describe("ChangeReasonTemplate", () => {
     });
 
     async function setReasonTemplate(variant: boolean): Promise<ReasonTemplate> {
-        const reasonTemplate = ReasonTemplate.fromObject(variant ? {
+        const reasonTemplate = new ReasonTemplate.Builder().fromValue(variant ? {
             id: "18ae484f-a1b7-456b-807e-339ff6679ad0",
             reason: "Reason",
             amount: 1.50,
@@ -139,7 +139,7 @@ describe("ChangeReasonTemplate", () => {
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            reasonTemplate: reasonTemplate.object,
+            reasonTemplate: reasonTemplate.serverObject,
         });
 
         // Check reason template
@@ -157,7 +157,7 @@ describe("ChangeReasonTemplate", () => {
         const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeReasonTemplate");
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            changedReasonTemplate: reasonTemplate.object,
+            changedReasonTemplate: reasonTemplate.serverObject,
         });
     });
 
@@ -172,8 +172,8 @@ describe("ChangeReasonTemplate", () => {
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousReasonTemplate: reasonTemplate1.object,
-            changedReasonTemplate: reasonTemplate2.object,
+            previousReasonTemplate: reasonTemplate1.serverObject,
+            changedReasonTemplate: reasonTemplate2.serverObject,
         });
     });
 
@@ -185,7 +185,7 @@ describe("ChangeReasonTemplate", () => {
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "delete",
-            reasonTemplate: reasonTemplate.object,
+            reasonTemplate: reasonTemplate.serverObject,
         });
 
         // Check reasonTemplate
@@ -200,7 +200,7 @@ describe("ChangeReasonTemplate", () => {
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousReasonTemplate: reasonTemplate.object,
+            previousReasonTemplate: reasonTemplate.serverObject,
         });
     });
 });
