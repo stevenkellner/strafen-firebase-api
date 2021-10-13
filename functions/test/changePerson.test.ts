@@ -5,10 +5,14 @@ import {signOut} from "firebase/auth";
 import {assert, AssertionError, expect} from "chai";
 import {FirebaseError} from "firebase-admin";
 import {Person} from "../src/TypeDefinitions/Person";
+import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
+import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
 
 describe("ChangePerson", () => {
 
-    const clubId = guid.fromString("c5429fcd-3b4b-437c-83a7-0e5433cc4cac", undefined);
+    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "changePersonTest", undefined, "notice");
+
+    const clubId = guid.fromString("c5429fcd-3b4b-437c-83a7-0e5433cc4cac", loggingProperties.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -158,7 +162,7 @@ describe("ChangePerson", () => {
                 first: "wgn",
                 last: "jzhtre",
             },
-        }, undefined);
+        }, loggingProperties.nextIndent);
 
         // Set person
         await callFunction("changePerson", {
@@ -170,7 +174,7 @@ describe("ChangePerson", () => {
         });
 
         // Check person
-        const personList = await getDatabasePersons(clubId);
+        const personList = await getDatabasePersons(clubId, loggingProperties.nextIndent);
         const fetchedPerson = personList.find(_person => _person.id.equals(person.id));
         expect(fetchedPerson).to.deep.equal(person);
 
@@ -181,7 +185,7 @@ describe("ChangePerson", () => {
         const person = await setPerson(false);
 
         // Check statistic
-        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson");
+        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson", loggingProperties.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
             changedPerson: person.serverObject,
@@ -193,7 +197,7 @@ describe("ChangePerson", () => {
         const person2 = await setPerson(true);
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson");
+        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson", loggingProperties.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousPerson!= null;
         });
@@ -216,12 +220,12 @@ describe("ChangePerson", () => {
         });
 
         // Check person
-        const personList = await getDatabasePersons(clubId);
+        const personList = await getDatabasePersons(clubId, loggingProperties.nextIndent);
         const fetchedPerson = personList.find(_person => _person.id.equals(person.id));
         expect(fetchedPerson).to.be.equal(undefined);
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson");
+        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson", loggingProperties.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousPerson != null;
         });

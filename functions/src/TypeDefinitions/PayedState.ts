@@ -1,4 +1,4 @@
-import { httpsError, undefinedAsNull } from "../utils";
+import { httpsError } from "../utils";
 import { LoggingProperties } from "./LoggingProperties";
 
 export class PayedState {
@@ -8,11 +8,26 @@ export class PayedState {
     ) {}
 
     public get ["serverObject"](): PayedState.ServerObject {
-        return {
-            state: this.property.state,
-            payDate: undefinedAsNull((this.property as any).payDate),
-            inApp: undefinedAsNull((this.property as any).inApp),
-        };
+        switch (this.property.state) {
+        case "payed":
+            return {
+                state: this.property.state,
+                payDate: this.property.payDate.toISOString(),
+                inApp: this.property.inApp,
+            };
+        case "unpayed":
+            return {
+                state: this.property.state,
+                payDate: null,
+                inApp: null,
+            };
+        case "settled":
+            return {
+                state: this.property.state,
+                payDate: null,
+                inApp: null,
+            };
+        }
     }
 }
 
@@ -21,7 +36,7 @@ export namespace PayedState {
     export type Property = {
         state: "payed",
         inApp: boolean,
-        payDate: number,
+        payDate: Date,
     } | {
         state: "unpayed",
     } | {
@@ -29,8 +44,8 @@ export namespace PayedState {
     };
 
     export class Builder {
-        public fromValue(value: any, loggingProperties?: LoggingProperties): PayedState {
-            loggingProperties?.append("PayedState.Builder.fromValue", {object: value});
+        public fromValue(value: any, loggingProperties: LoggingProperties): PayedState {
+            loggingProperties.append("PayedState.Builder.fromValue", {object: value});
 
             // Check if value is from type object
             if (typeof value !== "object")
@@ -42,16 +57,16 @@ export namespace PayedState {
 
             if (value.state == "payed") {
 
-                // Check if type of payDate is undefined, null or number.
-                if (typeof value.payDate !== "number")
-                    throw httpsError("invalid-argument", `Couldn't parse PayedState parameter 'payDate'. Expected type 'number', undefined or null, but got '${value.payDate}' from type '${typeof value.payDate}'.`, loggingProperties);
+                // Check if payDate is a iso string
+                if (typeof value.payDate !== "string" || isNaN(new Date(value.payDate).getTime()))
+                    throw httpsError("invalid-argument", `Couldn't parse PayedState parameter 'payDate', expected iso string but got '${value.payDate}' from type ${typeof value.payDate}`, loggingProperties);
 
                 // Check if type of inApp is undefined, null or boolean.
                 if (typeof value.inApp !== "boolean")
-                    throw httpsError("invalid-argument", `Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', undefined or null, but got '${value.payDate}' from type '${typeof value.payDate}'.`, loggingProperties);
+                    throw httpsError("invalid-argument", `Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', undefined or null, but got '${value.inApp}' from type '${typeof value.inApp}'.`, loggingProperties);
 
                 // Return payed state
-                return new PayedState({state: value.state, payDate: value.payDate, inApp: value.inApp});
+                return new PayedState({state: value.state, payDate: new Date(value.payDate), inApp: value.inApp});
 
             } else if (value.state == "unpayed")
                 return new PayedState({state: "unpayed"});
@@ -65,7 +80,7 @@ export namespace PayedState {
 
     export interface ServerObject {
         state: "payed" | "unpayed" | "settled",
-        payDate: number | null,
+        payDate: string | null,
         inApp: boolean | null,
     }
 }

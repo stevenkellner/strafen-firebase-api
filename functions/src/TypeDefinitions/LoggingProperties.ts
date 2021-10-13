@@ -32,7 +32,7 @@ export class LoggingProperties {
     ) {}
 
     public static withFirst(parameterContainer: ParameterContainer, functionName: string, details: { [key: string]: any } = {}, level: "debug" | "info" | "notice" = "debug"): LoggingProperties {
-        const verbose = (parameterContainer.getOptionalParameter("verbose", "boolean", undefined) as boolean | null) ?? false;
+        const verbose = (parameterContainer.getOptionalParameter("verbose", "boolean", null) as boolean | null) ?? false;
         const property: LoggingProperty = {
             functionName: functionName,
             level: new LogLevel(level),

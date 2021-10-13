@@ -30,7 +30,7 @@ export class ParameterContainer {
      * @param {ValidParameterTypes} expectedType Expected type of the parameter.
      * @return {any | null} Parameter with specified name.
      */
-    getOptionalParameter(parameterName: string, expectedType: ValidParameterTypes, loggingProperties?: LoggingProperties): any | null {
+    getOptionalParameter(parameterName: string, expectedType: ValidParameterTypes, loggingProperties: LoggingProperties | null): any | null {
         loggingProperties?.append("ParameterContainer.getOptionalParameter", {parameterName: parameterName, expectedType: expectedType});
         if (this.data == null)
             throw httpsError("invalid-argument", `Couldn't parse '${parameterName}'. No parameters specified to this function.`, loggingProperties);
@@ -48,9 +48,9 @@ export class ParameterContainer {
      * @param {ValidParameterTypes} expectedType Expected type of the parameter.
      * @return {any} Parameter with specified name.
      */
-    getParameter(parameterName: string, expectedType: ValidParameterTypes, loggingProperties?: LoggingProperties): any {
-        loggingProperties?.append("ParameterContainer.getParameter", {parameterName: parameterName, expectedType: expectedType});
-        const value = this.getOptionalParameter(parameterName, expectedType, loggingProperties?.nextIndent);
+    getParameter(parameterName: string, expectedType: ValidParameterTypes, loggingProperties: LoggingProperties): any {
+        loggingProperties.append("ParameterContainer.getParameter", {parameterName: parameterName, expectedType: expectedType});
+        const value = this.getOptionalParameter(parameterName, expectedType, loggingProperties.nextIndent);
         if (value == null)
             throw httpsError("invalid-argument", `Couldn't parse '${parameterName}'. Expected type '${expectedType}', but got undefined or null.`, loggingProperties);
         return value;

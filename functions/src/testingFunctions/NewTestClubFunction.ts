@@ -20,18 +20,18 @@ export class NewTestClubFunction implements FirebaseFunction {
         this.parameters = NewTestClubFunction.parseParameters(parameterContainer, this.loggingProperties.nextIndent);
     }
 
-    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): FunctionParameters {
-        loggingProperties?.append("NewTestClubFunction.parseParameters", {container: container});
+    private static parseParameters(container: ParameterContainer, loggingProperties: LoggingProperties): FunctionParameters {
+        loggingProperties.append("NewTestClubFunction.parseParameters", {container: container});
         return {
-            privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
-            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
-            testClubType: TestClubType.fromParameterContainer(container, "testClubType", loggingProperties?.nextIndent),
+            privateKey: container.getParameter("privateKey", "string", loggingProperties.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties.nextIndent),
+            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties.nextIndent),
+            testClubType: TestClubType.fromParameterContainer(container, "testClubType", loggingProperties.nextIndent),
         };
     }
 
     async executeFunction(auth?: { uid: string }): Promise<void> {
-        this.loggingProperties?.append("NewTestClubFunction.executeFunction", {auth: auth}, "info");
+        this.loggingProperties.append("NewTestClubFunction.executeFunction", {auth: auth}, "info");
         await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth);
         if (this.parameters.clubLevel.value !== "testing")
             throw httpsError("failed-precondition", "Function can only be called for testing.", this.loggingProperties);
@@ -53,15 +53,15 @@ class TestClubType {
         this.value = value;
     }
 
-    static fromString(value: string, loggingProperties?: LoggingProperties): TestClubType {
-        loggingProperties?.append("TestClubType.fromString", {value: value});
+    static fromString(value: string, loggingProperties: LoggingProperties): TestClubType {
+        loggingProperties.append("TestClubType.fromString", {value: value});
         if (value != "default")
             throw httpsError("invalid-argument", `Couldn't parse TestClubType, invalid type: ${value}`, loggingProperties);
         return new TestClubType(value);
     }
-    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): TestClubType {
-        loggingProperties?.append("TestClubType.fromParameterContainer", {container: container, parameterName: parameterName});
-        return TestClubType.fromString(container.getParameter(parameterName, "string", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): TestClubType {
+        loggingProperties.append("TestClubType.fromParameterContainer", {container: container, parameterName: parameterName});
+        return TestClubType.fromString(container.getParameter(parameterName, "string", loggingProperties.nextIndent), loggingProperties.nextIndent);
     }
 
     getTestClub(): any {

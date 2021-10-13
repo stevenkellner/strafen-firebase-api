@@ -6,10 +6,14 @@ import {assert, AssertionError, expect} from "chai";
 import {FirebaseError} from "firebase-admin";
 import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
 import {Fine} from "../src/TypeDefinitions/Fine";
+import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
+import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
 
 describe("ChangeFine", () => {
 
-    const clubId = guid.fromString("6fff234d-756b-4b53-9ae4-0f356ef189d1", undefined);
+    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "changeFineTest", undefined, "notice");
+
+    const clubId = guid.fromString("6fff234d-756b-4b53-9ae4-0f356ef189d1", loggingProperties.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -129,7 +133,7 @@ describe("ChangeFine", () => {
             reason: "Test Reason 1",
             amount: 2.50,
             importance: "low",
-        }, undefined);
+        }, loggingProperties.nextIndent);
         await callFunction("changeReasonTemplate", {
             privateKey: privateKey,
             clubLevel: "testing",
@@ -143,7 +147,7 @@ describe("ChangeFine", () => {
         });
 
         // Check reason
-        const reasonList = await getDatabaseReasonTemplates(clubId);
+        const reasonList = await getDatabaseReasonTemplates(clubId, loggingProperties.nextIndent);
         const fetchedReason = reasonList.find(_reason => _reason.id.equals(reasonTemplate.id));
         expect(fetchedReason).to.deep.equal(reasonTemplate);
     }
@@ -174,7 +178,7 @@ describe("ChangeFine", () => {
                 timestamp: timestamp,
                 personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
-        }, undefined);
+        }, loggingProperties.nextIndent);
 
         await callFunction("changeFine", {
             privateKey: privateKey,
@@ -185,8 +189,8 @@ describe("ChangeFine", () => {
         });
 
         // Check fine
-        const fineList = await getDatabaseFines(clubId);
-        const fetchedFine = fineList.find(_fine => _fine.id.equals(fine.id));
+        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fetchedFine = fineList.find(_fine => _fine.property.id.equals(fine.id))?.property;
         expect(fetchedFine).to.deep.equal(fine);
     }
 
@@ -195,7 +199,7 @@ describe("ChangeFine", () => {
         await setFine(true, 123456);
 
         // Check statistic
-        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine");
+        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine", loggingProperties.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
             changedFine: {
@@ -228,7 +232,7 @@ describe("ChangeFine", () => {
         await setFine(false, 123457);
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine");
+        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine", loggingProperties.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousFine != null;
         });
@@ -284,7 +288,7 @@ describe("ChangeFine", () => {
         await setFine(true, 123457);
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine");
+        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine", loggingProperties.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousFine != null;
         });
@@ -359,7 +363,7 @@ describe("ChangeFine", () => {
                 timestamp: 123457,
                 personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
-        }, undefined);
+        }, loggingProperties.nextIndent);
 
         await callFunction("changeFine", {
             privateKey: privateKey,
@@ -370,12 +374,12 @@ describe("ChangeFine", () => {
         });
 
         // Check fine
-        const fineList = await getDatabaseFines(clubId);
-        const fetchedFine = fineList.find(_fine => _fine.id.equals(fine.id));
+        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fetchedFine = fineList.find(_fine => _fine.property.id.equals(fine.id))?.property;
         expect(fetchedFine).to.be.equal(undefined);
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine");
+        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFine", loggingProperties.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousFine != null;
         });

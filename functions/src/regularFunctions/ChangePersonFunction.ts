@@ -83,14 +83,14 @@ export class ChangePersonFunction implements FirebaseFunction {
      * @param {ParameterContainer} container Parameter container to get parameters from.
      * @return {FunctionParameters} Parsed parameters for this function.
      */
-    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): FunctionParameters {
-        loggingProperties?.append("ChangePersonFunction.parseParameter", {container: container});
+    private static parseParameters(container: ParameterContainer, loggingProperties: LoggingProperties): FunctionParameters {
+        loggingProperties.append("ChangePersonFunction.parseParameter", {container: container});
         return {
-            privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
-            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
-            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
-            person: new Person.Builder().fromParameterContainer(container, "person", loggingProperties?.nextIndent),
+            privateKey: container.getParameter("privateKey", "string", loggingProperties.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties.nextIndent),
+            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties.nextIndent),
+            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties.nextIndent),
+            person: new Person.Builder().fromParameterContainer(container, "person", loggingProperties.nextIndent),
         };
     }
 
@@ -105,7 +105,7 @@ export class ChangePersonFunction implements FirebaseFunction {
      * @param {{uid: string} | undefined} auth Authentication state.
      */
     async executeFunction(auth?: { uid: string }): Promise<void> {
-        this.loggingProperties?.append("ChangePersonFunction.executeFunction", {auth: auth}, "info");
+        this.loggingProperties.append("ChangePersonFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements
         const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
@@ -139,7 +139,7 @@ export class ChangePersonFunction implements FirebaseFunction {
     }
 
     private async deleteItem(): Promise<void> {
-        this.loggingProperties?.append("ChangePersonFunction.deleteItem");
+        this.loggingProperties.append("ChangePersonFunction.deleteItem");
 
         // Check if person to delete is already signed in
         const personRef = this.getPersonRef();
@@ -155,7 +155,7 @@ export class ChangePersonFunction implements FirebaseFunction {
     }
 
     private async updateItem(): Promise<void> {
-        this.loggingProperties?.append("ChangePersonFunction.updateItem");
+        this.loggingProperties.append("ChangePersonFunction.updateItem");
         const personRef = this.getPersonRef();
         await personRef.set(this.parameters.person?.serverObjectWithoutId, error => {
             if (error != null)

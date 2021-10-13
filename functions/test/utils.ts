@@ -7,6 +7,9 @@ import { Fine } from "../src/TypeDefinitions/Fine";
 import {guid} from "../src/TypeDefinitions/guid";
 import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
 import {Person} from "../src/TypeDefinitions/Person";
+import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
+import { Deleted } from "../src/utils";
+import { getUpdatable, Updatable } from "../src/TypeDefinitions/UpdateProperties";
 
 const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app, "europe-west1");
@@ -36,37 +39,41 @@ export async function getDatabaseValue(referencePath: string): Promise<any> {
     });
 }
 
-export async function getDatabaseFines(clubId: guid): Promise<Fine[]> {
+export async function getDatabaseFines(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<Fine | Deleted>[]> {
+    loggingProperties.append("getDatabaseFines", {clubId: clubId});
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/fines`)).map(value => {
-        return new Fine.Builder().fromValue({
+        return getUpdatable({
             id: value[0],
             ...(value[1] as any),
-        }, undefined);
+        }, new Fine.Builder(), loggingProperties.nextIndent);
     });
 }
 
-export async function getDatabaseReasonTemplates(clubId: guid): Promise<ReasonTemplate[]> {
+export async function getDatabaseReasonTemplates(clubId: guid, loggingProperties: LoggingProperties): Promise<ReasonTemplate[]> {
+    loggingProperties.append("getDatabaseReasonTemplates", {clubId: clubId});
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/reasonTemplates`)).map(value => {
         return new ReasonTemplate.Builder().fromValue({
             id: value[0],
             ...(value[1] as any),
-        }, undefined);
+        }, loggingProperties.nextIndent);
     });
 }
 
-export async function getDatabasePersons(clubId: guid): Promise<Person[]> {
+export async function getDatabasePersons(clubId: guid, loggingProperties: LoggingProperties): Promise<Person[]> {
+    loggingProperties.append("getDatabasePersons", {clubId: clubId});
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/persons`)).map(value => {
         return new Person.Builder().fromValue({
             id: value[0],
             ...(value[1] as any),
-        }, undefined);
+        }, loggingProperties.nextIndent);
     });
 }
 
-export async function getDatabaseStatistics(clubId: guid): Promise<{id: guid, name: string, timestamp: number, properties: any}[]> {
+export async function getDatabaseStatistics(clubId: guid, loggingProperties: LoggingProperties): Promise<{id: guid, name: string, timestamp: number, properties: any}[]> {
+    loggingProperties.append("getDatabaseStatistics", {clubId: clubId});
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/statistics`)).map(value => {
         return {
-            id: guid.fromString(value[0], undefined),
+            id: guid.fromString(value[0], loggingProperties.nextIndent),
             name: (value[1] as any).name,
             timestamp: (value[1] as any).timestamp,
             properties: (value[1] as any).properties,
@@ -74,6 +81,20 @@ export async function getDatabaseStatistics(clubId: guid): Promise<{id: guid, na
     });
 }
 
-export async function getDatabaseStatisticsPropertiesWithName(clubId: guid, name: string) {
-    return (await getDatabaseStatistics(clubId)).filter(statistic => statistic.name == name ).map(statistic => statistic.properties);
+export async function getDatabaseStatisticsPropertiesWithName(clubId: guid, name: string, loggingProperties: LoggingProperties) {
+    return (await getDatabaseStatistics(clubId, loggingProperties)).filter(statistic => statistic.name == name ).map(statistic => statistic.properties);
+}
+
+interface FirebaseError {
+    code: string,
+    message: string,
+}
+
+export function firebaseError(error: unknown): FirebaseError {
+    if (typeof error != "object" || !(error as any).hasOwnProperty("name") || (error as any).name != "FirebaseError")
+        throw error
+    return {
+        code: (error as any).code,
+        message: (error as any).message,
+    };
 }

@@ -83,14 +83,14 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
      * @param {ParameterContainer} container Parameter container to get parameters from.
      * @return {FunctionParameters} Parsed parameters for this function.
      */
-    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): FunctionParameters {
-        loggingProperties?.append("ChangeReasonTemplateFunction.parseParameter", {container: container});
+    private static parseParameters(container: ParameterContainer, loggingProperties: LoggingProperties): FunctionParameters {
+        loggingProperties.append("ChangeReasonTemplateFunction.parseParameter", {container: container});
         return {
-            privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
-            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
-            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
-            reasonTemplate: new ReasonTemplate.Builder().fromParameterContainer(container, "reasonTemplate", loggingProperties?.nextIndent),
+            privateKey: container.getParameter("privateKey", "string", loggingProperties.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties.nextIndent),
+            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties.nextIndent),
+            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties.nextIndent),
+            reasonTemplate: new ReasonTemplate.Builder().fromParameterContainer(container, "reasonTemplate", loggingProperties.nextIndent),
         };
     }
 
@@ -105,7 +105,7 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
      * @param {{uid: string} | undefined} auth Authentication state.
      */
     async executeFunction(auth?: { uid: string }): Promise<void> {
-        this.loggingProperties?.append("ChangeReasonTemplateFunction.executeFunction", {auth: auth}, "info");
+        this.loggingProperties.append("ChangeReasonTemplateFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements
         await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
@@ -139,7 +139,7 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
     }
 
     private async deleteItem(): Promise<void> {
-        this.loggingProperties?.append("ChangeReasonTemplateFunction.deleteItem");
+        this.loggingProperties.append("ChangeReasonTemplateFunction.deleteItem");
         const reasonTemplateRef = this.getReasonTemplateRef();
         if (await existsData(reasonTemplateRef)) {
             await reasonTemplateRef.remove(error => {
@@ -150,7 +150,7 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
     }
 
     private async updateItem(): Promise<void> {
-        this.loggingProperties?.append("ChangeReasonTemplateFunction.updateItem");
+        this.loggingProperties.append("ChangeReasonTemplateFunction.updateItem");
         const reasonTemplateRef = this.getReasonTemplateRef();
         await reasonTemplateRef.set(this.parameters.reasonTemplate?.serverObjectWithoutId, error => {
             if (error != null)

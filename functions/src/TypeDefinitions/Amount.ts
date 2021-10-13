@@ -16,8 +16,8 @@ export class Amount {
 
 export namespace Amount {
     export class Builder {
-        public fromValue(value: any, loggingProperties?: LoggingProperties): Amount {
-            loggingProperties?.append("Amount.Builder.fromValue", {value: value});
+        public fromValue(value: any, loggingProperties: LoggingProperties): Amount {
+            loggingProperties.append("Amount.Builder.fromValue", {value: value});
 
             // Check if value is from type number
             if (typeof value !== "number")
@@ -32,9 +32,9 @@ export namespace Amount {
             return new Amount(amountValue, Math.floor(subUnitValue));
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Amount {
-            loggingProperties?.append("Amount.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
-            return this.fromValue(container.getParameter(parameterName, "number", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): Amount {
+            loggingProperties.append("Amount.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
+            return this.fromValue(container.getParameter(parameterName, "number", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }
     }
 }

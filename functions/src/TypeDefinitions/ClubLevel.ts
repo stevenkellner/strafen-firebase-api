@@ -22,8 +22,8 @@ export class ClubLevel {
 
 export namespace ClubLevel {
     export class Builder {
-        public fromValue(value: any, loggingProperties?: LoggingProperties): ClubLevel {
-            loggingProperties?.append("ClubLevel.Builder.fromString", {value: value});
+        public fromValue(value: any, loggingProperties: LoggingProperties): ClubLevel {
+            loggingProperties.append("ClubLevel.Builder.fromString", {value: value});
 
             // Check if value is from type string
             if (typeof value !== "string")
@@ -36,9 +36,9 @@ export namespace ClubLevel {
             return new ClubLevel(value);
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): ClubLevel {
-            loggingProperties?.append("ClubLevel.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
-            return this.fromValue(container.getParameter(parameterName, "string", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): ClubLevel {
+            loggingProperties.append("ClubLevel.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
+            return this.fromValue(container.getParameter(parameterName, "string", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }
     }
 }

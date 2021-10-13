@@ -48,8 +48,8 @@ export namespace ReasonTemplate {
 
     export class Builder {
 
-        public fromValue(value: any, loggingProperties?: LoggingProperties): ReasonTemplate {
-            loggingProperties?.append("ReasonTemplate.Builder.fromValue", {value: value});
+        public fromValue(value: any, loggingProperties: LoggingProperties): ReasonTemplate {
+            loggingProperties.append("ReasonTemplate.Builder.fromValue", {value: value});
 
             // Check if value is from type object
             if (typeof value !== "object")
@@ -58,7 +58,7 @@ export namespace ReasonTemplate {
             // Check if type of id is string
             if (typeof value.id !== "string")
                 throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
-            const id = guid.fromString(value.id, loggingProperties?.nextIndent);
+            const id = guid.fromString(value.id, loggingProperties.nextIndent);
 
             // Check if type of reason is string
             if (typeof value.reason !== "string")
@@ -67,19 +67,19 @@ export namespace ReasonTemplate {
             // Check if type of amount is number
             if (typeof value.amount !== "number")
                 throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'amount'. Expected type 'number', but got '${value.amount}' from type '${typeof value.amount}'.`, loggingProperties);
-            const amount = new Amount.Builder().fromValue(value.amount, loggingProperties?.nextIndent);
+            const amount = new Amount.Builder().fromValue(value.amount, loggingProperties.nextIndent);
 
             // Check if type of importance is string
             if (typeof value.importance !== "string")
                 throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'importance'. Expected type 'string', but got '${value.importance}' from type '${typeof value.importance}'.`, loggingProperties);
-            const importance = new Importance.Builder().fromValue(value.importance, loggingProperties?.nextIndent);
+            const importance = new Importance.Builder().fromValue(value.importance, loggingProperties.nextIndent);
 
             // Return reason template
             return new ReasonTemplate(id, value.reason, amount, importance);
         }
 
-        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties?: LoggingProperties): ReasonTemplate {
-            loggingProperties?.append("ReasonTemplate.Builder.fromSnapshot", {snapshot: snapshot});
+        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): ReasonTemplate {
+            loggingProperties.append("ReasonTemplate.Builder.fromSnapshot", {snapshot: snapshot});
 
             // Check if data exists in snapshot
             if (!snapshot.exists())
@@ -98,12 +98,12 @@ export namespace ReasonTemplate {
             return this.fromValue({
                 id: idString,
                 ...data,
-            }, loggingProperties?.nextIndent);
+            }, loggingProperties.nextIndent);
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): ReasonTemplate {
-            loggingProperties?.append("ReasonTemplate.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
-            return this.fromValue(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): ReasonTemplate {
+            loggingProperties.append("ReasonTemplate.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
+            return this.fromValue(container.getParameter(parameterName, "object", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }
     }
 }

@@ -19,8 +19,8 @@ export namespace LatePaymentInterest {
 
     export class Builder {
 
-        public fromValue(value: any, loggingProperties?: LoggingProperties): LatePaymentInterest {
-            loggingProperties?.append("LatePaymentInterest.Builder.fromValue", {value: value});
+        public fromValue(value: any, loggingProperties: LoggingProperties): LatePaymentInterest {
+            loggingProperties.append("LatePaymentInterest.Builder.fromValue", {value: value});
 
             // Check if value is from type object
             if (typeof value !== "object")
@@ -29,12 +29,12 @@ export namespace LatePaymentInterest {
             // Check if type of interest free period is time period
             if (typeof value.interestFreePeriod !== "object")
                 throw httpsError("invalid-argument", `Couldn't parse LatePaymentInterest parameter 'interestFreePeriod'. Expected type 'object', but got '${value.interestFreePeriod}' from type '${typeof value.interestFreePeriod}'.`, loggingProperties);
-            const interestFreePeriod = new TimePeriod.Builder().fromValue(value.interestFreePeriod, loggingProperties?.nextIndent);
+            const interestFreePeriod = new TimePeriod.Builder().fromValue(value.interestFreePeriod, loggingProperties.nextIndent);
 
             // Check if type of interest period is time period
             if (typeof value.interestPeriod !== "object")
                 throw httpsError("invalid-argument", `Couldn't parse LatePaymentInterest parameter 'interestPeriod'. Expected type 'object', but got '${value.interestPeriod}' from type '${typeof value.interestPeriod}'.`, loggingProperties);
-            const interestPeriod = new TimePeriod.Builder().fromValue(value.interestPeriod, loggingProperties?.nextIndent);
+            const interestPeriod = new TimePeriod.Builder().fromValue(value.interestPeriod, loggingProperties.nextIndent);
 
             // Check if type of interest rate is number
             if (typeof value.interestRate !== "number")
@@ -48,8 +48,8 @@ export namespace LatePaymentInterest {
             return new LatePaymentInterest(interestFreePeriod, interestPeriod, value.interestRate, value.compoundInterest);
         }
 
-        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties?: LoggingProperties): LatePaymentInterest {
-            loggingProperties?.append("LatePaymentInterest.Builder.fromSnapshot", {osnapshotject: snapshot});
+        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): LatePaymentInterest {
+            loggingProperties.append("LatePaymentInterest.Builder.fromSnapshot", {osnapshotject: snapshot});
 
             // Check if data exists in snapshot
             if (!snapshot.exists())
@@ -59,12 +59,12 @@ export namespace LatePaymentInterest {
             if (typeof data !== "object")
                 throw httpsError("invalid-argument", `Couldn't parse Person from snapshot since data isn't an object: ${data}`, loggingProperties);
 
-            return this.fromValue(data, loggingProperties?.nextIndent);
+            return this.fromValue(data, loggingProperties.nextIndent);
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): LatePaymentInterest {
-            loggingProperties?.append("LatePaymentInterest.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
-            return this.fromValue(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): LatePaymentInterest {
+            loggingProperties.append("LatePaymentInterest.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
+            return this.fromValue(container.getParameter(parameterName, "object", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }
     }
 
@@ -79,8 +79,8 @@ export namespace LatePaymentInterest {
     export namespace TimePeriod {
         export class Builder {
 
-            public fromValue(value: any, loggingProperties?: LoggingProperties): TimePeriod {
-                loggingProperties?.append("TimePeriod.fromValue", {value: value});
+            public fromValue(value: any, loggingProperties: LoggingProperties): TimePeriod {
+                loggingProperties.append("TimePeriod.fromValue", {value: value});
 
                 // Check if value is from type object
                 if (typeof value !== "object")

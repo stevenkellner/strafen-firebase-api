@@ -1,12 +1,12 @@
 export const defaultTestClub = {
     "fines": {
         "02462A8B-107F-4BAE-A85B-EFF1F727C00F": {
-            "date": 6.3018780725609E8,
+            "date": "2011-10-13T10:42:38+0000",
             "number": 1,
             "payedState": {
                 "state": "unpayed",
                 "updateProperties": {
-                    "timestamp": 12345,
+                    "timestamp": "2011-10-13T10:42:38+0000",
                     "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             },
@@ -15,19 +15,19 @@ export const defaultTestClub = {
                 "reasonTemplateId": "062FB0CB-F730-497B-BCF5-A4F907A6DCD5",
             },
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
         "0B5F958E-9D7D-46E1-8AEE-F52F4370A95A": {
-            "date": 6.3016007523132E8,
+            "date": "2011-09-13T10:42:38+0000",
             "number": 2,
             "payedState": {
-                "payDate": 6.30160103445665E8,
+                "payDate": "2011-09-13T10:42:38+0000",
                 "state": "payed",
                 "inApp": false,
                 "updateProperties": {
-                    "timestamp": 12345,
+                    "timestamp": "2011-10-13T10:42:38+0000",
                     "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             },
@@ -38,19 +38,19 @@ export const defaultTestClub = {
                 "reason": "Das ist ein Test",
             },
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
         "1B5F958E-9D7D-46E1-8AEE-F52F4370A95A": {
-            "date": 6.3016007523132E8,
+            "date": "2011-09-13T10:42:38+0000",
             "number": 2,
             "payedState": {
-                "payDate": 6.30160103445665E8,
+                "payDate": "2011-09-13T10:42:38+0000",
                 "state": "payed",
                 "inApp": true,
                 "updateProperties": {
-                    "timestamp": 12345,
+                    "timestamp": "2011-10-13T10:42:38+0000",
                     "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             },
@@ -61,7 +61,7 @@ export const defaultTestClub = {
                 "reason": "Das ist ein Test",
             },
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
@@ -70,7 +70,7 @@ export const defaultTestClub = {
     "inAppPaymentActive": true,
     "name": "Neuer Verein",
     "updateProperties": {
-        "timestamp": 12345,
+        "timestamp": "2011-10-13T10:42:38+0000",
         "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
     },
     "personUserIds": {
@@ -85,11 +85,11 @@ export const defaultTestClub = {
             },
             "signInData": {
                 "cashier": false,
-                "signInDate": 6.30095493619915E8,
+                "signInDate": "2011-09-13T10:42:38+0000",
                 "userId": "asdnfl",
             },
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
@@ -101,11 +101,11 @@ export const defaultTestClub = {
             },
             "signInData": {
                 "cashier": true,
-                "signInDate": 6.30095493619915E8,
+                "signInDate": "2011-09-13T10:42:38+0000",
                 "userId": "LpAaeCz0BQfDHVYw02KiCyoTMS13",
             },
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
@@ -115,7 +115,7 @@ export const defaultTestClub = {
                 "last": "Doe",
             },
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
@@ -126,7 +126,7 @@ export const defaultTestClub = {
             "importance": "high",
             "reason": "Gelbe Karte Unsportlichkeit",
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
@@ -135,7 +135,7 @@ export const defaultTestClub = {
             "importance": "low",
             "reason": "Mit Stutzen Auslaufen",
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
@@ -144,7 +144,7 @@ export const defaultTestClub = {
             "importance": "medium",
             "reason": "Spiel Ausrüstung Vergessen",
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
@@ -158,20 +158,20 @@ export const defaultTestClub = {
                 "first": "Max",
                 "last": "Mustermann",
             },
-            "payDate": 6.37601313257926E8,
+            "payDate": "2011-09-13T10:42:38+0000",
             "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },
         "7RQYM2DQ": {
             "approved": false,
             "fineIds": ["02462A8B-107F-4BAE-A85B-EFF1F727C00F"],
-            "payDate": 6.37599817777474E8,
+            "payDate": "2011-09-13T10:42:38+0000",
             "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             "updateProperties": {
-                "timestamp": 12345,
+                "timestamp": "2011-10-13T10:42:38+0000",
                 "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         },

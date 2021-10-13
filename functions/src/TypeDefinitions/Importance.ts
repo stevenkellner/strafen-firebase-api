@@ -15,8 +15,8 @@ export class Importance {
 export namespace Importance {
     export class Builder {
 
-        public fromValue(value: any, loggingProperties?: LoggingProperties): Importance {
-            loggingProperties?.append("Importance.Builder.fromValue", {value: value});
+        public fromValue(value: any, loggingProperties: LoggingProperties): Importance {
+            loggingProperties.append("Importance.Builder.fromValue", {value: value});
 
             // Check if value is from type string
             if (typeof value !== "string")
@@ -29,9 +29,9 @@ export namespace Importance {
             return new Importance(value);
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Importance {
-            loggingProperties?.append("Importance.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
-            return this.fromValue(container.getParameter(parameterName, "string", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): Importance {
+            loggingProperties.append("Importance.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
+            return this.fromValue(container.getParameter(parameterName, "string", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }
     }
 }

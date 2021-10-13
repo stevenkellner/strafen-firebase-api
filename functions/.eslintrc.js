@@ -44,5 +44,6 @@ module.exports = {
         "import/export": "off",
         "no-extend-native": "off",
         "valid-jsdoc": "off",
+        "no-irregular-whitespace": "off",
     },
 };

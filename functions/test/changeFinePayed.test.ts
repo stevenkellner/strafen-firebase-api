@@ -1,16 +1,20 @@
 import {privateKey} from "../src/privateKeys";
 import {guid} from "../src/TypeDefinitions/guid";
-import {auth, callFunction, getDatabaseFines, getDatabaseReasonTemplates, getDatabaseStatisticsPropertiesWithName, signInTestUser} from "./utils";
-import {assert, AssertionError, expect} from "chai";
+import {auth, callFunction, firebaseError, getDatabaseFines, getDatabaseReasonTemplates, getDatabaseStatisticsPropertiesWithName, signInTestUser} from "./utils";
+import {assert, expect} from "chai";
 import {signOut} from "firebase/auth";
-import {FirebaseError} from "firebase/app";
 import {Fine} from "../src/TypeDefinitions/Fine";
 import {FineReason} from "../src/TypeDefinitions/FineReason";
 import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
+import { Updatable, UpdateProperties } from "../src/TypeDefinitions/UpdateProperties";
+import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
+import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
 
 describe("ChangeFinePayed", () => {
 
-    const clubId = guid.fromString("1992af26-8b42-4452-a564-7e376b6401db", undefined);
+    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "changeFinePayedTest", undefined, "notice");
+
+    const clubId = guid.fromString("1992af26-8b42-4452-a564-7e376b6401db", loggingProperties.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -46,11 +50,10 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.be.equal("Couldn't parse 'clubId'. Expected type 'string', but got undefined or null.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse 'clubId'. Expected type 'string', but got undefined or null.",
+            });
         }
     });
 
@@ -64,17 +67,16 @@ describe("ChangeFinePayed", () => {
                     state: "unpayed",
                 },
                 updateProperties: {
-                    timestamp: 123456,
+                    timestamp: "2011-10-14T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.be.equal("Couldn't parse 'fineId'. Expected type 'string', but got undefined or null.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse 'fineId'. Expected type 'string', but got undefined or null.",
+            });
         }
     });
 
@@ -86,17 +88,16 @@ describe("ChangeFinePayed", () => {
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
                 updateProperties: {
-                    timestamp: 123456,
+                    timestamp: "2011-10-14T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.be.equal("Couldn't parse 'state'. Expected type 'object', but got undefined or null.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse 'state'. Expected type 'object', but got undefined or null.",
+            });
         }
     });
 
@@ -111,17 +112,16 @@ describe("ChangeFinePayed", () => {
                     state: "invalid state",
                 },
                 updateProperties: {
-                    timestamp: 123456,
+                    timestamp: "2011-10-14T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.be.equal("Couldn't parse PayedState parameter 'state'. Expected values 'payed', 'settled' or 'unpayed' from type 'string', but got 'invalid state' from type 'string'.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse PayedState parameter 'state'. Expected type 'string', but got 'invalid state' from type 'string'.",
+            });
         }
     });
 
@@ -136,17 +136,16 @@ describe("ChangeFinePayed", () => {
                     state: "payed",
                 },
                 updateProperties: {
-                    timestamp: 123456,
+                    timestamp: "2011-10-14T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.be.equal("Couldn't parse PayedState since state is 'payed' but payDate or inApp is null.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse PayedState parameter 'payDate', expected iso string but got 'undefined' from type undefined",
+            });
         }
     });
 
@@ -159,20 +158,19 @@ describe("ChangeFinePayed", () => {
                 fineId: guid.newGuid().guidString,
                 state: {
                     state: "payed",
-                    payDate: 123456789,
+                    payDate: "2011-10-14T10:42:38+0000",
                 },
                 updateProperties: {
-                    timestamp: 123456,
+                    timestamp: "2011-10-14T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.be.equal("Couldn't parse PayedState since state is 'payed' but payDate or inApp is null.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', undefined or null, but got 'undefined' from type 'undefined'.",
+            });
         }
     });
 
@@ -185,17 +183,16 @@ describe("ChangeFinePayed", () => {
                 fineId: guid.newGuid().guidString,
                 state: {
                     state: "payed",
-                    payDate: 123456789,
+                    payDate: "2011-10-14T10:42:38+0000",
                     inApp: false,
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.be.equal("Couldn't parse payed state parameter 'updateProperties', expected type object but got 'undefined' from type 'undefined'.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't get updateProperties.",
+            });
         }
     });
 
@@ -208,18 +205,19 @@ describe("ChangeFinePayed", () => {
                 fineId: guid.newGuid().guidString,
                 state: {
                     state: "payed",
-                    payDate: 123456789,
+                    payDate: "2011-10-14T10:42:38+0000",
                     inApp: false,
-                    updateProperties: "invalid",
+                    updateProperties: {
+                        asdf: "invalid",
+                    },
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.be.equal("Couldn't parse payed state parameter 'updateProperties', expected type object but got 'invalid' from type 'string'.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse UpdateProperties parameter 'personId', expected type string but got 'undefined' from type undefined",
+            });
         }
     });
 
@@ -233,50 +231,47 @@ describe("ChangeFinePayed", () => {
                 state: {
                     state: "unpayed",
                     updateProperties: {
-                        timestamp: 123456,
+                        timestamp: "2011-10-14T10:42:38+0000",
                         personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                     },
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.be.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.be.equal("Couldn't parse Fine since no data exists in snapshot.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse Fine since no data exists in snapshot.",
+            });
         }
     });
 
-    async function addFinesAndReason(fine2PersonId: guid = guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9", undefined), addReason = true) {
+    async function addFinesAndReason(fine2PersonId: guid = guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9", loggingProperties.nextIndent), addReason = true) {
 
         // Add reason
         const fine1 = new Fine.Builder().fromValue({
-            id: guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined).guidString,
-            personId: guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9", undefined).guidString,
-            date: 9284765,
+            id: guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba", loggingProperties.nextIndent).guidString,
+            personId: guid.fromString("D1852AC0-A0E2-4091-AC7E-CB2C23F708D9", loggingProperties.nextIndent).guidString,
+            date: "2011-10-14T10:42:38+0000",
             payedState: {
                 state: "unpayed",
                 updateProperties: {
-                    timestamp: 123455,
+                    timestamp: "2011-10-14T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             },
             number: 2,
             fineReason: {
-                reasonTemplateId: guid.fromString("9d0681f0-2045-4a1d-abbc-6bb289934ff9", undefined).guidString,
+                reasonTemplateId: guid.fromString("9d0681f0-2045-4a1d-abbc-6bb289934ff9", loggingProperties.nextIndent).guidString,
             },
-            updateProperties: {
-                timestamp: 123455,
-                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
-            },
-        }, undefined);
+        }, loggingProperties.nextIndent) as Fine;
+        expect(fine1).to.be.instanceOf(Fine);
+        const updatableFine1 = new Updatable<Fine>(fine1, new UpdateProperties(new Date("2011-10-14T10:42:38+0000"), guid.fromString("7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7", loggingProperties.nextIndent)));
         const reason = new ReasonTemplate.Builder().fromValue({
             id: (fine1.fineReason.value as FineReason.WithTemplate).reasonTemplateId.guidString,
             reason: "asldkfj",
             importance: "low",
             amount: 12.98,
-        }, undefined);
+        }, loggingProperties.nextIndent);
         if (addReason) {
             await callFunction("changeReasonTemplate", {
                 privateKey: privateKey,
@@ -297,20 +292,20 @@ describe("ChangeFinePayed", () => {
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            fine: fine1.serverObject,
+            fine: updatableFine1.serverObject,
         });
 
         // Add fine with custom reason
         const fine2 = new Fine.Builder().fromValue({
-            id: guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined).guidString,
+            id: guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", loggingProperties.nextIndent).guidString,
             personId: fine2PersonId.guidString,
-            date: 9284765,
+            date: "2011-10-14T10:42:38+0000",
             payedState: {
                 state: "payed",
                 inApp: false,
-                payDate: 234689,
+                payDate: "2011-10-14T10:42:38+0000",
                 updateProperties: {
-                    timestamp: 123455,
+                    timestamp: "2011-10-14T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             },
@@ -321,27 +316,29 @@ describe("ChangeFinePayed", () => {
                 importance: "high",
             },
             updateProperties: {
-                timestamp: 123455,
+                timestamp: "2011-10-14T10:42:38+0000",
                 personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
-        }, undefined);
+        }, loggingProperties.nextIndent) as Fine;
+        expect(fine2).to.be.instanceOf(Fine);
+        const updatableFine2 = new Updatable<Fine>(fine2, new UpdateProperties(new Date("2011-10-14T10:42:38+0000"), guid.fromString("7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7", loggingProperties.nextIndent)));
         await callFunction("changeFine", {
             privateKey: privateKey,
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            fine: fine2.serverObject,
+            fine: updatableFine2.serverObject,
         });
 
         // Check fines and reason
-        const fineList = await getDatabaseFines(clubId);
-        const fetchedFine1 = fineList.find(fine => fine.id.equals(fine1.id));
-        const fetchedFine2 = fineList.find(fine => fine.id.equals(fine2.id));
+        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fetchedFine1 = fineList.find(fine => fine.property.id.equals(fine1.id))?.property;
+        const fetchedFine2 = fineList.find(fine => fine.property.id.equals(fine2.id))?.property;
         expect(fetchedFine1).to.deep.equal(fine1);
         expect(fetchedFine2).to.deep.equal(fine2);
 
         if (addReason) {
-            const reasonList = await getDatabaseReasonTemplates(clubId);
+            const reasonList = await getDatabaseReasonTemplates(clubId, loggingProperties.nextIndent);
             const fetchedReason = reasonList.find(_reason => _reason.id.equals(reason.id));
             expect(fetchedReason).to.deep.equal(reason);
         }
@@ -353,47 +350,49 @@ describe("ChangeFinePayed", () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined);
+        const fineId = guid.fromString("637d6187-68d2-4000-9cb8-7dfc3877d5ba", loggingProperties.nextIndent);
         await callFunction("changeFinePayed", {
             privateKey: privateKey,
             clubLevel: "testing",
             clubId: clubId.guidString,
+            verbose: true,
             fineId: fineId.guidString,
             state: {
                 state: "payed",
-                payDate: 12345,
+                payDate: "2011-10-14T10:42:38+0000",
                 inApp: false,
                 updateProperties: {
-                    timestamp: 123456,
+                    timestamp: "2011-10-15T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             },
         });
 
         // Check fine payed
-        const fineList = await getDatabaseFines(clubId);
-        const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
+        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fetchedFine = fineList.find(fine => fine.property.id.equals(fineId))?.property as Fine;
+        expect(fetchedFine).to.be.an.instanceOf(Fine);
         expect(fetchedFine?.payedState.serverObject).to.deep.equal({
             state: "payed",
-            payDate: 12345,
+            payDate: "2011-10-14T10:42:38.000Z",
             inApp: false,
             updateProperties: {
-                timestamp: 123456,
+                timestamp: "2011-10-15T10:42:38.000Z",
                 personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         });
 
         // Check statistic
-        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed");
+        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed", loggingProperties.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
             changedState: {
                 inApp: false,
-                payDate: 12345,
+                payDate: "2011-10-14T10:42:38.000Z",
                 state: "payed",
             },
             previousFine: {
-                date: 9284765,
+                date: "2011-10-14T10:42:38.000Z",
                 id: "637D6187-68D2-4000-9CB8-7DFC3877D5BA",
                 number: 2,
                 payedState: {
@@ -422,7 +421,7 @@ describe("ChangeFinePayed", () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined);
+        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", loggingProperties.nextIndent);
         await callFunction("changeFinePayed", {
             privateKey: privateKey,
             clubLevel: "testing",
@@ -430,43 +429,44 @@ describe("ChangeFinePayed", () => {
             fineId: fineId.guidString,
             state: {
                 state: "payed",
-                payDate: 54321,
+                payDate: "2011-10-14T10:42:38+0000",
                 inApp: true,
                 updateProperties: {
-                    timestamp: 123456,
+                    timestamp: "2011-10-15T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             },
         });
 
         // Check fine payed
-        const fineList = await getDatabaseFines(clubId);
-        const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
+        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fetchedFine = fineList.find(fine => fine.property.id.equals(fineId))?.property as Fine;
+        expect(fetchedFine).to.be.an.instanceOf(Fine);
         expect(fetchedFine?.payedState.serverObject).to.deep.equal({
             state: "payed",
-            payDate: 54321,
+            payDate: "2011-10-14T10:42:38.000Z",
             inApp: true,
             updateProperties: {
-                timestamp: 123456,
+                timestamp: "2011-10-15T10:42:38.000Z",
                 personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         });
 
         // Check statistic
-        expect(await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed")).to.be.deep.equal([
+        expect(await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed", loggingProperties.nextIndent)).to.be.deep.equal([
             {
                 changedState: {
                     state: "payed",
-                    payDate: 54321,
+                    payDate: "2011-10-14T10:42:38.000Z",
                     inApp: true,
                 },
                 previousFine: {
-                    date: 9284765,
+                    date: "2011-10-14T10:42:38.000Z",
                     id: "137D6187-68D2-4000-9CB8-7DFC3877D5BA",
                     number: 10,
                     payedState: {
                         inApp: false,
-                        payDate: 234689,
+                        payDate: "2011-10-14T10:42:38.000Z",
                         state: "payed",
                     },
                     person: {
@@ -492,7 +492,7 @@ describe("ChangeFinePayed", () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined);
+        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", loggingProperties.nextIndent);
         await callFunction("changeFinePayed", {
             privateKey: privateKey,
             clubLevel: "testing",
@@ -501,38 +501,39 @@ describe("ChangeFinePayed", () => {
             state: {
                 state: "unpayed",
                 updateProperties: {
-                    timestamp: 123456,
+                    timestamp: "2011-10-15T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             },
         });
 
         // Check fine payed
-        const fineList = await getDatabaseFines(clubId);
-        const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
+        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fetchedFine = fineList.find(fine => fine.property.id.equals(fineId))?.property as Fine;
+        expect(fetchedFine).to.be.an.instanceOf(Fine);
         expect(fetchedFine?.payedState.serverObject).to.deep.equal({
             state: "unpayed",
             inApp: null,
             payDate: null,
             updateProperties: {
-                timestamp: 123456,
+                timestamp: "2011-10-15T10:42:38.000Z",
                 personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         });
 
         // Check statistic
-        expect(await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed")).to.be.deep.equal([
+        expect(await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed", loggingProperties.nextIndent)).to.be.deep.equal([
             {
                 changedState: {
                     state: "unpayed",
                 },
                 previousFine: {
-                    date: 9284765,
+                    date: "2011-10-14T10:42:38.000Z",
                     id: "137D6187-68D2-4000-9CB8-7DFC3877D5BA",
                     number: 10,
                     payedState: {
                         inApp: false,
-                        payDate: 234689,
+                        payDate: "2011-10-14T10:42:38.000Z",
                         state: "payed",
                     },
                     person: {
@@ -558,7 +559,7 @@ describe("ChangeFinePayed", () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", undefined);
+        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", loggingProperties.nextIndent);
         await callFunction("changeFinePayed", {
             privateKey: privateKey,
             clubLevel: "testing",
@@ -567,38 +568,39 @@ describe("ChangeFinePayed", () => {
             state: {
                 state: "settled",
                 updateProperties: {
-                    timestamp: 123456,
+                    timestamp: "2011-10-15T10:42:38+0000",
                     personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                 },
             },
         });
 
         // Check fine payed
-        const fineList = await getDatabaseFines(clubId);
-        const fetchedFine = fineList.find(fine => fine.id.equals(fineId));
+        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fetchedFine = fineList.find(fine => fine.property.id.equals(fineId))?.property as Fine;
+        expect(fetchedFine).to.be.an.instanceOf(Fine);
         expect(fetchedFine?.payedState.serverObject).to.deep.equal({
             state: "settled",
             inApp: null,
             payDate: null,
             updateProperties: {
-                timestamp: 123456,
+                timestamp: "2011-10-15T10:42:38.000Z",
                 personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
             },
         });
 
         // Check statistic
-        expect(await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed")).to.be.deep.equal([
+        expect(await getDatabaseStatisticsPropertiesWithName(clubId, "changeFinePayed", loggingProperties.nextIndent)).to.be.deep.equal([
             {
                 changedState: {
                     state: "settled",
                 },
                 previousFine: {
-                    date: 9284765,
+                    date: "2011-10-14T10:42:38.000Z",
                     id: "137D6187-68D2-4000-9CB8-7DFC3877D5BA",
                     number: 10,
                     payedState: {
                         inApp: false,
-                        payDate: 234689,
+                        payDate: "2011-10-14T10:42:38.000Z",
                         state: "payed",
                     },
                     person: {
@@ -618,5 +620,60 @@ describe("ChangeFinePayed", () => {
         ]);
     });
 
-    // TODO: change state of deleted fine
+    it("Change state of deleted fine", async () => {
+
+        // Add fines and reason
+        await addFinesAndReason();
+
+        // Delete fine
+        const fineId = guid.fromString("137d6187-68d2-4000-9cb8-7dfc3877d5ba", loggingProperties.nextIndent);
+        await callFunction("changeFine", {
+            privateKey: privateKey,
+            clubLevel: "testing",
+            clubId: clubId.guidString,
+            changeType: "delete",
+            fine: {
+                id: fineId.guidString,
+                deleted: true,
+                updateProperties: {
+                    timestamp: "2011-10-15T10:42:38+0000",
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
+            },
+        });
+
+        // Check if fine is deleted
+        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fetchedFine = fineList.find(fine => fine.property.id.equals(fineId));
+        expect(fetchedFine?.serverObject).to.be.deep.equal({
+            deleted: true,
+            updateProperties: {
+                timestamp: "2011-10-15T10:42:38.000Z",
+                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+            },
+        });
+
+        // Change fine payed
+        try {
+            await callFunction("changeFinePayed", {
+                privateKey: privateKey,
+                clubLevel: "testing",
+                clubId: clubId.guidString,
+                fineId: fineId.guidString,
+                state: {
+                    state: "settled",
+                    updateProperties: {
+                        timestamp: "2011-10-15T10:42:38+0000",
+                        personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                    },
+                },
+            });
+            assert.fail("A statement above should throw an exception.");
+        } catch (error) {
+            expect(firebaseError(error)).to.be.deep.equal({      
+                code: "functions/internal",
+                message: "Couldn't get statistic fine from 'Deleted'."
+            });
+        }
+    });
 });

@@ -14,8 +14,8 @@ export class ChangeType {
 
 export namespace ChangeType {
     export class Builder {
-        public fromValue(value: any, loggingProperties?: LoggingProperties): ChangeType {
-            loggingProperties?.append("ChangeType.Builder.fromValue", {value: value});
+        public fromValue(value: any, loggingProperties: LoggingProperties): ChangeType {
+            loggingProperties.append("ChangeType.Builder.fromValue", {value: value});
 
             // Check if value is from type string
             if (typeof value !== "string")
@@ -27,9 +27,9 @@ export namespace ChangeType {
 
             return new ChangeType(value);
         }
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): ChangeType {
-            loggingProperties?.append("ChangeType.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
-            return this.fromValue(container.getParameter(parameterName, "string", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): ChangeType {
+            loggingProperties.append("ChangeType.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
+            return this.fromValue(container.getParameter(parameterName, "string", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }
     }
 }

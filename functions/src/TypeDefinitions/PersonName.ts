@@ -25,8 +25,8 @@ export namespace PersonName {
 
     export class Builder {
 
-        public fromValue(value: any, loggingProperties?: LoggingProperties): PersonName {
-            loggingProperties?.append("PersonName.Builder.fromValue", {value: value});
+        public fromValue(value: any, loggingProperties: LoggingProperties): PersonName {
+            loggingProperties.append("PersonName.Builder.fromValue", {value: value});
 
             // Check if value is from type object
             if (typeof value !== "object")

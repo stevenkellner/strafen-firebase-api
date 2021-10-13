@@ -25,8 +25,8 @@ export class guid {
      * @param {string} guidString String value of the guid.
      * @return {guid} Parsed guid.
      */
-    static fromString(guidString: string, loggingProperties?: LoggingProperties): guid {
-        loggingProperties?.append("guid.fromString", {guidString: guidString});
+    static fromString(guidString: string, loggingProperties: LoggingProperties): guid {
+        loggingProperties.append("guid.fromString", {guidString: guidString});
         const regex = new RegExp("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
         if (!regex.test(guidString))
             throw httpsError("invalid-argument", `Couldn't parse Guid, guid string isn't a valid Guid: ${guidString}`, loggingProperties);
@@ -40,9 +40,9 @@ export class guid {
      * @param {string} parameterName Name of parameter from parameter container.
      * @return {guid} Parsed guid.
      */
-    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): guid {
-        loggingProperties?.append("guid.fromParameterContainer", {container: container, parameterName: parameterName});
-        return guid.fromString(container.getParameter(parameterName, "string", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+    static fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): guid {
+        loggingProperties.append("guid.fromParameterContainer", {container: container, parameterName: parameterName});
+        return guid.fromString(container.getParameter(parameterName, "string", loggingProperties.nextIndent), loggingProperties.nextIndent);
     }
 
     /**
@@ -55,7 +55,8 @@ export class guid {
             const v = c == "x" ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
-        return guid.fromString(guidString, undefined);
+        const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "guid.newGuid");
+        return guid.fromString(guidString, loggingProperties);
     }
 
     equals(other: guid): boolean {

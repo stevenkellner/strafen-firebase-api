@@ -5,10 +5,14 @@ import {signOut} from "firebase/auth";
 import {assert, AssertionError, expect} from "chai";
 import {FirebaseError} from "firebase-admin";
 import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
+import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
+import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
 
 describe("ChangeReasonTemplate", () => {
 
-    const clubId = guid.fromString("9e00bbc6-c1b4-4e6f-8919-77f01aa10749", undefined);
+    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "changeReasonTemplateTest", undefined, "notice");
+
+    const clubId = guid.fromString("9e00bbc6-c1b4-4e6f-8919-77f01aa10749", loggingProperties.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -131,7 +135,7 @@ describe("ChangeReasonTemplate", () => {
             reason: "Reason asdf",
             amount: 150,
             importance: "medium",
-        }, undefined);
+        }, loggingProperties.nextIndent);
 
         // Set reason template
         await callFunction("changeReasonTemplate", {
@@ -143,7 +147,7 @@ describe("ChangeReasonTemplate", () => {
         });
 
         // Check reason template
-        const reasonTemplateList = await getDatabaseReasonTemplates(clubId);
+        const reasonTemplateList = await getDatabaseReasonTemplates(clubId, loggingProperties.nextIndent);
         const fetchedReasonTemplate = reasonTemplateList.find(_reasonTemplate => _reasonTemplate.id.equals(reasonTemplate.id));
         expect(fetchedReasonTemplate).to.deep.equal(reasonTemplate);
 
@@ -154,7 +158,7 @@ describe("ChangeReasonTemplate", () => {
         const reasonTemplate = await setReasonTemplate(false);
 
         // Check statistic
-        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeReasonTemplate");
+        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeReasonTemplate", loggingProperties.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
             changedReasonTemplate: reasonTemplate.serverObject,
@@ -166,7 +170,7 @@ describe("ChangeReasonTemplate", () => {
         const reasonTemplate2 = await setReasonTemplate(true);
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeReasonTemplate");
+        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeReasonTemplate", loggingProperties.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousReasonTemplate != null;
         });
@@ -189,12 +193,12 @@ describe("ChangeReasonTemplate", () => {
         });
 
         // Check reasonTemplate
-        const reasonTemplateList = await getDatabaseReasonTemplates(clubId);
+        const reasonTemplateList = await getDatabaseReasonTemplates(clubId, loggingProperties.nextIndent);
         const fetchedReasonTemplate = reasonTemplateList.find(_reasonTemplate => _reasonTemplate.id.equals(reasonTemplate.id));
         expect(fetchedReasonTemplate).to.be.equal(undefined);
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeReasonTemplate");
+        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changeReasonTemplate", loggingProperties.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousReasonTemplate != null;
         });

@@ -1,11 +1,15 @@
-import {FirebaseError} from "@firebase/app";
 import {signOut} from "@firebase/auth";
-import {expect, assert, AssertionError} from "chai";
+import {expect, assert} from "chai";
 import {privateKey} from "../src/privateKeys";
 import {guid} from "../src/TypeDefinitions/guid";
-import {callFunction, signInTestUser, auth} from "./utils";
+import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
+import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
+import {callFunction, signInTestUser, auth, firebaseError} from "./utils";
 
 describe("General", () => {
+
+    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "generalTest", undefined, "notice");
+
     beforeEach(async () => {
         if (auth.currentUser != null)
             await signOut(auth);
@@ -16,11 +20,10 @@ describe("General", () => {
             await callFunction("changeFinePayed", null);
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'verbose'. No parameters specified to this function.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse 'verbose'. No parameters specified to this function.",
+            });
         }
     });
 
@@ -29,11 +32,10 @@ describe("General", () => {
             await callFunction("changeFinePayed", {});
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'privateKey'. Expected type 'string', but got undefined or null.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse 'privateKey'. Expected type 'string', but got undefined or null.",
+            });
         }
     });
 
@@ -46,15 +48,18 @@ describe("General", () => {
                 fineId: guid.newGuid().guidString,
                 state: {
                     state: "unpayed",
+                    updateProperties: {
+                        timestamp: "2011-10-14T10:42:38+0000",
+                        personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                    },
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse ClubLevel, expected 'regular', 'debug' or 'testing', but got invalid level instead.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse ClubLevel, expected 'regular', 'debug' or 'testing', but got invalid level instead.",
+            });
         }
     });
 
@@ -67,15 +72,18 @@ describe("General", () => {
                 fineId: guid.newGuid().guidString,
                 state: {
                     state: "unpayed",
+                    updateProperties: {
+                        timestamp: "2011-10-14T10:42:38+0000",
+                        personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                    },
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse Guid, guid string isn't a valid Guid: invalid guid");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse Guid, guid string isn't a valid Guid: invalid guid",
+            });
         }
     });
 
@@ -89,18 +97,17 @@ describe("General", () => {
                 state: {
                     state: "unpayed",
                     updateProperties: {
-                        timestamp: 123456,
+                        timestamp: "2011-10-14T10:42:38+0000",
                         personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                     },
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/permission-denied");
-            expect((error as FirebaseError).message).to.equal("Private key is invalid.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/permission-denied",
+                message: "Private key is invalid.",
+            });
         }
     });
 
@@ -114,18 +121,17 @@ describe("General", () => {
                 state: {
                     state: "unpayed",
                     updateProperties: {
-                        timestamp: 123456,
+                        timestamp: "2011-10-14T10:42:38+0000",
                         personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                     },
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/permission-denied");
-            expect((error as FirebaseError).message).to.equal("The function must be called while authenticated, nobody signed in.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/permission-denied",
+                message: "The function must be called while authenticated, nobody signed in.",
+            });
         }
     });
 
@@ -140,25 +146,24 @@ describe("General", () => {
                 state: {
                     state: "unpayed",
                     updateProperties: {
-                        timestamp: 123456,
+                        timestamp: "2011-10-14T10:42:38+0000",
                         personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                     },
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/permission-denied");
-            expect((error as FirebaseError).message).to.equal("The function must be called while authenticated, person not in club.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/permission-denied",
+                message: "The function must be called while authenticated, person not in club.",
+            });
         }
     });
 
     it("Older function value", async () => {
         try {
             const clubId = guid.newGuid();
-            const fineId = guid.fromString("1B5F958E-9D7D-46E1-8AEE-F52F4370A95A", undefined);
+            const fineId = guid.fromString("1B5F958E-9D7D-46E1-8AEE-F52F4370A95A", loggingProperties.nextIndent);
             await signInTestUser();
             await callFunction("newTestClub", {
                 privateKey: privateKey,
@@ -174,18 +179,17 @@ describe("General", () => {
                 state: {
                     state: "unpayed",
                     updateProperties: {
-                        timestamp: 12344,
+                        timestamp: "2011-10-12T10:42:38+0000",
                         personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                     },
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/cancelled");
-            expect((error as FirebaseError).message).to.equal("Server value is newer or same old than updated value:\n\t- Server  : 12345\n\t- Function: 12344");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/cancelled",
+                message: "Server value is newer or same old than updated value.",
+            });
         }
         await callFunction("deleteTestClubs", {
             privateKey: privateKey,
@@ -197,7 +201,7 @@ describe("General", () => {
     it("Same old function value", async () => {
         try {
             const clubId = guid.newGuid();
-            const fineId = guid.fromString("1B5F958E-9D7D-46E1-8AEE-F52F4370A95A", undefined);
+            const fineId = guid.fromString("1B5F958E-9D7D-46E1-8AEE-F52F4370A95A", loggingProperties.nextIndent);
             await signInTestUser();
             await callFunction("newTestClub", {
                 privateKey: privateKey,
@@ -213,18 +217,17 @@ describe("General", () => {
                 state: {
                     state: "unpayed",
                     updateProperties: {
-                        timestamp: 12345,
+                        timestamp: "2011-10-13T10:42:38+0000",
                         personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                     },
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/cancelled");
-            expect((error as FirebaseError).message).to.equal("Server value is newer or same old than updated value:\n\t- Server  : 12345\n\t- Function: 12345");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/cancelled",
+                message: "Server value is newer or same old than updated value.",
+            });
         }
         await callFunction("deleteTestClubs", {
             privateKey: privateKey,

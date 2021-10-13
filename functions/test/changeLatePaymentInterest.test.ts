@@ -4,10 +4,14 @@ import {auth, callFunction, signInTestUser} from "./utils";
 import {signOut} from "firebase/auth";
 import {assert, AssertionError, expect} from "chai";
 import {FirebaseError} from "firebase-admin";
+import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
+import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
 
 describe("ChangeLatePaymentInterest", () => {
 
-    const clubId = guid.fromString("36cf0982-d1de-4316-ba67-a38ce64712fd", undefined);
+    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "changeLatePaymentInterestTest", undefined, "notice");
+
+    const clubId = guid.fromString("36cf0982-d1de-4316-ba67-a38ce64712fd", loggingProperties.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();

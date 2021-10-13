@@ -38,8 +38,8 @@ export namespace Person {
 
     export class Builder {
 
-        public fromValue(value: any, loggingProperties?: LoggingProperties): Person {
-            loggingProperties?.append("Person.Builder.fromValue", {value: value});
+        public fromValue(value: any, loggingProperties: LoggingProperties): Person {
+            loggingProperties.append("Person.Builder.fromValue", {value: value});
 
             // Check if value is from type object
             if (typeof value !== "object")
@@ -48,19 +48,19 @@ export namespace Person {
             // Check if type of id is string
             if (typeof value.id !== "string")
                 throw httpsError("invalid-argument", `Couldn't parse Person parameter 'id'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
-            const id = guid.fromString(value.id, loggingProperties?.nextIndent);
+            const id = guid.fromString(value.id, loggingProperties.nextIndent);
 
             // Check if type of name is object
             if (typeof value.name !== "object")
                 throw httpsError("invalid-argument", `Couldn't parse Person parameter 'name'. Expected type 'object', but got '${value.name}' from type '${typeof value.name}'.`, loggingProperties);
-            const name = new PersonName.Builder().fromValue(value.name, loggingProperties?.nextIndent);
+            const name = new PersonName.Builder().fromValue(value.name, loggingProperties.nextIndent);
 
             // Return person
             return new Person(id, name);
         }
 
-        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties?: LoggingProperties): Person {
-            loggingProperties?.append("Person.Builder.fromSnapshot", {snapshot: snapshot});
+        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): Person {
+            loggingProperties.append("Person.Builder.fromSnapshot", {snapshot: snapshot});
 
             // Check if data exists in snapshot
             if (!snapshot.exists())
@@ -79,12 +79,12 @@ export namespace Person {
             return this.fromValue({
                 id: idString,
                 ...data,
-            }, loggingProperties?.nextIndent);
+            }, loggingProperties.nextIndent);
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties?: LoggingProperties): Person {
-            loggingProperties?.append("Person.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
-            return this.fromValue(container.getParameter(parameterName, "object", loggingProperties?.nextIndent), loggingProperties?.nextIndent);
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): Person {
+            loggingProperties.append("Person.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
+            return this.fromValue(container.getParameter(parameterName, "object", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }
     }
 }

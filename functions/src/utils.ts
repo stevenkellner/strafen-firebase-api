@@ -15,8 +15,8 @@ import { UpdateProperties } from "./TypeDefinitions/UpdateProperties";
  * @param {{ uid: string } | undefined} auth Authentication state.
  * @param {guid | undefined } clubId Id of club to check if person is in that club.
  */
-export async function checkPrerequirements(parameter: FunctionDefaultParameters, loggingProperties?: LoggingProperties, auth?: { uid: string }, clubId?: guid) {
-    loggingProperties?.append("checkPrerequirements", {parameter: parameter, auth: auth, clubId: clubId});
+export async function checkPrerequirements(parameter: FunctionDefaultParameters, loggingProperties: LoggingProperties, auth?: { uid: string }, clubId?: guid) {
+    loggingProperties.append("checkPrerequirements", {parameter: parameter, auth: auth, clubId: clubId});
 
     // Check if key is valid
     if (parameter.privateKey != privateKey)
@@ -35,14 +35,14 @@ export async function checkPrerequirements(parameter: FunctionDefaultParameters,
     }
 }
 
-export async function checkUpdateTimestamp(updatePropertiesPath: string, functionUpdateProperties: UpdateProperties, loggingProperties?: LoggingProperties) {
-    loggingProperties?.append("checkUpdateTimestamp", {updatePropertiesPath: updatePropertiesPath, functionUpdateProperties: functionUpdateProperties});
+export async function checkUpdateTimestamp(updatePropertiesPath: string, functionUpdateProperties: UpdateProperties, loggingProperties: LoggingProperties) {
+    loggingProperties.append("checkUpdateTimestamp", {updatePropertiesPath: updatePropertiesPath, functionUpdateProperties: functionUpdateProperties});
 
     // Get server update properties
     const updatePropertiesRef = admin.database().ref(updatePropertiesPath);
     const snapshot = await updatePropertiesRef.once("value");
     if (!snapshot.exists()) return;
-    const serverUpdateProperties = UpdateProperties.fromValue(snapshot.val(), loggingProperties?.nextIndent);
+    const serverUpdateProperties = UpdateProperties.fromValue(snapshot.val(), loggingProperties.nextIndent);
 
     // Check timestamp
     if (functionUpdateProperties.timestamp <= serverUpdateProperties.timestamp)
@@ -94,14 +94,14 @@ interface Statistic<Properties extends StatisticsProperties<StatisticsProperties
  * @param {string} clubPath Path of club to save statistic to.
  * @param {Statistic} statistic Properties of statistic to save.
  */
-export async function saveStatistic<Properties extends StatisticsProperties<StatisticsPropertiesObject<Properties>>>(clubPath: string, statistic: Statistic<Properties>, loggingProperties?: LoggingProperties) {
-    loggingProperties?.append("saveStatistic", {clubPath: clubPath, statistic: statistic});
+export async function saveStatistic<Properties extends StatisticsProperties<StatisticsPropertiesObject<Properties>>>(clubPath: string, statistic: Statistic<Properties>, loggingProperties: LoggingProperties) {
+    loggingProperties.append("saveStatistic", {clubPath: clubPath, statistic: statistic});
     const path = `${clubPath}/statistics/${guid.newGuid().guidString}`;
     const reference = admin.database().ref(path);
     await reference.set({
         name: statistic.name,
         properties: statistic.properties.serverObject,
-        timestamp: Date.now(),
+        timestamp: new Date().toISOString(),
     });
 }
 
@@ -140,6 +140,19 @@ export interface PrimitveDataSnapshot {
     child(path: string): PrimitveDataSnapshot
 }
 
-export function httpsError(code: functions.https.FunctionsErrorCode, message: string, properties?: LoggingProperties): functions.https.HttpsError {
+export function httpsError(code: functions.https.FunctionsErrorCode, message: string, properties: LoggingProperties | null): functions.https.HttpsError {
     return new functions.https.HttpsError(code, message, properties?.joinedMessages);
+}
+
+export class Deleted {
+
+    public constructor(
+        public readonly id: guid
+    ) {}
+
+    public get ["serverObject"](): {deleted: true} {
+        return {
+            deleted: true,
+        };
+    }
 }

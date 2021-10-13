@@ -1,5 +1,5 @@
 import * as admin from "firebase-admin";
-import { checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull, httpsError, checkUpdateTimestamp } from "../utils";
+import { checkPrerequirements, FunctionDefaultParameters, FirebaseFunction, existsData, saveStatistic, StatisticsProperties, undefinedAsNull, httpsError, checkUpdateTimestamp, Deleted } from "../utils";
 import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
 import { guid } from "../TypeDefinitions/guid";
 import { ClubLevel } from "../TypeDefinitions/ClubLevel";
@@ -7,7 +7,7 @@ import { ChangeType } from "../TypeDefinitions/ChangeType";
 import { Reference } from "@firebase/database-types";
 import { Fine} from "../TypeDefinitions/Fine";
 import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
-import { getUpdatable, UpdatableWithServerObject } from "../TypeDefinitions/UpdateProperties";
+import { getUpdatable, Updatable } from "../TypeDefinitions/UpdateProperties";
 
 /**
  * @summary
@@ -24,7 +24,7 @@ import { getUpdatable, UpdatableWithServerObject } from "../TypeDefinitions/Upda
  *  - clubLevel ({@link ClubLevel}): level of the club change
  *  - clubId ({@link guid}): id of the club to force sign out the person
  *  - changeType ({@link ChangeType}}): type of the change
- *  - fine ({@link Fine}): fine to change
+ *  - updatableFine ({@link Updatable}<{@link Fine} | {@link Deleted}>): fine to change
  *
  * @throws
  *  - {@link functions.https.HttpsError}:
@@ -56,14 +56,14 @@ export class ChangeFineFunction implements FirebaseFunction {
      * @param {ParameterContainer} container Parameter container to get parameters from.
      * @return {FunctionParameters} Parsed parameters for this function.
      */
-    private static parseParameters(container: ParameterContainer, loggingProperties?: LoggingProperties): ChangeFineFunction.Parameters {
-        loggingProperties?.append("ChangeFineFunction.parseParameter", {container: container});
+    private static parseParameters(container: ParameterContainer, loggingProperties: LoggingProperties): ChangeFineFunction.Parameters {
+        loggingProperties.append("ChangeFineFunction.parseParameter", {container: container});
         return {
-            privateKey: container.getParameter("privateKey", "string", loggingProperties?.nextIndent),
-            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties?.nextIndent),
-            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties?.nextIndent),
-            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties?.nextIndent),
-            updatableFine: getUpdatable<Fine, Fine.Builder>(container.getParameter("fine", "object", loggingProperties?.nextIndent), new Fine.Builder(), loggingProperties?.nextIndent),
+            privateKey: container.getParameter("privateKey", "string", loggingProperties.nextIndent),
+            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties.nextIndent),
+            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties.nextIndent),
+            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties.nextIndent),
+            updatableFine: getUpdatable<Fine | Deleted, Fine.Builder>(container.getParameter("fine", "object", loggingProperties.nextIndent), new Fine.Builder(), loggingProperties.nextIndent),
         };
     }
 
@@ -78,7 +78,7 @@ export class ChangeFineFunction implements FirebaseFunction {
      * @param {{uid: string} | undefined} auth Authentication state.
      */
     async executeFunction(auth?: { uid: string }): Promise<void> {
-        this.loggingProperties?.append("ChangeFineFunction.executeFunction", {auth: auth}, "info");
+        this.loggingProperties.append("ChangeFineFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements
         const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
@@ -91,8 +91,11 @@ export class ChangeFineFunction implements FirebaseFunction {
         const fineRef = this.getFineRef();
         const fineSnapshot = await fineRef.once("value");
         let previousFine: Fine.Statistic | null = null;
-        if (fineSnapshot.exists())
-            previousFine = await new Fine.Builder().fromSnapshot(fineSnapshot, this.loggingProperties.nextIndent).forStatistics(clubPath, this.loggingProperties.nextIndent);
+        if (fineSnapshot.exists()) {
+            const previousRawFine = new Fine.Builder().fromSnapshot(fineSnapshot, this.loggingProperties.nextIndent);
+            if (previousRawFine instanceof Fine)
+                previousFine = await previousRawFine.forStatistics(clubPath, this.loggingProperties.nextIndent);
+        }
 
         // Change fine
         let changedFine: Fine.Statistic | null = null;
@@ -102,6 +105,8 @@ export class ChangeFineFunction implements FirebaseFunction {
             break;
 
         case "update":
+            if (!(this.parameters.updatableFine.property instanceof Fine))
+                throw httpsError("invalid-argument", "Fine property isn't from type 'Fine'.", this.loggingProperties);
             await this.updateItem();
             changedFine = await this.parameters.updatableFine.property.forStatistics(clubPath, this.loggingProperties.nextIndent);
             break;
@@ -115,13 +120,12 @@ export class ChangeFineFunction implements FirebaseFunction {
     }
 
     private async deleteItem(): Promise<void> {
-        this.loggingProperties?.append("ChangeFineFunction.deleteItem");
+        this.loggingProperties.append("ChangeFineFunction.deleteItem");
+        if (!(this.parameters.updatableFine.property instanceof Deleted))
+            throw httpsError("invalid-argument", "Fine property isn't from type 'Deleted'.", this.loggingProperties);
         const fineRef = this.getFineRef();
         if (await existsData(fineRef)) {
-            await fineRef.set({
-                deleted: true,
-                updateProperties: this.parameters.updatableFine.updateProperties.serverObject,
-            }, error => {
+            await fineRef.set(this.parameters.updatableFine.serverObject, error => {
                 if (error != null)
                     throw httpsError("internal", `Couldn't delete fine, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
             });
@@ -129,7 +133,7 @@ export class ChangeFineFunction implements FirebaseFunction {
     }
 
     private async updateItem(): Promise<void> {
-        this.loggingProperties?.append("ChangeFineFunction.updateItem");
+        this.loggingProperties.append("ChangeFineFunction.updateItem");
         const fineRef = this.getFineRef();
         await fineRef.set(this.parameters.updatableFine.serverObject, error => {
             if (error != null)
@@ -140,7 +144,11 @@ export class ChangeFineFunction implements FirebaseFunction {
 
 export namespace ChangeFineFunction {
 
-    export type Parameters = FunctionDefaultParameters & { clubId: guid, changeType: ChangeType, updatableFine: UpdatableWithServerObject<Fine> }
+    export type Parameters = FunctionDefaultParameters & {
+        clubId: guid,
+        changeType: ChangeType,
+        updatableFine: Updatable<Fine | Deleted>
+    }
 
     export class Statistic implements StatisticsProperties<Statistic.ServerObject> {
 
