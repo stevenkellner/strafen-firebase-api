@@ -8,8 +8,8 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "testAll": "mocha -r ts-node/register --exit -t 30000 test/**.test.ts",
-    "test": "mocha -r ts-node/register --exit -t 30000"
+    "testAll": "mocha -r ts-node/register --exit -t 30000 --retries 2 test/**.test.ts",
+    "test": "mocha -r ts-node/register --exit -t 30000 --retries 2"
   },
   "engines": {
     "node": "14"

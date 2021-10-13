@@ -49,13 +49,13 @@ export async function getDatabaseFines(clubId: guid, loggingProperties: LoggingP
     });
 }
 
-export async function getDatabaseReasonTemplates(clubId: guid, loggingProperties: LoggingProperties): Promise<ReasonTemplate[]> {
+export async function getDatabaseReasonTemplates(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<ReasonTemplate | Deleted>[]> {
     loggingProperties.append("getDatabaseReasonTemplates", {clubId: clubId});
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/reasonTemplates`)).map(value => {
-        return new ReasonTemplate.Builder().fromValue({
+        return getUpdatable({
             id: value[0],
             ...(value[1] as any),
-        }, loggingProperties.nextIndent);
+        }, new ReasonTemplate.Builder(), loggingProperties.nextIndent);
     });
 }
 

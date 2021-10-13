@@ -103,6 +103,8 @@ export namespace FineReason {
             const reasonTemplateRef = admin.database().ref(`${clubPath}/reasonTemplates/${fineReason.value.reasonTemplateId.guidString}`);
             const reasonTemplateSnapshot = await reasonTemplateRef.once("value");
             const reasonTemplate = new ReasonTemplate.Builder().fromSnapshot(reasonTemplateSnapshot, loggingProperties.nextIndent);
+            if (!(reasonTemplate instanceof ReasonTemplate))
+                throw httpsError("internal", "Couldn't get reasonTemplate for fine statistic.", loggingProperties);
             return new FineReason.Statistic(reasonTemplate.id, reasonTemplate.reason, reasonTemplate.amount, reasonTemplate.importance);
         }
 

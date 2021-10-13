@@ -2,7 +2,7 @@ import { Importance } from "./Importance";
 import { ParameterContainer } from "./ParameterContainer";
 import { Amount } from "./Amount";
 import { guid } from "./guid";
-import { httpsError, PrimitveDataSnapshot } from "../utils";
+import { Deleted, httpsError, PrimitveDataSnapshot } from "../utils";
 import { LoggingProperties } from "./LoggingProperties";
 
 
@@ -48,7 +48,7 @@ export namespace ReasonTemplate {
 
     export class Builder {
 
-        public fromValue(value: any, loggingProperties: LoggingProperties): ReasonTemplate {
+        public fromValue(value: any, loggingProperties: LoggingProperties): ReasonTemplate | Deleted {
             loggingProperties.append("ReasonTemplate.Builder.fromValue", {value: value});
 
             // Check if value is from type object
@@ -59,6 +59,13 @@ export namespace ReasonTemplate {
             if (typeof value.id !== "string")
                 throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
             const id = guid.fromString(value.id, loggingProperties.nextIndent);
+
+            // Check if reason template is deleted
+            if (typeof value.deleted === "boolean") {
+                if (!value.deleted)
+                    throw httpsError("invalid-argument", "Couldn't parse reason template, deleted argument was false.", loggingProperties);
+                return new Deleted(id);
+            }
 
             // Check if type of reason is string
             if (typeof value.reason !== "string")
@@ -78,7 +85,7 @@ export namespace ReasonTemplate {
             return new ReasonTemplate(id, value.reason, amount, importance);
         }
 
-        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): ReasonTemplate {
+        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): ReasonTemplate | Deleted {
             loggingProperties.append("ReasonTemplate.Builder.fromSnapshot", {snapshot: snapshot});
 
             // Check if data exists in snapshot
@@ -101,7 +108,7 @@ export namespace ReasonTemplate {
             }, loggingProperties.nextIndent);
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): ReasonTemplate {
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): ReasonTemplate | Deleted {
             loggingProperties.append("ReasonTemplate.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
             return this.fromValue(container.getParameter(parameterName, "object", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }

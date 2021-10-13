@@ -128,22 +128,20 @@ describe("ChangeFine", () => {
             reason: "Test Reason 1",
             amount: 2.50,
             importance: "low",
-        }, loggingProperties.nextIndent);
+        }, loggingProperties.nextIndent) as ReasonTemplate;
+        expect(reasonTemplate).to.be.instanceOf(ReasonTemplate);
+        const updatableReasonTemplate = new Updatable<ReasonTemplate>(reasonTemplate, new UpdateProperties(new Date("2011-10-15T10:42:38+0000"), guid.fromString("7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7", loggingProperties.nextIndent)));
         await callFunction("changeReasonTemplate", {
             privateKey: privateKey,
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            reasonTemplate: reasonTemplate.serverObject,
-            updateProperties: { // TODO: remove
-                timestamp: "2011-10-14T10:42:38+0000",
-                personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
-            },
+            reasonTemplate: updatableReasonTemplate.serverObject,
         });
 
         // Check reason
         const reasonList = await getDatabaseReasonTemplates(clubId, loggingProperties.nextIndent);
-        const fetchedReason = reasonList.find(_reason => _reason.id.equals(reasonTemplate.id));
+        const fetchedReason = reasonList.find(_reason => _reason.property.id.equals(reasonTemplate.id))?.property;
         expect(fetchedReason).to.deep.equal(reasonTemplate);
     }
 
