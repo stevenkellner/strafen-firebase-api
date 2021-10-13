@@ -24,7 +24,7 @@ import { getUpdatable, Updatable } from "../TypeDefinitions/UpdateProperties";
  *  - clubLevel ({@link ClubLevel}): level of the club change
  *  - clubId ({@link guid}): id of the club to force sign out the person
  *  - changeType ({@link ChangeType}}): type of the change
- *  - updatableFine ({@link Updatable}<{@link Fine} | {@link Deleted}>): fine to change
+ *  - fine ({@link Updatable}<{@link Fine} | {@link Deleted}>): fine to change
  *
  * @throws
  *  - {@link functions.https.HttpsError}:

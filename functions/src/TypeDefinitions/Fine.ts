@@ -155,6 +155,8 @@ export namespace Fine {
             const personRef = admin.database().ref(`${clubPath}/persons/${fine.personId.guidString}`);
             const personSnapshot = await personRef.once("value");
             const person = new Person.Builder().fromSnapshot(personSnapshot, loggingProperties.nextIndent);
+            if (!(person instanceof Person))
+                throw httpsError("internal", "Couldn't get person for fine statistic.", loggingProperties);
 
             // Get statistic fine reason
             const fineReason = await fine.fineReason.forStatistics(clubPath, loggingProperties.nextIndent);

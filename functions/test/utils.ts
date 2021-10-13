@@ -59,13 +59,13 @@ export async function getDatabaseReasonTemplates(clubId: guid, loggingProperties
     });
 }
 
-export async function getDatabasePersons(clubId: guid, loggingProperties: LoggingProperties): Promise<Person[]> {
+export async function getDatabasePersons(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<Person | Deleted>[]> {
     loggingProperties.append("getDatabasePersons", {clubId: clubId});
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/persons`)).map(value => {
-        return new Person.Builder().fromValue({
+        return getUpdatable({
             id: value[0],
             ...(value[1] as any),
-        }, loggingProperties.nextIndent);
+        }, new Person.Builder, loggingProperties.nextIndent);
     });
 }
 
@@ -92,7 +92,7 @@ interface FirebaseError {
 
 export function firebaseError(error: unknown): FirebaseError {
     if (typeof error != "object" || !(error as any).hasOwnProperty("name") || (error as any).name != "FirebaseError")
-        throw error
+        throw error;
     return {
         code: (error as any).code,
         message: (error as any).message,

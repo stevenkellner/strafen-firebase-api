@@ -670,9 +670,9 @@ describe("ChangeFinePayed", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({      
+            expect(firebaseError(error)).to.be.deep.equal({
                 code: "functions/internal",
-                message: "Couldn't get statistic fine from 'Deleted'."
+                message: "Couldn't get statistic fine from 'Deleted'.",
             });
         }
     });

@@ -1,5 +1,5 @@
 import { guid } from "./guid";
-import { httpsError, PrimitveDataSnapshot } from "../utils";
+import { Deleted, httpsError, PrimitveDataSnapshot } from "../utils";
 import { ParameterContainer } from "./ParameterContainer";
 import { PersonName } from "./PersonName";
 import { LoggingProperties } from "./LoggingProperties";
@@ -38,7 +38,7 @@ export namespace Person {
 
     export class Builder {
 
-        public fromValue(value: any, loggingProperties: LoggingProperties): Person {
+        public fromValue(value: any, loggingProperties: LoggingProperties): Person | Deleted {
             loggingProperties.append("Person.Builder.fromValue", {value: value});
 
             // Check if value is from type object
@@ -50,6 +50,13 @@ export namespace Person {
                 throw httpsError("invalid-argument", `Couldn't parse Person parameter 'id'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
             const id = guid.fromString(value.id, loggingProperties.nextIndent);
 
+            // Check if person is deleted
+            if (typeof value.deleted === "boolean") {
+                if (!value.deleted)
+                    throw httpsError("invalid-argument", "Couldn't parse person, deleted argument was false.", loggingProperties);
+                return new Deleted(id);
+            }
+
             // Check if type of name is object
             if (typeof value.name !== "object")
                 throw httpsError("invalid-argument", `Couldn't parse Person parameter 'name'. Expected type 'object', but got '${value.name}' from type '${typeof value.name}'.`, loggingProperties);
@@ -59,7 +66,7 @@ export namespace Person {
             return new Person(id, name);
         }
 
-        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): Person {
+        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): Person | Deleted {
             loggingProperties.append("Person.Builder.fromSnapshot", {snapshot: snapshot});
 
             // Check if data exists in snapshot
@@ -82,7 +89,7 @@ export namespace Person {
             }, loggingProperties.nextIndent);
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): Person {
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): Person | Deleted {
             loggingProperties.append("Person.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
             return this.fromValue(container.getParameter(parameterName, "object", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }

@@ -355,7 +355,7 @@ describe("ChangeFine", () => {
         const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
         const fetchedFine = fineList.find(_fine => _fine.property.id.equals(fineId))?.property;
         expect(fetchedFine?.serverObject).to.be.deep.equal({
-            deleted: true
+            deleted: true,
         });
 
         // Check statistic
@@ -414,7 +414,7 @@ describe("ChangeFine", () => {
         const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
         const fetchedFine = fineList.find(_fine => _fine.property.id.equals(fineId))?.property;
         expect(fetchedFine?.serverObject).to.be.deep.equal({
-            deleted: true
+            deleted: true,
         });
 
         // Update deleted fine
@@ -444,7 +444,7 @@ describe("ChangeFine", () => {
                 clubLevel: "testing",
                 clubId: clubId.guidString,
                 changeType: "update",
-                fine: updatableFine.serverObject
+                fine: updatableFine.serverObject,
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
@@ -480,7 +480,7 @@ describe("ChangeFine", () => {
         const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
         const fetchedFine = fineList.find(_fine => _fine.property.id.equals(fineId))?.property;
         expect(fetchedFine?.serverObject).to.be.deep.equal({
-            deleted: true
+            deleted: true,
         });
 
         // Update deleted fine
@@ -509,7 +509,7 @@ describe("ChangeFine", () => {
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            fine: updatableFine.serverObject
+            fine: updatableFine.serverObject,
         });
 
         // Check statistics
@@ -521,24 +521,24 @@ describe("ChangeFine", () => {
         expect(statisticsList[0]).to.be.deep.equal({
             changedFine: {
                 date: "2011-10-14T10:42:38.000Z",
-                fineReason: { 
+                fineReason: {
                     amount: 1.5,
                     importance: "medium",
-                    reason: "asdf"
+                    reason: "asdf",
                 },
                 id: "637D6187-68D2-4000-9CB8-7DFC3877D5BA",
                 number: 2,
-                payedState: { 
-                    state: "settled"
+                payedState: {
+                    state: "settled",
                 },
-                person: { 
-                    id: "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9", 
+                person: {
+                    id: "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9",
                     name: {
                         first: "John",
-                        last: "Doe"
-                    }
-                }
-            }
+                        last: "Doe",
+                    },
+                },
+            },
         });
     });
 });

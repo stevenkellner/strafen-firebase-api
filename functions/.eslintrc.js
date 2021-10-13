@@ -45,5 +45,6 @@ module.exports = {
         "no-extend-native": "off",
         "valid-jsdoc": "off",
         "no-irregular-whitespace": "off",
+        "no-prototype-builtins": "off",
     },
 };

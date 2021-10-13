@@ -1,12 +1,12 @@
 import {privateKey} from "../src/privateKeys";
 import {guid} from "../src/TypeDefinitions/guid";
-import {auth, callFunction, getDatabasePersons, getDatabaseStatisticsPropertiesWithName, signInTestUser} from "./utils";
+import {auth, callFunction, firebaseError, getDatabasePersons, getDatabaseStatisticsPropertiesWithName, signInTestUser} from "./utils";
 import {signOut} from "firebase/auth";
-import {assert, AssertionError, expect} from "chai";
-import {FirebaseError} from "firebase-admin";
+import {assert, expect} from "chai";
 import {Person} from "../src/TypeDefinitions/Person";
 import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
 import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
+import { Updatable, UpdateProperties } from "../src/TypeDefinitions/UpdateProperties";
 
 describe("ChangePerson", () => {
 
@@ -42,11 +42,10 @@ describe("ChangePerson", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'clubId'. Expected type 'string', but got undefined or null.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse 'clubId'. Expected type 'string', but got undefined or null.",
+            });
         }
     });
 
@@ -60,11 +59,10 @@ describe("ChangePerson", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'changeType'. Expected type 'string', but got undefined or null.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse 'changeType'. Expected type 'string', but got undefined or null.",
+            });
         }
     });
 
@@ -79,11 +77,10 @@ describe("ChangePerson", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse ChangeType, expected 'delete' or 'update', but got invalid instead.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse ChangeType, expected 'delete' or 'update', but got invalid instead.",
+            });
         }
     });
 
@@ -97,11 +94,10 @@ describe("ChangePerson", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'person'. Expected type 'object', but got undefined or null.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse 'person'. Expected type 'object', but got undefined or null.",
+            });
         }
     });
 
@@ -116,11 +112,10 @@ describe("ChangePerson", () => {
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/invalid-argument");
-            expect((error as FirebaseError).message).to.equal("Couldn't parse 'person'. Expected type 'object', but got 'invalid' from type 'string'.");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/invalid-argument",
+                message: "Couldn't parse 'person'. Expected type 'object', but got 'invalid' from type 'string'.",
+            });
         }
     });
 
@@ -133,23 +128,23 @@ describe("ChangePerson", () => {
                 changeType: "delete",
                 person: {
                     id: "76025DDE-6893-46D2-BC34-9864BB5B8DAD",
-                    name: {
-                        first: "some",
-                        last: "name",
+                    deleted: true,
+                    updateProperties: {
+                        timestamp: "2011-10-15T10:42:38+0000",
+                        personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
                     },
                 },
             });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
-            if (error instanceof AssertionError) {
-                throw error;
-            }
-            expect((error as FirebaseError).code).to.equal("functions/unavailable");
-            expect((error as FirebaseError).message).to.equal("Person is already signed in!");
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/unavailable",
+                message: "Person is already signed in!",
+            });
         }
     });
 
-    async function setPerson(variant: boolean): Promise<Person> {
+    async function setPerson(variant: boolean, timestamp: Date): Promise<Person> {
         const person = new Person.Builder().fromValue(variant ? {
             id: "61756c29-ac8a-4471-a283-4dde2623a1b9",
             name: {
@@ -162,27 +157,29 @@ describe("ChangePerson", () => {
                 first: "wgn",
                 last: "jzhtre",
             },
-        }, loggingProperties.nextIndent);
+        }, loggingProperties.nextIndent) as Person;
+        expect(person).to.be.instanceOf(Person);
 
         // Set person
+        const updatablePerson = new Updatable<Person>(person, new UpdateProperties(timestamp, guid.fromString("7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7", loggingProperties.nextIndent)));
         await callFunction("changePerson", {
             privateKey: privateKey,
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "update",
-            person: person.serverObject,
+            person: updatablePerson.serverObject,
         });
 
         // Check person
         const personList = await getDatabasePersons(clubId, loggingProperties.nextIndent);
-        const fetchedPerson = personList.find(_person => _person.id.equals(person.id));
-        expect(fetchedPerson).to.deep.equal(person);
+        const fetchedPerson = personList.find(_person => _person.property.id.equals(person.id));
+        expect(fetchedPerson?.property).to.deep.equal(person);
 
         return person;
     }
 
     it("Person set", async () => {
-        const person = await setPerson(false);
+        const person = await setPerson(false, new Date("2011-10-14T10:42:38+0000"));
 
         // Check statistic
         const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson", loggingProperties.nextIndent);
@@ -193,8 +190,8 @@ describe("ChangePerson", () => {
     });
 
     it("Person update", async () => {
-        const person1 = await setPerson(false);
-        const person2 = await setPerson(true);
+        const person1 = await setPerson(false, new Date("2011-10-14T10:42:38+0000"));
+        const person2 = await setPerson(true, new Date("2011-10-15T10:42:38+0000"));
 
         // Check statistic
         let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson", loggingProperties.nextIndent);
@@ -209,20 +206,29 @@ describe("ChangePerson", () => {
     });
 
     it("Person delete", async () => {
-        const person = await setPerson(true);
+        const person = await setPerson(true, new Date("2011-10-14T10:42:38+0000"));
 
         await callFunction("changePerson", {
             privateKey: privateKey,
             clubLevel: "testing",
             clubId: clubId.guidString,
             changeType: "delete",
-            person: person.serverObject,
+            person: {
+                id: person.id.guidString,
+                deleted: true,
+                updateProperties: {
+                    timestamp: "2011-10-15T10:42:38+0000",
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
+            },
         });
 
         // Check person
         const personList = await getDatabasePersons(clubId, loggingProperties.nextIndent);
-        const fetchedPerson = personList.find(_person => _person.id.equals(person.id));
-        expect(fetchedPerson).to.be.equal(undefined);
+        const fetchedPerson = personList.find(_person => _person.property.id.equals(person.id))?.property;
+        expect(fetchedPerson?.serverObject).to.be.deep.equal({
+            deleted: true,
+        });
 
         // Check statistic
         let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, "changePerson", loggingProperties.nextIndent);
