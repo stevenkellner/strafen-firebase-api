@@ -64,7 +64,7 @@ export class ChangePersonFunction implements FirebaseFunction {
             clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties.nextIndent),
             clubId: guid.fromParameterContainer(container, "clubId", loggingProperties.nextIndent),
             changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties.nextIndent),
-            updatablePerson: getUpdatable<Person | Deleted, Person.Builder>(container.getParameter("person", "object", loggingProperties.nextIndent), new Person.Builder(), loggingProperties.nextIndent),
+            updatablePerson: getUpdatable<Person | Deleted<guid>, Person.Builder>(container.getParameter("person", "object", loggingProperties.nextIndent), new Person.Builder(), loggingProperties.nextIndent),
         };
     }
 
@@ -153,7 +153,7 @@ export namespace ChangePersonFunction {
     export type Parameters = FunctionDefaultParameters & {
         clubId: guid,
         changeType: ChangeType,
-        updatablePerson: Updatable<Person | Deleted>
+        updatablePerson: Updatable<Person | Deleted<guid>>
     }
 
     export class Statistic implements StatisticsProperties<Statistic.ServerObject> {

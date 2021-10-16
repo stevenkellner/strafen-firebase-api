@@ -38,7 +38,7 @@ export namespace Person {
 
     export class Builder {
 
-        public fromValue(value: any, loggingProperties: LoggingProperties): Person | Deleted {
+        public fromValue(value: any, loggingProperties: LoggingProperties): Person | Deleted<guid> {
             loggingProperties.append("Person.Builder.fromValue", {value: value});
 
             // Check if value is from type object
@@ -66,7 +66,7 @@ export namespace Person {
             return new Person(id, name);
         }
 
-        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): Person | Deleted {
+        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): Person | Deleted<guid> {
             loggingProperties.append("Person.Builder.fromSnapshot", {snapshot: snapshot});
 
             // Check if data exists in snapshot
@@ -89,7 +89,7 @@ export namespace Person {
             }, loggingProperties.nextIndent);
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): Person | Deleted {
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): Person | Deleted<guid> {
             loggingProperties.append("Person.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
             return this.fromValue(container.getParameter(parameterName, "object", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }

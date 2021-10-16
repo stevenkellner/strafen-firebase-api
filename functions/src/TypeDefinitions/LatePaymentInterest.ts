@@ -1,5 +1,5 @@
 import { ParameterContainer } from "./ParameterContainer";
-import { httpsError, PrimitveDataSnapshot } from "../utils";
+import { Deleted, httpsError, PrimitveDataSnapshot } from "../utils";
 import { LoggingProperties } from "./LoggingProperties";
 
 /*
@@ -13,18 +13,29 @@ export class LatePaymentInterest {
         public readonly interestRate: number,
         public readonly compoundInterest: boolean
     ) {}
+
+    public get ["serverObject"](): LatePaymentInterest {
+        return this;
+    }
 }
 
 export namespace LatePaymentInterest {
 
     export class Builder {
 
-        public fromValue(value: any, loggingProperties: LoggingProperties): LatePaymentInterest {
+        public fromValue(value: any, loggingProperties: LoggingProperties): LatePaymentInterest | Deleted<null> {
             loggingProperties.append("LatePaymentInterest.Builder.fromValue", {value: value});
 
             // Check if value is from type object
             if (typeof value !== "object")
                 throw httpsError("invalid-argument", `Couldn't parse LatePaymentInterest, expected type 'object', but bot ${value} from type '${typeof value}'`, loggingProperties);
+
+            // Check if interest is deleted
+            if (typeof value.deleted === "boolean") {
+                if (!value.deleted)
+                    throw httpsError("invalid-argument", "Couldn't parse interest, deleted argument was false.", loggingProperties);
+                return new Deleted(null);
+            }
 
             // Check if type of interest free period is time period
             if (typeof value.interestFreePeriod !== "object")
@@ -48,7 +59,7 @@ export namespace LatePaymentInterest {
             return new LatePaymentInterest(interestFreePeriod, interestPeriod, value.interestRate, value.compoundInterest);
         }
 
-        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): LatePaymentInterest {
+        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): LatePaymentInterest | Deleted<null> {
             loggingProperties.append("LatePaymentInterest.Builder.fromSnapshot", {osnapshotject: snapshot});
 
             // Check if data exists in snapshot
@@ -62,7 +73,7 @@ export namespace LatePaymentInterest {
             return this.fromValue(data, loggingProperties.nextIndent);
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): LatePaymentInterest {
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): LatePaymentInterest | Deleted<null> {
             loggingProperties.append("LatePaymentInterest.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
             return this.fromValue(container.getParameter(parameterName, "object", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }

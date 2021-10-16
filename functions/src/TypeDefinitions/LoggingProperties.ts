@@ -70,7 +70,7 @@ export class LoggingProperties {
     private detailString(indent: number, key: string, detail: { [key: string]: any }): string {
         const builder = new StringBuilder();
         const jsonLines = JSON.stringify(detail, null, "  ").split("\n");
-        builder.appendLine(`${" ".repeat(2 * indent)}| ${`${key}: ${jsonLines.shift()!.gray()}`}`);
+        builder.appendLine(`${" ".repeat(2 * indent)}| ${`${key}: ${jsonLines.shift()?.gray()}`}`);
         for (const line of jsonLines)
             builder.appendLine(`${" ".repeat(2 * indent)}| ${" ".repeat(key.length + 2)}${line.gray()}`);
         return builder.toString();

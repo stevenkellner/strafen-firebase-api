@@ -63,7 +63,7 @@ export class ChangeReasonTemplateFunction implements FirebaseFunction {
             clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties.nextIndent),
             clubId: guid.fromParameterContainer(container, "clubId", loggingProperties.nextIndent),
             changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties.nextIndent),
-            updatableReasonTemplate: getUpdatable<ReasonTemplate | Deleted, ReasonTemplate.Builder>(container.getParameter("reasonTemplate", "object", loggingProperties.nextIndent), new ReasonTemplate.Builder(), loggingProperties.nextIndent),
+            updatableReasonTemplate: getUpdatable<ReasonTemplate | Deleted<guid>, ReasonTemplate.Builder>(container.getParameter("reasonTemplate", "object", loggingProperties.nextIndent), new ReasonTemplate.Builder(), loggingProperties.nextIndent),
         };
     }
 
@@ -147,7 +147,7 @@ export namespace ChangeReasonTemplateFunction {
     export type Parameters = FunctionDefaultParameters & {
         clubId: guid,
         changeType: ChangeType,
-        updatableReasonTemplate: Updatable<ReasonTemplate | Deleted>
+        updatableReasonTemplate: Updatable<ReasonTemplate | Deleted<guid>>
     }
 
     export class Statistic implements StatisticsProperties<Statistic.ServerObject> {

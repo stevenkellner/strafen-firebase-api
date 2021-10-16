@@ -39,7 +39,7 @@ export async function getDatabaseValue(referencePath: string): Promise<any> {
     });
 }
 
-export async function getDatabaseFines(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<Fine | Deleted>[]> {
+export async function getDatabaseFines(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<Fine | Deleted<guid>>[]> {
     loggingProperties.append("getDatabaseFines", {clubId: clubId});
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/fines`)).map(value => {
         return getUpdatable({
@@ -49,7 +49,7 @@ export async function getDatabaseFines(clubId: guid, loggingProperties: LoggingP
     });
 }
 
-export async function getDatabaseReasonTemplates(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<ReasonTemplate | Deleted>[]> {
+export async function getDatabaseReasonTemplates(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<ReasonTemplate | Deleted<guid>>[]> {
     loggingProperties.append("getDatabaseReasonTemplates", {clubId: clubId});
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/reasonTemplates`)).map(value => {
         return getUpdatable({
@@ -59,7 +59,7 @@ export async function getDatabaseReasonTemplates(clubId: guid, loggingProperties
     });
 }
 
-export async function getDatabasePersons(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<Person | Deleted>[]> {
+export async function getDatabasePersons(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<Person | Deleted<guid>>[]> {
     loggingProperties.append("getDatabasePersons", {clubId: clubId});
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/persons`)).map(value => {
         return getUpdatable({

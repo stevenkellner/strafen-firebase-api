@@ -35,11 +35,11 @@ describe("ChangeReasonTemplate", () => {
     it("No club id", async () => {
         try {
             await callFunction("changeReasonTemplate", {
-            privateKey: privateKey,
-            clubLevel: "testing",
-            changeType: "upate",
-            reasonTemplate: "some Fine",
-        });
+                privateKey: privateKey,
+                clubLevel: "testing",
+                changeType: "upate",
+                reasonTemplate: "some Fine",
+            });
             assert.fail("A statement above should throw an exception.");
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({

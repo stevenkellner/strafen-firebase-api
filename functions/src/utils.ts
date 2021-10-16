@@ -144,10 +144,10 @@ export function httpsError(code: functions.https.FunctionsErrorCode, message: st
     return new functions.https.HttpsError(code, message, properties?.joinedMessages);
 }
 
-export class Deleted {
+export class Deleted<ID> {
 
     public constructor(
-        public readonly id: guid
+        public readonly id: ID
     ) {}
 
     public get ["serverObject"](): {deleted: true} {

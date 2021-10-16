@@ -63,7 +63,7 @@ export class ChangeFineFunction implements FirebaseFunction {
             clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties.nextIndent),
             clubId: guid.fromParameterContainer(container, "clubId", loggingProperties.nextIndent),
             changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties.nextIndent),
-            updatableFine: getUpdatable<Fine | Deleted, Fine.Builder>(container.getParameter("fine", "object", loggingProperties.nextIndent), new Fine.Builder(), loggingProperties.nextIndent),
+            updatableFine: getUpdatable<Fine | Deleted<guid>, Fine.Builder>(container.getParameter("fine", "object", loggingProperties.nextIndent), new Fine.Builder(), loggingProperties.nextIndent),
         };
     }
 
@@ -147,7 +147,7 @@ export namespace ChangeFineFunction {
     export type Parameters = FunctionDefaultParameters & {
         clubId: guid,
         changeType: ChangeType,
-        updatableFine: Updatable<Fine | Deleted>
+        updatableFine: Updatable<Fine | Deleted<guid>>
     }
 
     export class Statistic implements StatisticsProperties<Statistic.ServerObject> {

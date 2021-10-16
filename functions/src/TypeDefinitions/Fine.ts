@@ -61,7 +61,7 @@ export namespace Fine {
     }
 
     export class Builder {
-        public fromValue(value: any, loggingProperties: LoggingProperties): Fine | Deleted {
+        public fromValue(value: any, loggingProperties: LoggingProperties): Fine | Deleted<guid> {
             loggingProperties.append("Fine.Builder.fromValue", {value: value});
 
             // Check if value is from type object
@@ -107,7 +107,7 @@ export namespace Fine {
             return new Fine(id, personId, payedState, value.number, new Date(value.date), fineReason);
         }
 
-        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): Fine | Deleted {
+        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): Fine | Deleted<guid> {
             loggingProperties.append("Fine.Builder.fromSnapshot", {snapshot: snapshot});
 
             // Check if data exists in snapshot
@@ -131,7 +131,7 @@ export namespace Fine {
             }, loggingProperties.nextIndent);
         }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): Fine | Deleted {
+        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): Fine | Deleted<guid> {
             loggingProperties.append("Fine.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
             return this.fromValue(container.getParameter(parameterName, "object", loggingProperties.nextIndent), loggingProperties.nextIndent);
         }
