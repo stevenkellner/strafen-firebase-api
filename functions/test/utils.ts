@@ -28,6 +28,17 @@ export async function signInTestUser(): Promise<UserCredential> {
     return await signIn("functions-tests-user@mail.com", "ghQshXA7rnDdGWj8GffSQN7VGrm9Qf3Z");
 }
 
+export async function getDatabaseOptionalValue(referencePath: string): Promise<any | null> {
+    const reference = ref(database, referencePath);
+    return new Promise((resolve, _) => {
+        onValue(reference, snapshot => {
+            if (!snapshot.exists())
+                return resolve(null);
+            resolve(snapshot.val());
+        });
+    });
+}
+
 export async function getDatabaseValue(referencePath: string): Promise<any> {
     const reference = ref(database, referencePath);
     return new Promise((resolve, reject) => {

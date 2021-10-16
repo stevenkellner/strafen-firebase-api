@@ -1,6 +1,6 @@
 import {privateKey} from "../src/privateKeys";
 import {guid} from "../src/TypeDefinitions/guid";
-import {auth, callFunction, firebaseError, getDatabaseStatisticsPropertiesWithName, getDatabaseValue, signInTestUser} from "./utils";
+import {auth, callFunction, firebaseError, getDatabaseOptionalValue, getDatabaseStatisticsPropertiesWithName, getDatabaseValue, signInTestUser} from "./utils";
 import {signOut} from "firebase/auth";
 import {assert, expect} from "chai";
 import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
@@ -225,5 +225,23 @@ describe("ChangeLatePaymentInterest", () => {
         });
     });
 
-    // TODO: delete before adding interest
+    it("delete before adding interest", async () => {
+        await callFunction("changeLatePaymentInterest", {
+            privateKey: privateKey,
+            clubLevel: "testing",
+            clubId: clubId.guidString,
+            changeType: "delete",
+            latePaymentInterest: {
+                deleted: true,
+                updateProperties: {
+                    timestamp: "2011-10-15T10:42:38+0000",
+                    personId: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                },
+            },
+        });
+
+        // Check interest
+        const interest = await getDatabaseOptionalValue(`testableClubs/${clubId.guidString}/latePaymentInterest`);
+        expect(interest).to.be.null;
+    });
 });

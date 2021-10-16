@@ -1,13 +1,14 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
-import {ChangeFinePayedFunction} from "./regularFunctions/ChangeFinePayedFunction";
-import {NewTestClubFunction} from "./testingFunctions/NewTestClubFunction";
-import {DeleteTestClubsFunction} from "./testingFunctions/DeleteTestClubsFunction";
-import {ChangeReasonTemplateFunction} from "./regularFunctions/ChangeReasonTemplateFunction";
-import {ChangeFineFunction} from "./regularFunctions/ChangeFineFunction";
-import {ChangePersonFunction} from "./regularFunctions/ChangePersonFunction";
-import {ChangeLatePaymentInterestFunction} from "./regularFunctions/ChangeLatePaymentInterestFunction";
+import { ChangeFinePayedFunction } from "./regularFunctions/ChangeFinePayedFunction";
+import { NewTestClubFunction } from "./testingFunctions/NewTestClubFunction";
+import { DeleteTestClubsFunction } from "./testingFunctions/DeleteTestClubsFunction";
+import { ChangeReasonTemplateFunction } from "./regularFunctions/ChangeReasonTemplateFunction";
+import { ChangeFineFunction } from "./regularFunctions/ChangeFineFunction";
+import { ChangePersonFunction } from "./regularFunctions/ChangePersonFunction";
+import { ChangeLatePaymentInterestFunction } from "./regularFunctions/ChangeLatePaymentInterestFunction";
+import { ExistsClubWithIdentifierFunction } from "./regularFunctions/ExistsClubWithIdentifierFunction";
 
 admin.initializeApp();
 
@@ -16,7 +17,7 @@ admin.initializeApp();
  */
 export const changeFinePayed = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new ChangeFinePayedFunction(data);
-    await firebaseFunction.executeFunction(context.auth);
+    return await firebaseFunction.executeFunction(context.auth);
 });
 
 /**
@@ -24,7 +25,7 @@ export const changeFinePayed = functions.region("europe-west1").https.onCall(asy
  */
 export const changeReasonTemplate = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new ChangeReasonTemplateFunction(data);
-    await firebaseFunction.executeFunction(context.auth);
+    return await firebaseFunction.executeFunction(context.auth);
 });
 
 /**
@@ -32,7 +33,7 @@ export const changeReasonTemplate = functions.region("europe-west1").https.onCal
  */
 export const changeFine = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new ChangeFineFunction(data);
-    await firebaseFunction.executeFunction(context.auth);
+    return await firebaseFunction.executeFunction(context.auth);
 });
 
 /**
@@ -40,7 +41,7 @@ export const changeFine = functions.region("europe-west1").https.onCall(async (d
  */
 export const changePerson = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new ChangePersonFunction(data);
-    await firebaseFunction.executeFunction(context.auth);
+    return await firebaseFunction.executeFunction(context.auth);
 });
 
 /**
@@ -48,15 +49,23 @@ export const changePerson = functions.region("europe-west1").https.onCall(async 
  */
 export const changeLatePaymentInterest = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new ChangeLatePaymentInterestFunction(data);
-    await firebaseFunction.executeFunction(context.auth);
+    return await firebaseFunction.executeFunction(context.auth);
+});
+
+/**
+ * Checks if club with given identifier already exists.
+ */
+export const existsClubWithIdentifier = functions.region("europe-west1").https.onCall(async (data, context) => {
+    const firebaseFunction = new ExistsClubWithIdentifierFunction(data);
+    return await firebaseFunction.executeFunction(context.auth);
 });
 
 export const newTestClub = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new NewTestClubFunction(data);
-    await firebaseFunction.executeFunction(context.auth);
+    return await firebaseFunction.executeFunction(context.auth);
 });
 
 export const deleteTestClubs = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new DeleteTestClubsFunction(data);
-    await firebaseFunction.executeFunction(context.auth);
+    return await firebaseFunction.executeFunction(context.auth);
 });
