@@ -6,11 +6,11 @@ import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
 import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
 import { auth, callFunction, firebaseError, signInTestUser } from "./utils";
 
-describe("ExistsClubWithIdentifier", () => {
+describe("ExistsPersonWithUserId", () => {
 
-    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "existsClubWithIdentifierTest", undefined, "notice");
+    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "existsPersonWithUserIdTest", undefined, "notice");
 
-    const clubId = guid.fromString("1a20bbc6-c1b4-4e6f-8919-77f01aa10749", loggingProperties.nextIndent);
+    const clubId = guid.fromString("48a0bbc6-c1b4-4e6f-8919-77f01aa10749", loggingProperties.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -30,9 +30,9 @@ describe("ExistsClubWithIdentifier", () => {
         await signOut(auth);
     });
 
-    it("No identifier", async () => {
+    it("No user id", async () => {
         try {
-            await callFunction("existsClubWithIdentifier", {
+            await callFunction("existsPersonWithUserId", {
                 privateKey: privateKey,
                 clubLevel: "testing",
             });
@@ -40,25 +40,25 @@ describe("ExistsClubWithIdentifier", () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: "functions/invalid-argument",
-                message: "Couldn't parse 'identifier'. Expected type 'string', but got undefined or null.",
+                message: "Couldn't parse 'userId'. Expected type 'string', but got undefined or null.",
             });
         }
     });
 
-    it("With existsting identifier", async () => {
-        const httpResult = await callFunction("existsClubWithIdentifier", {
+    it("With existsting user id", async () => {
+        const httpResult = await callFunction("existsPersonWithUserId", {
             privateKey: privateKey,
             clubLevel: "testing",
-            identifier: clubId.guidString,
+            userId: "LpAaeCz0BQfDHVYw02KiCyoTMS13",
         });
         expect(httpResult.data).to.be.true;
     });
 
-    it("With not existsting identifier", async () => {
-        const httpResult = await callFunction("existsClubWithIdentifier", {
+    it("With not existsting user id", async () => {
+        const httpResult = await callFunction("existsPersonWithUserId", {
             privateKey: privateKey,
             clubLevel: "testing",
-            identifier: guid.newGuid().guidString,
+            userId: "invalid",
         });
         expect(httpResult.data).to.be.false;
     });

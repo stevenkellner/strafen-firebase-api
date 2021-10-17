@@ -9,6 +9,7 @@ import { ChangeFineFunction } from "./regularFunctions/ChangeFineFunction";
 import { ChangePersonFunction } from "./regularFunctions/ChangePersonFunction";
 import { ChangeLatePaymentInterestFunction } from "./regularFunctions/ChangeLatePaymentInterestFunction";
 import { ExistsClubWithIdentifierFunction } from "./regularFunctions/ExistsClubWithIdentifierFunction";
+import { ExistsPersonWithUserIdFunction } from "./regularFunctions/ExistsPersonWithUserIdFunction";
 
 admin.initializeApp();
 
@@ -57,6 +58,14 @@ export const changeLatePaymentInterest = functions.region("europe-west1").https.
  */
 export const existsClubWithIdentifier = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new ExistsClubWithIdentifierFunction(data);
+    return await firebaseFunction.executeFunction(context.auth);
+});
+
+/**
+ * Checks if a person with given user id exists.
+ */
+export const existsPersonWithUserId = functions.region("europe-west1").https.onCall(async (data, context) => {
+    const firebaseFunction = new ExistsPersonWithUserIdFunction(data);
     return await firebaseFunction.executeFunction(context.auth);
 });
 
