@@ -10,6 +10,7 @@ import { ChangePersonFunction } from "./regularFunctions/ChangePersonFunction";
 import { ChangeLatePaymentInterestFunction } from "./regularFunctions/ChangeLatePaymentInterestFunction";
 import { ExistsClubWithIdentifierFunction } from "./regularFunctions/ExistsClubWithIdentifierFunction";
 import { ExistsPersonWithUserIdFunction } from "./regularFunctions/ExistsPersonWithUserIdFunction";
+import { ForceSignOutFunction } from "./regularFunctions/ForceSignOutFunction";
 
 admin.initializeApp();
 
@@ -66,6 +67,14 @@ export const existsClubWithIdentifier = functions.region("europe-west1").https.o
  */
 export const existsPersonWithUserId = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new ExistsPersonWithUserIdFunction(data);
+    return await firebaseFunction.executeFunction(context.auth);
+});
+
+/**
+ * Force sign out a person.
+ */
+export const forceSignOut = functions.region("europe-west1").https.onCall(async (data, context) => {
+    const firebaseFunction = new ForceSignOutFunction(data);
     return await firebaseFunction.executeFunction(context.auth);
 });
 
