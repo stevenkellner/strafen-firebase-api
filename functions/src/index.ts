@@ -12,6 +12,7 @@ import { ExistsClubWithIdentifierFunction } from "./regularFunctions/ExistsClubW
 import { ExistsPersonWithUserIdFunction } from "./regularFunctions/ExistsPersonWithUserIdFunction";
 import { ForceSignOutFunction } from "./regularFunctions/ForceSignOutFunction";
 import { GetClubIdFunction } from "./regularFunctions/GetClubIdFunction";
+import { GetPersonPropertiesFunction } from "./regularFunctions/GetPersonPropertiesFunction";
 
 admin.initializeApp();
 
@@ -84,6 +85,14 @@ export const forceSignOut = functions.region("europe-west1").https.onCall(async 
  */
 export const getClubId = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new GetClubIdFunction(data);
+    return await firebaseFunction.executeFunction(context.auth);
+});
+
+/**
+ * Returns club and person properties of user id.
+ */
+export const getPersonProperties = functions.region("europe-west1").https.onCall(async (data, context) => {
+    const firebaseFunction = new GetPersonPropertiesFunction(data);
     return await firebaseFunction.executeFunction(context.auth);
 });
 
