@@ -11,6 +11,7 @@ import { ChangeLatePaymentInterestFunction } from "./regularFunctions/ChangeLate
 import { ExistsClubWithIdentifierFunction } from "./regularFunctions/ExistsClubWithIdentifierFunction";
 import { ExistsPersonWithUserIdFunction } from "./regularFunctions/ExistsPersonWithUserIdFunction";
 import { ForceSignOutFunction } from "./regularFunctions/ForceSignOutFunction";
+import { GetClubIdFunction } from "./regularFunctions/GetClubIdFunction";
 
 admin.initializeApp();
 
@@ -75,6 +76,14 @@ export const existsPersonWithUserId = functions.region("europe-west1").https.onC
  */
 export const forceSignOut = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new ForceSignOutFunction(data);
+    return await firebaseFunction.executeFunction(context.auth);
+});
+
+/**
+ * Get club id with given club identifier.
+ */
+export const getClubId = functions.region("europe-west1").https.onCall(async (data, context) => {
+    const firebaseFunction = new GetClubIdFunction(data);
     return await firebaseFunction.executeFunction(context.auth);
 });
 

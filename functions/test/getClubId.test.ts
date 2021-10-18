@@ -6,11 +6,11 @@ import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
 import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
 import { auth, callFunction, firebaseError, signInTestUser } from "./utils";
 
-describe("ExistsClubWithIdentifier", () => {
+describe("GetClubId", () => {
 
-    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "existsClubWithIdentifierTest", undefined, "notice");
+    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "getClubIdTest", undefined, "notice");
 
-    const clubId = guid.fromString("1a20bbc6-c1b4-4e6f-8919-77f01aa10749", loggingProperties.nextIndent);
+    const clubId = guid.fromString("3210bbc6-c1b4-4e6f-8919-77f01aa10749", loggingProperties.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -32,7 +32,7 @@ describe("ExistsClubWithIdentifier", () => {
 
     it("No identifier", async () => {
         try {
-            await callFunction("existsClubWithIdentifier", {
+            await callFunction("getClubId", {
                 privateKey: privateKey,
                 clubLevel: "testing",
             });
@@ -46,20 +46,27 @@ describe("ExistsClubWithIdentifier", () => {
     });
 
     it("With existsting identifier", async () => {
-        const httpResult = await callFunction("existsClubWithIdentifier", {
+        const httpResult = await callFunction("getClubId", {
             privateKey: privateKey,
             clubLevel: "testing",
             identifier: "demo-team",
         });
-        expect(httpResult.data).to.be.true;
+        expect(httpResult.data).to.be.equal(clubId.guidString);
     });
 
     it("With not existsting identifier", async () => {
-        const httpResult = await callFunction("existsClubWithIdentifier", {
-            privateKey: privateKey,
-            clubLevel: "testing",
-            identifier: "invalid",
-        });
-        expect(httpResult.data).to.be.false;
+        try {
+            await callFunction("getClubId", {
+                privateKey: privateKey,
+                clubLevel: "testing",
+                identifier: "invalid",
+            });
+            assert.fail("A statement above should throw an exception.");
+        } catch (error) {
+            expect(firebaseError(error)).to.be.deep.equal({
+                code: "functions/not-found",
+                message: "Club doesn't exists.",
+            });
+        }
     });
 });
