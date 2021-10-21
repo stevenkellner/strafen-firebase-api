@@ -14,6 +14,7 @@ import { ForceSignOutFunction } from "./regularFunctions/ForceSignOutFunction";
 import { GetClubIdFunction } from "./regularFunctions/GetClubIdFunction";
 import { GetPersonPropertiesFunction } from "./regularFunctions/GetPersonPropertiesFunction";
 import { NewClubFunction } from "./regularFunctions/NewClubFunction";
+import { RegisterPersonFunction } from "./regularFunctions/RegisterPersonFunction";
 
 admin.initializeApp();
 
@@ -102,6 +103,14 @@ export const getPersonProperties = functions.region("europe-west1").https.onCall
  */
 export const newClub = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new NewClubFunction(data);
+    return await firebaseFunction.executeFunction(context.auth);
+});
+
+/**
+ * Register person to club with given club id.
+ */
+export const registerPerson = functions.region("europe-west1").https.onCall(async (data, context) => {
+    const firebaseFunction = new RegisterPersonFunction(data);
     return await firebaseFunction.executeFunction(context.auth);
 });
 

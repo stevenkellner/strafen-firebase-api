@@ -18,7 +18,7 @@ import { checkPrerequirements, existsData, FirebaseFunction, FunctionDefaultPara
  *  - personProperties ({@link PersonPropertiesWithUserId}): properties of the person signed in
  *
  * @throws
- *  - functions.https.HttpsError:
+ *  - {@link functions.https.HttpsError}:
  *    - permission-denied: if private key isn't valid or the function is called while unauthendicated
  *    - invalid-argument: if a required parameter isn't give over or if a parameter hasn't the right type
  *    - internal: if couldn't create new club in database

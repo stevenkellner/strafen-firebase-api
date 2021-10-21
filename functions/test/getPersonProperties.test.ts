@@ -66,7 +66,7 @@ describe("GetPersonProperties", () => {
                     first: "Max",
                     last: "Mustermann",
                 },
-                signInDate: "2011-09-13T10:42:38+0000",
+                signInDate: "2011-09-13T10:42:38.000Z",
             },
         });
     });

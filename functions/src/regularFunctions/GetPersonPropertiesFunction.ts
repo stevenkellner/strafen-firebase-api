@@ -79,7 +79,7 @@ export class GetPersonPropertiesFunction implements FirebaseFunction {
                         new PersonPropertiesWithIsCashier.Builder().fromValue({
                             id: personSnapshot.key,
                             signInDate: personSnapshot.child("signInData") .child("signInDate").val(),
-                            cashier: personSnapshot.child("signInData").child("cashier").val(),
+                            isCashier: personSnapshot.child("signInData").child("cashier").val(),
                             name: {
                                 first: personSnapshot.child("name").child("first").val(),
                                 last: personSnapshot.child("name").child("last").val(),
