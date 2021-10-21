@@ -1,70 +1,10 @@
 import * as admin from "firebase-admin";
 import { ClubLevel } from "../TypeDefinitions/ClubLevel";
-import { guid } from "../TypeDefinitions/guid";
+import { ClubProperties } from "../TypeDefinitions/ClubProperties";
 import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
-import { PersonName } from "../TypeDefinitions/PersonName";
+import { PersonPropertiesWithIsCashier } from "../TypeDefinitions/PersonPropertiesWithIsCashier";
 import { checkPrerequirements, FirebaseFunction, FunctionDefaultParameters, httpsError } from "../utils";
-
-class ClubProperties {
-    public constructor(
-        public readonly id: guid,
-        public readonly name: string,
-        public readonly identifier: string,
-        public readonly regionCode: string,
-        public readonly inAppPaymentActive: boolean
-    ) {}
-
-    public get ["serverObject"](): ClubProperties.ServerObject {
-        return {
-            id: this.id.guidString,
-            name: this.name,
-            identifier: this.identifier,
-            regionCode: this.regionCode,
-            inAppPaymentActive: this.inAppPaymentActive,
-        };
-    }
-}
-
-namespace ClubProperties {
-    export interface ServerObject {
-        id: string,
-        name: string,
-        identifier: string,
-        regionCode: string,
-        inAppPaymentActive: boolean,
-    }
-}
-
-class PersonProperties {
-    public constructor(
-        public readonly clubProperties: ClubProperties,
-        public readonly id: guid,
-        public readonly signInDate: string,
-        public readonly isCashier: boolean,
-        public readonly name: PersonName
-    ) {}
-
-    public get ["serverObject"](): PersonProperties.ServerObject {
-        return {
-            clubProperties: this.clubProperties.serverObject,
-            id: this.id.guidString,
-            signInDate: this.signInDate,
-            isCashier: this.isCashier,
-            name: this.name.serverObject,
-        };
-    }
-}
-
-namespace PersonProperties {
-    export interface ServerObject {
-        clubProperties: ClubProperties.ServerObject,
-        id: string,
-        signInDate: string,
-        isCashier: boolean,
-        name: PersonName.ServerObject
-    }
-}
 
 /**
  * @summary
@@ -75,7 +15,9 @@ namespace PersonProperties {
  *  - clubLevel ({@link ClubLevel}): level of the club (`regular`, `debug`, `testing`)
  *  - userId (string): user id to search in database
  *
- * @returns: ({@link PersonProperties.ServerObject}) properties of person with specified user id
+ * @returns:
+ *  - personProperties ({@link PersonProperties.ServerObject}) properties of person with specified user id
+ *  - clubProperties ({@link ClubProperties.ServerObject}) properties of club
  *
  * @throws
  *  - {@link functions.https.HttpsError}:
@@ -120,7 +62,7 @@ export class GetPersonPropertiesFunction implements FirebaseFunction {
      * Executes this firebase function.
      * @param {{uid: string} | undefined} auth Authentication state.
      */
-    async executeFunction(auth?: { uid: string }): Promise<PersonProperties.ServerObject> {
+    async executeFunction(auth?: { uid: string }): Promise<GetPersonPropertiesFunction.ReturnType.ServerObject> {
         this.loggingProperties.append("GetPersonPropertiesFunction.executeFunction", {auth: auth}, "info");
 
         // Check prerequirements
@@ -128,36 +70,38 @@ export class GetPersonPropertiesFunction implements FirebaseFunction {
 
         // Get person properties
         const reference = admin.database().ref(this.parameters.clubLevel.clubComponent);
-        let personProperties: PersonProperties | null = null;
+        let properties: GetPersonPropertiesFunction.ReturnType | null = null;
         (await reference.once("value")).forEach(clubSnapshot => {
             clubSnapshot.child("persons").forEach(personSnapshot => {
                 const userId = personSnapshot.child("signInData").child("userId").val();
                 if (userId == this.parameters.userId)
-                    personProperties = new PersonProperties(
-                        new ClubProperties(
-                            guid.fromString(clubSnapshot.key ?? "", this.loggingProperties.nextIndent),
-                            clubSnapshot.child("name").val(),
-                            clubSnapshot.child("identifier").val(),
-                            clubSnapshot.child("regionCode").val(),
-                            clubSnapshot.child("inAppPaymentActive").val()
-                        ),
-                        guid.fromString(personSnapshot.key ?? "", this.loggingProperties.nextIndent),
-                        personSnapshot.child("signInData") .child("signInDate").val(),
-                        personSnapshot.child("signInData").child("cashier").val(),
-                        new PersonName(
-                            personSnapshot.child("name").child("first").val(),
-                            personSnapshot.child("name").child("last").val()
-                        )
+                    properties = new GetPersonPropertiesFunction.ReturnType(
+                        new PersonPropertiesWithIsCashier.Builder().fromValue({
+                            id: personSnapshot.key,
+                            signInDate: personSnapshot.child("signInData") .child("signInDate").val(),
+                            cashier: personSnapshot.child("signInData").child("cashier").val(),
+                            name: {
+                                first: personSnapshot.child("name").child("first").val(),
+                                last: personSnapshot.child("name").child("last").val(),
+                            },
+                        }, this.loggingProperties.nextIndent),
+                        new ClubProperties.Builder().fromValue({
+                            id: clubSnapshot.key,
+                            name: clubSnapshot.child("name").val(),
+                            identifier: clubSnapshot.child("identifier").val(),
+                            regionCode: clubSnapshot.child("regionCode").val(),
+                            inAppPaymentActive: clubSnapshot.child("inAppPaymentActive").val(),
+                        }, this.loggingProperties.nextIndent),
                     );
-                return personProperties != null;
+                return properties != null;
             });
-            return personProperties != null;
+            return properties != null;
         });
 
         // Return person properties
-        if (personProperties == null)
+        if (properties == null)
             throw httpsError("not-found", "Person doesn't exist.", this.loggingProperties);
-        return (personProperties as any).serverObject;
+        return (properties as GetPersonPropertiesFunction.ReturnType).serverObject;
     }
 }
 
@@ -165,5 +109,26 @@ export namespace GetPersonPropertiesFunction {
 
     export type Parameters = FunctionDefaultParameters & {
         userId: string,
+    }
+
+    export class ReturnType {
+        public constructor(
+            public readonly personProperties: PersonPropertiesWithIsCashier,
+            public readonly clubProperties: ClubProperties
+        ) {}
+
+        public get ["serverObject"](): ReturnType.ServerObject {
+            return {
+                personProperties: this.personProperties.serverObject,
+                clubProperties: this.clubProperties.serverObject,
+            };
+        }
+    }
+
+    export namespace ReturnType {
+        export interface ServerObject {
+            personProperties: PersonPropertiesWithIsCashier.ServerObject,
+            clubProperties: ClubProperties.ServerObject,
+        }
     }
 }

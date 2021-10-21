@@ -59,13 +59,15 @@ describe("GetPersonProperties", () => {
                 name: "Neuer Verein",
                 regionCode: "DE",
             },
-            id: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
-            isCashier: true,
-            name: {
-                first: "Max",
-                last: "Mustermann",
+            personProperties: {
+                id: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
+                isCashier: true,
+                name: {
+                    first: "Max",
+                    last: "Mustermann",
+                },
+                signInDate: "2011-09-13T10:42:38+0000",
             },
-            signInDate: "2011-09-13T10:42:38+0000",
         });
     });
 

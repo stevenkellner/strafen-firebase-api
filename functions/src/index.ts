@@ -13,6 +13,7 @@ import { ExistsPersonWithUserIdFunction } from "./regularFunctions/ExistsPersonW
 import { ForceSignOutFunction } from "./regularFunctions/ForceSignOutFunction";
 import { GetClubIdFunction } from "./regularFunctions/GetClubIdFunction";
 import { GetPersonPropertiesFunction } from "./regularFunctions/GetPersonPropertiesFunction";
+import { NewClubFunction } from "./regularFunctions/NewClubFunction";
 
 admin.initializeApp();
 
@@ -93,6 +94,14 @@ export const getClubId = functions.region("europe-west1").https.onCall(async (da
  */
 export const getPersonProperties = functions.region("europe-west1").https.onCall(async (data, context) => {
     const firebaseFunction = new GetPersonPropertiesFunction(data);
+    return await firebaseFunction.executeFunction(context.auth);
+});
+
+/**
+ * Creates a new club with given properties.
+ */
+export const newClub = functions.region("europe-west1").https.onCall(async (data, context) => {
+    const firebaseFunction = new NewClubFunction(data);
     return await firebaseFunction.executeFunction(context.auth);
 });
 
