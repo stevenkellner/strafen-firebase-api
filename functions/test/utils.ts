@@ -96,16 +96,23 @@ export async function getDatabaseStatisticsPropertiesWithName(clubId: guid, name
     return (await getDatabaseStatistics(clubId, loggingProperties)).filter(statistic => statistic.name == name ).map(statistic => statistic.properties);
 }
 
-interface FirebaseError {
+interface ErrorCodeAndMessage {
     code: string,
     message: string,
 }
 
-export function firebaseError(error: unknown): FirebaseError {
-    if (typeof error != "object" || !(error as any).hasOwnProperty("name") || (error as any).name != "FirebaseError")
-        throw error;
-    return {
-        code: (error as any).code,
-        message: (error as any).message,
-    };
+export function firebaseError(error: unknown): ErrorCodeAndMessage {
+    const _errorCodeAndMessage = errorCodeAndMessage(error);
+    if ((error as any).hasOwnProperty("name") && (error as any).name == "FirebaseError")
+        return _errorCodeAndMessage;
+    throw error;
+}
+
+export function errorCodeAndMessage(error: unknown): ErrorCodeAndMessage {
+    if (typeof error == "object" && (error as any).hasOwnProperty("code") && (error as any).hasOwnProperty("message"))
+        return {
+            code: (error as any).code,
+            message: (error as any).message,
+        };
+    throw error;
 }

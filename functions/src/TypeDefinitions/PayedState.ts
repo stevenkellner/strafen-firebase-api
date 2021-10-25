@@ -51,11 +51,7 @@ export namespace PayedState {
             if (typeof value !== "object")
                 throw httpsError("invalid-argument", `Couldn't parse PayedState, expected type 'object', but bot ${value} from type '${typeof value}'`, loggingProperties);
 
-            // Check if type of state is a string and the value either 'payed', 'settled' or 'unpayed'.
-            if (typeof value.state !== "string" || (value.state != "payed" && value.state != "settled" && value.state != "unpayed"))
-                throw httpsError("invalid-argument", `Couldn't parse PayedState parameter 'state'. Expected type 'string', but got '${value.state}' from type '${typeof value.state}'.`, loggingProperties);
-
-            if (value.state == "payed") {
+            if (value.state === "payed") {
 
                 // Check if payDate is a iso string
                 if (typeof value.payDate !== "string" || isNaN(new Date(value.payDate).getTime()))
@@ -68,9 +64,9 @@ export namespace PayedState {
                 // Return payed state
                 return new PayedState({state: value.state, payDate: new Date(value.payDate), inApp: value.inApp});
 
-            } else if (value.state == "unpayed")
+            } else if (value.state === "unpayed")
                 return new PayedState({state: "unpayed"});
-            else if (value.state == "settled")
+            else if (value.state === "settled")
                 return new PayedState({state: "settled"});
 
             // Throw error since value.state isn't 'payed', 'settled' or 'unpayed'.

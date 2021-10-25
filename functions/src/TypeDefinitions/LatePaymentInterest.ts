@@ -31,10 +31,10 @@ export namespace LatePaymentInterest {
                 throw httpsError("invalid-argument", `Couldn't parse LatePaymentInterest, expected type 'object', but bot ${value} from type '${typeof value}'`, loggingProperties);
 
             // Check if interest is deleted
-            if (typeof value.deleted === "boolean") {
-                if (!value.deleted)
-                    throw httpsError("invalid-argument", "Couldn't parse interest, deleted argument was false.", loggingProperties);
-                return new Deleted(null);
+            if (typeof value.deleted !== "undefined") {
+                if (typeof value.deleted !== "boolean" || !value.deleted)
+                    throw httpsError("invalid-argument", "Couldn't parse interest, deleted argument wasn't from type boolean or was false.", loggingProperties);
+                 return new Deleted(null);
             }
 
             // Check if type of interest free period is time period

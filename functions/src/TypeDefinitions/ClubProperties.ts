@@ -49,19 +49,19 @@ export namespace ClubProperties {
 
             // Check if type of name is string
             if (typeof value.name !== "string")
-                throw httpsError("invalid-argument", `Couldn't parse club properties parameter 'name'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
+                throw httpsError("invalid-argument", `Couldn't parse club properties parameter 'name'. Expected type 'string', but got '${value.name}' from type '${typeof value.name}'.`, loggingProperties);
 
             // Check if type of identifier is string
             if (typeof value.identifier !== "string")
-                throw httpsError("invalid-argument", `Couldn't parse club properties parameter 'identifier'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
+                throw httpsError("invalid-argument", `Couldn't parse club properties parameter 'identifier'. Expected type 'string', but got '${value.identifier}' from type '${typeof value.identifier}'.`, loggingProperties);
 
             // Check if type of regionCode is string
             if (typeof value.regionCode !== "string")
-                throw httpsError("invalid-argument", `Couldn't parse club properties parameter 'regionCode'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
+                throw httpsError("invalid-argument", `Couldn't parse club properties parameter 'regionCode'. Expected type 'string', but got '${value.regionCode}' from type '${typeof value.regionCode}'.`, loggingProperties);
 
             // Check if type of inAppPaymentActive is boolean
             if (typeof value.inAppPaymentActive !== "boolean")
-                throw httpsError("invalid-argument", `Couldn't parse club properties parameter 'inAppPaymentActive'. Expected type 'boolean', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
+                throw httpsError("invalid-argument", `Couldn't parse club properties parameter 'inAppPaymentActive'. Expected type 'boolean', but got '${value.inAppPaymentActive}' from type '${typeof value.inAppPaymentActive}'.`, loggingProperties);
 
             // Return club properties
             return new ClubProperties(id, value.name, value.identifier, value.regionCode, value.inAppPaymentActive);

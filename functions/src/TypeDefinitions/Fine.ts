@@ -74,9 +74,9 @@ export namespace Fine {
             const id = guid.fromString(value.id, loggingProperties.nextIndent);
 
             // Check if fine is deleted
-            if (typeof value.deleted === "boolean") {
-                if (!value.deleted)
-                    throw httpsError("invalid-argument", "Couldn't parse fine, deleted argument was false.", loggingProperties);
+            if (typeof value.deleted !== "undefined") {
+                if (typeof value.deleted !== "boolean" || !value.deleted)
+                    throw httpsError("invalid-argument", "Couldn't parse fine, deleted argument wasn't from type boolean or was false.", loggingProperties);
                 return new Deleted(id);
             }
 
@@ -91,8 +91,8 @@ export namespace Fine {
             const payedState = getUpdatable<PayedState, PayedState.Builder>(value.payedState, new PayedState.Builder(), loggingProperties.nextIndent);
 
             // Check if number is a positive number
-            if (typeof value.number !== "number" || value.number < 0)
-                throw httpsError("invalid-argument", `Couldn't parse fine parameter 'number', expected positive number but got '${value.number}' from type ${typeof value.number}`, loggingProperties);
+            if (typeof value.number !== "number" || value.number <= 0 || value.number != Math.floor(value.number))
+                throw httpsError("invalid-argument", `Couldn't parse fine parameter 'number', expected unsigned integer greater zero but got '${value.number}' from type ${typeof value.number}`, loggingProperties);
 
             // Check if date is a iso string
             if (typeof value.date !== "string" || isNaN(new Date(value.date).getTime()))
