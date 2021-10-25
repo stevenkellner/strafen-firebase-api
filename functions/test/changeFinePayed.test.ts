@@ -120,7 +120,7 @@ describe("ChangeFinePayed", () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: "functions/invalid-argument",
-                message: "Couldn't parse PayedState parameter 'state'. Expected type 'string', but got 'invalid state' from type 'string'.",
+                message: "Couldn't parse PayedState parameter 'state'. Expected values 'payed', 'settled' or 'unpayed', but got 'invalid state' from type 'string'.",
             });
         }
     });
@@ -144,7 +144,7 @@ describe("ChangeFinePayed", () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: "functions/invalid-argument",
-                message: "Couldn't parse PayedState parameter 'payDate', expected iso string but got 'undefined' from type undefined",
+                message: "Couldn't parse PayedState parameter 'payDate', expected iso string, but got 'undefined' from type undefined",
             });
         }
     });
@@ -169,7 +169,7 @@ describe("ChangeFinePayed", () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: "functions/invalid-argument",
-                message: "Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', undefined or null, but got 'undefined' from type 'undefined'.",
+                message: "Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', but got 'undefined' from type 'undefined'.",
             });
         }
     });
