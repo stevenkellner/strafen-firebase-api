@@ -34,7 +34,7 @@ export namespace LatePaymentInterest {
             if (typeof value.deleted !== "undefined") {
                 if (typeof value.deleted !== "boolean" || !value.deleted)
                     throw httpsError("invalid-argument", "Couldn't parse interest, deleted argument wasn't from type boolean or was false.", loggingProperties);
-                 return new Deleted(null);
+                return new Deleted(null);
             }
 
             // Check if type of interest free period is time period

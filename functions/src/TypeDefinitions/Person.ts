@@ -51,9 +51,9 @@ export namespace Person {
             const id = guid.fromString(value.id, loggingProperties.nextIndent);
 
             // Check if person is deleted
-            if (typeof value.deleted === "boolean") {
-                if (!value.deleted)
-                    throw httpsError("invalid-argument", "Couldn't parse person, deleted argument was false.", loggingProperties);
+            if (typeof value.deleted !== "undefined") {
+                if (typeof value.deleted !== "boolean" || !value.deleted)
+                    throw httpsError("invalid-argument", "Couldn't parse person, deleted argument wasn't from type boolean or was false.", loggingProperties);
                 return new Deleted(id);
             }
 

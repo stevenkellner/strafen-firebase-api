@@ -55,11 +55,11 @@ export namespace PayedState {
 
                 // Check if payDate is a iso string
                 if (typeof value.payDate !== "string" || isNaN(new Date(value.payDate).getTime()))
-                    throw httpsError("invalid-argument", `Couldn't parse PayedState parameter 'payDate', expected iso string but got '${value.payDate}' from type ${typeof value.payDate}`, loggingProperties);
+                    throw httpsError("invalid-argument", `Couldn't parse PayedState parameter 'payDate', expected iso string, but got '${value.payDate}' from type ${typeof value.payDate}`, loggingProperties);
 
                 // Check if type of inApp is undefined, null or boolean.
                 if (typeof value.inApp !== "boolean")
-                    throw httpsError("invalid-argument", `Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', undefined or null, but got '${value.inApp}' from type '${typeof value.inApp}'.`, loggingProperties);
+                    throw httpsError("invalid-argument", `Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', but got '${value.inApp}' from type '${typeof value.inApp}'.`, loggingProperties);
 
                 // Return payed state
                 return new PayedState({state: value.state, payDate: new Date(value.payDate), inApp: value.inApp});

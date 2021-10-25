@@ -61,9 +61,9 @@ export namespace ReasonTemplate {
             const id = guid.fromString(value.id, loggingProperties.nextIndent);
 
             // Check if reason template is deleted
-            if (typeof value.deleted === "boolean") {
-                if (!value.deleted)
-                    throw httpsError("invalid-argument", "Couldn't parse reason template, deleted argument was false.", loggingProperties);
+            if (typeof value.deleted !== "undefined") {
+                if (typeof value.deleted !== "boolean" || !value.deleted)
+                    throw httpsError("invalid-argument", "Couldn't parse ReasonTemplate, deleted argument wasn't from type boolean or was false.", loggingProperties);
                 return new Deleted(id);
             }
 

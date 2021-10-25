@@ -47,16 +47,16 @@ export namespace PersonPropertiesWithUserId {
 
             // Check if type of sign in date is string
             if (typeof value.signInDate !== "string")
-                throw httpsError("invalid-argument", `Couldn't parse person properties parameter 'signInDate'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
+                throw httpsError("invalid-argument", `Couldn't parse person properties parameter 'signInDate'. Expected type 'string', but got '${value.signInDate}' from type '${typeof value.signInDate}'.`, loggingProperties);
             const signInDate = new Date(value.signInDate);
 
             // Check if type of userId is string
             if (typeof value.userId !== "string")
-                throw httpsError("invalid-argument", `Couldn't parse person properties parameter 'userId'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
+                throw httpsError("invalid-argument", `Couldn't parse person properties parameter 'userId'. Expected type 'string', but got '${value.userId}' from type '${typeof value.userId}'.`, loggingProperties);
 
             // Check if type of name is object
             if (typeof value.name !== "object")
-                throw httpsError("invalid-argument", `Couldn't parse person properties parameter 'name'. Expected type 'object', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
+                throw httpsError("invalid-argument", `Couldn't parse person properties parameter 'name'. Expected type 'object', but got '${value.name}' from type '${typeof value.name}'.`, loggingProperties);
             const name = new PersonName.Builder().fromValue(value.name, loggingProperties.nextIndent);
 
             // Return person properties

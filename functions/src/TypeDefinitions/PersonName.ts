@@ -36,12 +36,13 @@ export namespace PersonName {
             if (typeof value.first !== "string")
                 throw httpsError("invalid-argument", `Couldn't parse PersonName parameter 'first'. Expected type 'string', but got '${value.first}' from type '${typeof value.first}'.`, loggingProperties);
 
-            // Check if type of last is string
-            if (typeof value.last !== "string")
-                throw httpsError("invalid-argument", `Couldn't parse PersonName parameter 'last'. Expected type 'string', but got '${value.last}' from type '${typeof value.last}'.`, loggingProperties);
+            // Check if type of last is string or undefined
+            if (typeof value.last === "undefined")
+                return new PersonName(value.first, null);
+            if (typeof value.last === "string")
+                return new PersonName(value.first, value.last);
 
-            // Return person name
-            return new PersonName(value.first, value.last);
+            throw httpsError("invalid-argument", `Couldn't parse PersonName parameter 'last'. Expected type 'string' or undefined, but got '${value.last}' from type '${typeof value.last}'.`, loggingProperties);
         }
     }
 }

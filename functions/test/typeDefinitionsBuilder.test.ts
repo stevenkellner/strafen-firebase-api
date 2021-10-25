@@ -1,19 +1,24 @@
 import { assert, expect } from "chai";
-import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
-import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
-import { errorCodeAndMessage } from "./utils";
 import { Amount } from "../src/TypeDefinitions/Amount";
 import { ChangeType } from "../src/TypeDefinitions/ChangeType";
 import { ClubLevel } from "../src/TypeDefinitions/ClubLevel";
 import { ClubProperties } from "../src/TypeDefinitions/ClubProperties";
-import { guid } from "../src/TypeDefinitions/guid";
 import { Fine } from "../src/TypeDefinitions/Fine";
-import { Deleted } from "../src/utils";
-import { Updatable, UpdateProperties } from "../src/TypeDefinitions/UpdateProperties";
-import { PayedState } from "../src/TypeDefinitions/PayedState";
 import { FineReason } from "../src/TypeDefinitions/FineReason";
+import { guid } from "../src/TypeDefinitions/guid";
 import { Importance } from "../src/TypeDefinitions/Importance";
 import { LatePaymentInterest } from "../src/TypeDefinitions/LatePaymentInterest";
+import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
+import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
+import { PayedState } from "../src/TypeDefinitions/PayedState";
+import { Person } from "../src/TypeDefinitions/Person";
+import { PersonName } from "../src/TypeDefinitions/PersonName";
+import { PersonPropertiesWithIsCashier } from "../src/TypeDefinitions/PersonPropertiesWithIsCashier";
+import { PersonPropertiesWithUserId } from "../src/TypeDefinitions/PersonPropertiesWithUserId";
+import { ReasonTemplate } from "../src/TypeDefinitions/ReasonTemplate";
+import { Updatable, UpdateProperties } from "../src/TypeDefinitions/UpdateProperties";
+import { Deleted } from "../src/utils";
+import { errorCodeAndMessage } from "./utils";
 
 describe("TypeDefinitionsBuilder", () => {
 
@@ -948,7 +953,6 @@ describe("TypeDefinitionsBuilder", () => {
                 });
             }
         });
-        
 
         it("Value has wrong deleted type", () => {
             try {
@@ -987,8 +991,7 @@ describe("TypeDefinitionsBuilder", () => {
 
         it("Value has no interestFreePeriod", () => {
             try {
-                new LatePaymentInterest.Builder().fromValue({
-                }, loggingProperties.nextIndent);
+                new LatePaymentInterest.Builder().fromValue({}, loggingProperties.nextIndent);
                 assert.fail("A statement above should throw an exception.");
             } catch (error) {
                 expect(errorCodeAndMessage(error)).to.be.deep.equal({
@@ -1232,7 +1235,881 @@ describe("TypeDefinitionsBuilder", () => {
                 new LatePaymentInterest.TimePeriod(10, "day"),
                 new LatePaymentInterest.TimePeriod(10, "year"),
                 1.2, true
-            ))
+            ));
+        });
+    });
+
+    describe("PayedStateBuilder", () => {
+
+        loggingProperties.append("PayedStateBuilder", undefined, "info");
+
+        it("Value no object", () => {
+            try {
+                new PayedState.Builder().fromValue("asdf", loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PayedState, expected type 'object', but bot asdf from type 'string'",
+                });
+            }
+        });
+
+        it("Value has no state", () => {
+            try {
+                new PayedState.Builder().fromValue({}, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PayedState parameter 'state'. Expected values 'payed', 'settled' or 'unpayed', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has invalid state", () => {
+            try {
+                new PayedState.Builder().fromValue({
+                    state: "invalid",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PayedState parameter 'state'. Expected values 'payed', 'settled' or 'unpayed', but got 'invalid' from type 'string'.",
+                });
+            }
+        });
+
+        it("Value unpayed", () => {
+            const payedState = new PayedState.Builder().fromValue({
+                state: "unpayed",
+            }, loggingProperties.nextIndent);
+            expect(payedState).to.be.deep.equal(new PayedState({state: "unpayed"}));
+        });
+
+        it("Value settled", () => {
+            const payedState = new PayedState.Builder().fromValue({
+                state: "settled",
+            }, loggingProperties.nextIndent);
+            expect(payedState).to.be.deep.equal(new PayedState({state: "settled"}));
+        });
+
+        it("Value payed with no payDate", () => {
+            try {
+                new PayedState.Builder().fromValue({
+                    state: "payed",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PayedState parameter 'payDate', expected iso string, but got 'undefined' from type undefined",
+                });
+            }
+        });
+
+        it("Value payed with wrong payDate type", () => {
+            try {
+                new PayedState.Builder().fromValue({
+                    state: "payed",
+                    payDate: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PayedState parameter 'payDate', expected iso string, but got '1234' from type number",
+                });
+            }
+        });
+
+        it("Value payed with no inApp", () => {
+            try {
+                new PayedState.Builder().fromValue({
+                    state: "payed",
+                    payDate: "2011-10-14T10:42:38+0000",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value payed with wrong inApp type", () => {
+            try {
+                new PayedState.Builder().fromValue({
+                    state: "payed",
+                    payDate: "2011-10-14T10:42:38+0000",
+                    inApp: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value valid payed", () => {
+            const payedState = new PayedState.Builder().fromValue({
+                state: "payed",
+                payDate: "2011-10-14T10:42:38+0000",
+                inApp: true,
+            }, loggingProperties.nextIndent);
+            expect(payedState).to.be.deep.equal(new PayedState({
+                state: "payed",
+                inApp: true,
+                payDate: new Date("2011-10-14T10:42:38+0000"),
+            }));
+        });
+    });
+
+    describe("PersonBuilder", () => {
+
+        loggingProperties.append("PersonBuilder", undefined, "info");
+
+        it("Value no object", () => {
+            try {
+                new Person.Builder().fromValue("asdf", loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person, expected type 'object', but bot asdf from type 'string'",
+                });
+            }
+        });
+
+        it("Value has no id", () => {
+            try {
+                new Person.Builder().fromValue({}, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse Person parameter 'id'. Expected type 'string', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong id type", () => {
+            try {
+                new Person.Builder().fromValue({
+                    id: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse Person parameter 'id'. Expected type 'string', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value has invalid id guid", () => {
+            try {
+                new Person.Builder().fromValue({
+                    id: "invalid",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse Guid, guid string isn't a valid Guid: invalid",
+                });
+            }
+        });
+
+        it("Value has wrong deleted type", () => {
+            try {
+                new Person.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                    deleted: "asdf",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person, deleted argument wasn't from type boolean or was false.",
+                });
+            }
+        });
+
+        it("Value has deleted false", () => {
+            try {
+                new Person.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                    deleted: false,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person, deleted argument wasn't from type boolean or was false.",
+                });
+            }
+        });
+
+        it("Value has deleted true", () => {
+            const person = new Person.Builder().fromValue({
+                id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                deleted: true,
+            }, loggingProperties.nextIndent);
+            expect(person).to.be.deep.equal(new Deleted<guid>(guid.fromString("4ED90BA2-D536-4B2B-A93E-403987A056CC", loggingProperties.nextIndent)));
+        });
+
+        it("Value has no name", () => {
+            try {
+                new Person.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse Person parameter 'name'. Expected type 'object', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong id type", () => {
+            try {
+                new Person.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                    name: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse Person parameter 'name'. Expected type 'object', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value valid", () => {
+            const person = new Person.Builder().fromValue({
+                id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                name: {
+                    first: "asdf",
+                    last: "öjk",
+                },
+            }, loggingProperties.nextIndent);
+            expect(person).to.be.deep.equal(new Person(
+                guid.fromString("4ED90BA2-D536-4B2B-A93E-403987A056CC", loggingProperties.nextIndent),
+                new PersonName("asdf", "öjk"),
+            ));
+        });
+    });
+
+    describe("PersonNameBuilder", () => {
+
+        loggingProperties.append("PersonNameBuilder", undefined, "info");
+
+        it("Value no object", () => {
+            try {
+                new PersonName.Builder().fromValue("asdf", loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PersonName, expected type 'object', but bot asdf from type 'string'",
+                });
+            }
+        });
+
+        it("Value has no firstName", () => {
+            try {
+                new PersonName.Builder().fromValue({}, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PersonName parameter 'first'. Expected type 'string', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong firstName type", () => {
+            try {
+                new PersonName.Builder().fromValue({
+                    first: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PersonName parameter 'first'. Expected type 'string', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value has no lastName", () => {
+            const personName = new PersonName.Builder().fromValue({
+                first: "first name",
+            }, loggingProperties.nextIndent);
+            expect(personName).to.be.deep.equal(new PersonName("first name", null));
+        });
+
+        it("Value has wrong lastName type", () => {
+            try {
+                new PersonName.Builder().fromValue({
+                    first: "first name",
+                    last: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse PersonName parameter 'last'. Expected type 'string' or undefined, but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value with lastName", () => {
+            const personName = new PersonName.Builder().fromValue({
+                first: "first name",
+                last: "last name",
+            }, loggingProperties.nextIndent);
+            expect(personName).to.be.deep.equal(new PersonName("first name", "last name"));
+        });
+    });
+
+    describe("PersonPropertiesWithIsCashierBuilder", () => {
+
+        loggingProperties.append("PersonPropertiesWithIsCashierBuilder", undefined, "info");
+
+        it("Value no object", () => {
+            try {
+                new PersonPropertiesWithIsCashier.Builder().fromValue("asdf", loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties, expected type 'object', but bot asdf from type 'string'",
+                });
+            }
+        });
+
+        it("Value has no id", () => {
+            try {
+                new PersonPropertiesWithIsCashier.Builder().fromValue({}, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'id'. Expected type 'string', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong id type", () => {
+            try {
+                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                    id: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'id'. Expected type 'string', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value has invalid id guid", () => {
+            try {
+                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                    id: "invalid",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse Guid, guid string isn't a valid Guid: invalid",
+                });
+            }
+        });
+
+        it("Value has no signInDate", () => {
+            try {
+                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'signInDate'. Expected type 'string', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong signInDate type", () => {
+            try {
+                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                    signInDate: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'signInDate'. Expected type 'string', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value has no isCashier", () => {
+            try {
+                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                    signInDate: "2011-10-14T10:42:38+0000",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'isCashier'. Expected type 'boolean', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong isCashier type", () => {
+            try {
+                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                    signInDate: "2011-10-14T10:42:38+0000",
+                    isCashier: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'isCashier'. Expected type 'boolean', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value has no name", () => {
+            try {
+                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                    signInDate: "2011-10-14T10:42:38+0000",
+                    isCashier: true,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'name'. Expected type 'object', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong name type", () => {
+            try {
+                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                    signInDate: "2011-10-14T10:42:38+0000",
+                    isCashier: true,
+                    name: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'name'. Expected type 'object', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value valid", () => {
+            const personProperties = new PersonPropertiesWithIsCashier.Builder().fromValue({
+                id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                signInDate: "2011-10-14T10:42:38+0000",
+                isCashier: true,
+                name: {
+                    first: "asdf",
+                },
+            }, loggingProperties.nextIndent);
+            expect(personProperties).to.be.deep.equal(new PersonPropertiesWithIsCashier(
+                guid.fromString("fd8f2af8-25bc-4eee-b4b7-b4206439395a", loggingProperties.nextIndent),
+                new Date("2011-10-14T10:42:38+0000"), true,
+                new PersonName("asdf", null)
+            ));
+        });
+    });
+
+    describe("PersonPropertiesWithUserIdBuilder", () => {
+
+        loggingProperties.append("PersonPropertiesWithUserIdBuilder", undefined, "info");
+
+        it("Value no object", () => {
+            try {
+                new PersonPropertiesWithUserId.Builder().fromValue("asdf", loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties, expected type 'object', but bot asdf from type 'string'",
+                });
+            }
+        });
+
+        it("Value has no id", () => {
+            try {
+                new PersonPropertiesWithUserId.Builder().fromValue({}, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'id'. Expected type 'string', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong id type", () => {
+            try {
+                new PersonPropertiesWithUserId.Builder().fromValue({
+                    id: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'id'. Expected type 'string', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value has invalid id guid", () => {
+            try {
+                new PersonPropertiesWithUserId.Builder().fromValue({
+                    id: "invalid",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse Guid, guid string isn't a valid Guid: invalid",
+                });
+            }
+        });
+
+        it("Value has no signInDate", () => {
+            try {
+                new PersonPropertiesWithUserId.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'signInDate'. Expected type 'string', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong signInDate type", () => {
+            try {
+                new PersonPropertiesWithUserId.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                    signInDate: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'signInDate'. Expected type 'string', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value has no userId", () => {
+            try {
+                new PersonPropertiesWithUserId.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                    signInDate: "2011-10-14T10:42:38+0000",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'userId'. Expected type 'string', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong userId type", () => {
+            try {
+                new PersonPropertiesWithUserId.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                    signInDate: "2011-10-14T10:42:38+0000",
+                    userId: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'userId'. Expected type 'string', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value has no name", () => {
+            try {
+                new PersonPropertiesWithUserId.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                    signInDate: "2011-10-14T10:42:38+0000",
+                    userId: "lkjnm",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'name'. Expected type 'object', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong name type", () => {
+            try {
+                new PersonPropertiesWithUserId.Builder().fromValue({
+                    id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                    signInDate: "2011-10-14T10:42:38+0000",
+                    userId: "lkjnm",
+                    name: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse person properties parameter 'name'. Expected type 'object', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value valid", () => {
+            const personProperties = new PersonPropertiesWithUserId.Builder().fromValue({
+                id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
+                signInDate: "2011-10-14T10:42:38+0000",
+                userId: "lkjnm",
+                name: {
+                    first: "asdf",
+                },
+            }, loggingProperties.nextIndent);
+            expect(personProperties).to.be.deep.equal(new PersonPropertiesWithUserId(
+                guid.fromString("fd8f2af8-25bc-4eee-b4b7-b4206439395a", loggingProperties.nextIndent),
+                new Date("2011-10-14T10:42:38+0000"), "lkjnm",
+                new PersonName("asdf", null)
+            ));
+        });
+    });
+
+    describe("ReasonTemplateBuilder", () => {
+
+        loggingProperties.append("ReasonTemplateBuilder", undefined, "info");
+
+        it("Value no object", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue("asdf", loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate, expected type 'object', but bot asdf from type 'string'",
+                });
+            }
+        });
+
+        it("Value has no id", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({}, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong id type", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({
+                    id: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value has invalid id guid", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({
+                    id: "invalid",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse Guid, guid string isn't a valid Guid: invalid",
+                });
+            }
+        });
+
+        it("Value has wrong deleted type", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                    deleted: "asdf",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate, deleted argument wasn't from type boolean or was false.",
+                });
+            }
+        });
+
+        it("Value has deleted false", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                    deleted: false,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate, deleted argument wasn't from type boolean or was false.",
+                });
+            }
+        });
+
+        it("Value has deleted true", () => {
+            const reasonTemplate = new ReasonTemplate.Builder().fromValue({
+                id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                deleted: true,
+            }, loggingProperties.nextIndent);
+            expect(reasonTemplate).to.be.deep.equal(new Deleted<guid>(guid.fromString("4ED90BA2-D536-4B2B-A93E-403987A056CC", loggingProperties.nextIndent)));
+        });
+
+        it("Value has no reason", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate parameter 'reason'. Expected type 'string', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong reason type", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                    reason: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate parameter 'reason'. Expected type 'string', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value has no amount", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                    reason: "asdf",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate parameter 'amount'. Expected type 'number', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong amount type", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                    reason: "asdf",
+                    amount: "asdf",
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate parameter 'amount'. Expected type 'number', but got 'asdf' from type 'string'.",
+                });
+            }
+        });
+
+        it("Value has no importance", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                    reason: "asdf",
+                    amount: 12.50,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate parameter 'importance'. Expected type 'string', but got 'undefined' from type 'undefined'.",
+                });
+            }
+        });
+
+        it("Value has wrong importance type", () => {
+            try {
+                new ReasonTemplate.Builder().fromValue({
+                    id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                    reason: "asdf",
+                    amount: 12.50,
+                    importance: 1234,
+                }, loggingProperties.nextIndent);
+                assert.fail("A statement above should throw an exception.");
+            } catch (error) {
+                expect(errorCodeAndMessage(error)).to.be.deep.equal({
+                    code: "invalid-argument",
+                    message: "Couldn't parse ReasonTemplate parameter 'importance'. Expected type 'string', but got '1234' from type 'number'.",
+                });
+            }
+        });
+
+        it("Value valid", () => {
+            const reasonTemplate = new ReasonTemplate.Builder().fromValue({
+                id: "4ED90BA2-D536-4B2B-A93E-403987A056CC",
+                reason: "asdf",
+                amount: 12.50,
+                importance: "high",
+            }, loggingProperties.nextIndent);
+            expect(reasonTemplate).to.be.deep.equal(new ReasonTemplate(
+                guid.fromString("4ED90BA2-D536-4B2B-A93E-403987A056CC", loggingProperties.nextIndent),
+                "asdf", new Amount(12, 50), new Importance("high")
+            ));
         });
     });
 });
