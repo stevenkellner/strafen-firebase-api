@@ -108,7 +108,7 @@ describe("RegisterPerson", () => {
                 last: "last name",
             },
             signInData: {
-                cashier: false,
+                admin: false,
                 signInDate: signInDate.toISOString(),
                 userId: "userId-123",
             },

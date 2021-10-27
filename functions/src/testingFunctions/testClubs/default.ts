@@ -84,7 +84,7 @@ export const defaultTestClub = {
                 "last": "Arkins",
             },
             "signInData": {
-                "cashier": false,
+                "admin": false,
                 "signInDate": "2011-09-13T10:42:38+0000",
                 "userId": "asdnfl",
             },
@@ -100,7 +100,7 @@ export const defaultTestClub = {
                 "last": "Mustermann",
             },
             "signInData": {
-                "cashier": true,
+                "admin": true,
                 "signInDate": "2011-09-13T10:42:38+0000",
                 "userId": "LpAaeCz0BQfDHVYw02KiCyoTMS13",
             },

@@ -3,7 +3,7 @@ import { ClubLevel } from "../TypeDefinitions/ClubLevel";
 import { ClubProperties } from "../TypeDefinitions/ClubProperties";
 import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
 import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
-import { PersonPropertiesWithIsCashier } from "../TypeDefinitions/PersonPropertiesWithIsCashier";
+import { PersonPropertiesWithIsAdmin } from "../TypeDefinitions/PersonPropertiesWithIsAdmin";
 import { checkPrerequirements, FirebaseFunction, FunctionDefaultParameters, httpsError } from "../utils";
 
 /**
@@ -76,10 +76,10 @@ export class GetPersonPropertiesFunction implements FirebaseFunction {
                 const userId = personSnapshot.child("signInData").child("userId").val();
                 if (userId == this.parameters.userId)
                     properties = new GetPersonPropertiesFunction.ReturnType(
-                        new PersonPropertiesWithIsCashier.Builder().fromValue({
+                        new PersonPropertiesWithIsAdmin.Builder().fromValue({
                             id: personSnapshot.key,
                             signInDate: personSnapshot.child("signInData") .child("signInDate").val(),
-                            isCashier: personSnapshot.child("signInData").child("cashier").val(),
+                            isAdmin: personSnapshot.child("signInData").child("admin").val(),
                             name: {
                                 first: personSnapshot.child("name").child("first").val(),
                                 last: personSnapshot.child("name").child("last").val(),
@@ -113,7 +113,7 @@ export namespace GetPersonPropertiesFunction {
 
     export class ReturnType {
         public constructor(
-            public readonly personProperties: PersonPropertiesWithIsCashier,
+            public readonly personProperties: PersonPropertiesWithIsAdmin,
             public readonly clubProperties: ClubProperties
         ) {}
 
@@ -127,7 +127,7 @@ export namespace GetPersonPropertiesFunction {
 
     export namespace ReturnType {
         export interface ServerObject {
-            personProperties: PersonPropertiesWithIsCashier.ServerObject,
+            personProperties: PersonPropertiesWithIsAdmin.ServerObject,
             clubProperties: ClubProperties.ServerObject,
         }
     }

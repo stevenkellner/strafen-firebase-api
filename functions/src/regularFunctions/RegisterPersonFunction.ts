@@ -76,7 +76,7 @@ export class RegisterPersonFunction implements FirebaseFunction {
         const person = {
             name: this.parameters.personProperties.name,
             signInData: {
-                cashier: false,
+                admin: false,
                 userId: this.parameters.personProperties.userId,
                 signInDate: this.parameters.personProperties.signInDate.toISOString(),
             },

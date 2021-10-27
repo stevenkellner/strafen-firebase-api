@@ -113,7 +113,7 @@ describe("NewClub", () => {
                         last: "last name",
                     },
                     signInData: {
-                        cashier: true,
+                        admin: true,
                         signInDate: signInDate.toISOString(),
                         userId: "userId",
                     },
@@ -244,7 +244,7 @@ describe("NewClub", () => {
                         last: "last name",
                     },
                     signInData: {
-                        cashier: true,
+                        admin: true,
                         signInDate: signInDate.toISOString(),
                         userId: "userId",
                     },

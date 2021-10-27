@@ -61,7 +61,7 @@ describe("GetPersonProperties", () => {
             },
             personProperties: {
                 id: "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7",
-                isCashier: true,
+                isAdmin: true,
                 name: {
                     first: "Max",
                     last: "Mustermann",

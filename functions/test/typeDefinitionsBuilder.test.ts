@@ -13,7 +13,7 @@ import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
 import { PayedState } from "../src/TypeDefinitions/PayedState";
 import { Person } from "../src/TypeDefinitions/Person";
 import { PersonName } from "../src/TypeDefinitions/PersonName";
-import { PersonPropertiesWithIsCashier } from "../src/TypeDefinitions/PersonPropertiesWithIsCashier";
+import { PersonPropertiesWithIsAdmin } from "../src/TypeDefinitions/PersonPropertiesWithIsAdmin";
 import { PersonPropertiesWithUserId } from "../src/TypeDefinitions/PersonPropertiesWithUserId";
 import { ReasonTemplate } from "../src/TypeDefinitions/ReasonTemplate";
 import { Updatable, UpdateProperties } from "../src/TypeDefinitions/UpdateProperties";
@@ -1580,13 +1580,13 @@ describe("TypeDefinitionsBuilder", () => {
         });
     });
 
-    describe("PersonPropertiesWithIsCashierBuilder", () => {
+    describe("PersonPropertiesWithIsAdmin", () => {
 
-        loggingProperties.append("PersonPropertiesWithIsCashierBuilder", undefined, "info");
+        loggingProperties.append("PersonPropertiesWithIsAdmin", undefined, "info");
 
         it("Value no object", () => {
             try {
-                new PersonPropertiesWithIsCashier.Builder().fromValue("asdf", loggingProperties.nextIndent);
+                new PersonPropertiesWithIsAdmin.Builder().fromValue("asdf", loggingProperties.nextIndent);
                 assert.fail("A statement above should throw an exception.");
             } catch (error) {
                 expect(errorCodeAndMessage(error)).to.be.deep.equal({
@@ -1598,7 +1598,7 @@ describe("TypeDefinitionsBuilder", () => {
 
         it("Value has no id", () => {
             try {
-                new PersonPropertiesWithIsCashier.Builder().fromValue({}, loggingProperties.nextIndent);
+                new PersonPropertiesWithIsAdmin.Builder().fromValue({}, loggingProperties.nextIndent);
                 assert.fail("A statement above should throw an exception.");
             } catch (error) {
                 expect(errorCodeAndMessage(error)).to.be.deep.equal({
@@ -1610,7 +1610,7 @@ describe("TypeDefinitionsBuilder", () => {
 
         it("Value has wrong id type", () => {
             try {
-                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                new PersonPropertiesWithIsAdmin.Builder().fromValue({
                     id: 1234,
                 }, loggingProperties.nextIndent);
                 assert.fail("A statement above should throw an exception.");
@@ -1624,7 +1624,7 @@ describe("TypeDefinitionsBuilder", () => {
 
         it("Value has invalid id guid", () => {
             try {
-                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                new PersonPropertiesWithIsAdmin.Builder().fromValue({
                     id: "invalid",
                 }, loggingProperties.nextIndent);
                 assert.fail("A statement above should throw an exception.");
@@ -1638,7 +1638,7 @@ describe("TypeDefinitionsBuilder", () => {
 
         it("Value has no signInDate", () => {
             try {
-                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                new PersonPropertiesWithIsAdmin.Builder().fromValue({
                     id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
                 }, loggingProperties.nextIndent);
                 assert.fail("A statement above should throw an exception.");
@@ -1652,7 +1652,7 @@ describe("TypeDefinitionsBuilder", () => {
 
         it("Value has wrong signInDate type", () => {
             try {
-                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                new PersonPropertiesWithIsAdmin.Builder().fromValue({
                     id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
                     signInDate: 1234,
                 }, loggingProperties.nextIndent);
@@ -1665,9 +1665,9 @@ describe("TypeDefinitionsBuilder", () => {
             }
         });
 
-        it("Value has no isCashier", () => {
+        it("Value has no isAdmin", () => {
             try {
-                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                new PersonPropertiesWithIsAdmin.Builder().fromValue({
                     id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
                     signInDate: "2011-10-14T10:42:38+0000",
                 }, loggingProperties.nextIndent);
@@ -1675,33 +1675,33 @@ describe("TypeDefinitionsBuilder", () => {
             } catch (error) {
                 expect(errorCodeAndMessage(error)).to.be.deep.equal({
                     code: "invalid-argument",
-                    message: "Couldn't parse person properties parameter 'isCashier'. Expected type 'boolean', but got 'undefined' from type 'undefined'.",
+                    message: "Couldn't parse person properties parameter 'isAdmin'. Expected type 'boolean', but got 'undefined' from type 'undefined'.",
                 });
             }
         });
 
-        it("Value has wrong isCashier type", () => {
+        it("Value has wrong isAdmin type", () => {
             try {
-                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                new PersonPropertiesWithIsAdmin.Builder().fromValue({
                     id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
                     signInDate: "2011-10-14T10:42:38+0000",
-                    isCashier: 1234,
+                    isAdmin: 1234,
                 }, loggingProperties.nextIndent);
                 assert.fail("A statement above should throw an exception.");
             } catch (error) {
                 expect(errorCodeAndMessage(error)).to.be.deep.equal({
                     code: "invalid-argument",
-                    message: "Couldn't parse person properties parameter 'isCashier'. Expected type 'boolean', but got '1234' from type 'number'.",
+                    message: "Couldn't parse person properties parameter 'isAdmin'. Expected type 'boolean', but got '1234' from type 'number'.",
                 });
             }
         });
 
         it("Value has no name", () => {
             try {
-                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                new PersonPropertiesWithIsAdmin.Builder().fromValue({
                     id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
                     signInDate: "2011-10-14T10:42:38+0000",
-                    isCashier: true,
+                    isAdmin: true,
                 }, loggingProperties.nextIndent);
                 assert.fail("A statement above should throw an exception.");
             } catch (error) {
@@ -1714,10 +1714,10 @@ describe("TypeDefinitionsBuilder", () => {
 
         it("Value has wrong name type", () => {
             try {
-                new PersonPropertiesWithIsCashier.Builder().fromValue({
+                new PersonPropertiesWithIsAdmin.Builder().fromValue({
                     id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
                     signInDate: "2011-10-14T10:42:38+0000",
-                    isCashier: true,
+                    isAdmin: true,
                     name: 1234,
                 }, loggingProperties.nextIndent);
                 assert.fail("A statement above should throw an exception.");
@@ -1730,15 +1730,15 @@ describe("TypeDefinitionsBuilder", () => {
         });
 
         it("Value valid", () => {
-            const personProperties = new PersonPropertiesWithIsCashier.Builder().fromValue({
+            const personProperties = new PersonPropertiesWithIsAdmin.Builder().fromValue({
                 id: "fd8f2af8-25bc-4eee-b4b7-b4206439395a",
                 signInDate: "2011-10-14T10:42:38+0000",
-                isCashier: true,
+                isAdmin: true,
                 name: {
                     first: "asdf",
                 },
             }, loggingProperties.nextIndent);
-            expect(personProperties).to.be.deep.equal(new PersonPropertiesWithIsCashier(
+            expect(personProperties).to.be.deep.equal(new PersonPropertiesWithIsAdmin(
                 guid.fromString("fd8f2af8-25bc-4eee-b4b7-b4206439395a", loggingProperties.nextIndent),
                 new Date("2011-10-14T10:42:38+0000"), true,
                 new PersonName("asdf", null)

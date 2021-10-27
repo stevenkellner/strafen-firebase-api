@@ -98,7 +98,7 @@ export class NewClubFunction implements FirebaseFunction {
                 [this.parameters.personProperties.id.guidString]: {
                     name: this.parameters.personProperties.name.serverObject,
                     signInData: {
-                        cashier: true,
+                        admin: true,
                         userId: this.parameters.personProperties.userId,
                         signInDate: this.parameters.personProperties.signInDate.toISOString(),
                     },
