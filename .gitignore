@@ -67,4 +67,5 @@ node_modules/
 
 # Ignore security-relevant files
 /functions/src/privateKeys.ts
+/functions/src/TypeDefinitions/Crypter.ts
 /functions/test/firebaseConfig.ts
