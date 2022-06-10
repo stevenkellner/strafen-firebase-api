@@ -1,116 +1,288 @@
-import { Importance } from "./Importance";
-import { ParameterContainer } from "./ParameterContainer";
-import { Amount } from "./Amount";
-import { guid } from "./guid";
-import { Deleted, httpsError, PrimitveDataSnapshot } from "../utils";
-import { LoggingProperties } from "./LoggingProperties";
+import { Importance } from './Importance';
+import { ParameterContainer } from '../ParameterContainer';
+import { Amount } from './Amount';
+import { guid } from './guid';
+import { Deleted, httpsError, DataSnapshot } from '../utils';
+import { Logger } from '../Logger';
 
-
+/**
+ * Reason template with id, reason message, amount and importance.
+ */
 export class ReasonTemplate {
 
+    /**
+     * Constructs reason template with id, reason message, amount and importance.
+     * @param { guid } id Id of the reason.
+     * @param { string } reasonMessage Message of the reason.
+     * @param { Amount } amount Amount if the reason.
+     * @param { Importance } importance Importance of the reason.
+     */
     public constructor(
         public readonly id: guid,
-        public readonly reason: string,
+        public readonly reasonMessage: string,
         public readonly amount: Amount,
         public readonly importance: Importance
     ) {}
 
-    get ["serverObjectWithoutId"](): ReasonTemplate.ServerObjectWithoutId {
+    /**
+     * Reason object without id that will be stored in the database.
+     */
+    get databaseObjectWithoutId(): ReasonTemplate.DatabaseObjectWithoutId {
         return {
-            reason: this.reason,
+            reasonMessage: this.reasonMessage,
             amount: this.amount.numberValue,
             importance: this.importance.value,
         };
     }
 
-    get ["serverObject"](): ReasonTemplate.ServerObject {
+    /**
+     * Reason object that will be stored in the database.
+     */
+    get databaseObject(): ReasonTemplate.DatabaseObject {
         return {
             id: this.id.guidString,
-            ...this.serverObjectWithoutId,
+            ...this.databaseObjectWithoutId,
         };
+    }
+
+    /**
+     * Gets this reason for statistics.
+     */
+    public get statistic(): ReasonTemplate.Statistic {
+        return new ReasonTemplate.Statistic(this.id, this.reasonMessage, this.amount, this.importance);
     }
 }
 
 export namespace ReasonTemplate {
 
-    export interface ServerObject {
-        id: string;
-        reason: string;
+    /**
+     * Reason object without id that will be stored in the database.
+     */
+    export interface DatabaseObjectWithoutId {
+
+        /**
+         * Message of the reason.
+         */
+        reasonMessage: string;
+
+        /**
+         * Amount of the reason
+         */
         amount: number;
+
+        /**
+         * Importance of the reason.
+         */
         importance: string;
     }
 
-    export interface ServerObjectWithoutId {
-        reason: string;
-        amount: number;
-        importance: string;
+    /**
+     * Reason object that will be stored in the database.
+     */
+    export type DatabaseObject = { id: string } & DatabaseObjectWithoutId;
+
+    /**
+     * Builds reason template from specified value.
+     * @param { object } value Value to build reason template from.
+     * @param { Logger } logger Logger to log this method.
+     * @return { ReasonTemplate | Deleted<guid> } Builded reason template.
+     */
+    export function fromObject(value: object & any, logger: Logger): ReasonTemplate | Deleted<guid> {
+        logger.append('ReasonTemplate.fromObject', { value });
+
+        // Check if type of id is string
+        if (typeof value.id !== 'string')
+            throw httpsError(
+                'invalid-argument',
+                `Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '${value.id}' 
+                from type '${typeof value.id}'.`,
+                logger
+            );
+        const id = guid.fromString(value.id, logger.nextIndent);
+
+        // Check if reason template is deleted
+        if (typeof value.deleted !== 'undefined') {
+            if (typeof value.deleted !== 'boolean' || !value.deleted)
+                throw httpsError(
+                    'invalid-argument',
+                    'Couldn\'t parse ReasonTemplate, deleted argument wasn\'t from type boolean or was false.',
+                    logger
+                );
+            return new Deleted(id);
+        }
+
+        // Check if type of reasonMessage is string
+        if (typeof value.reasonMessage !== 'string')
+            throw httpsError(
+                'invalid-argument',
+                `Couldn't parse ReasonTemplate parameter 'reason'. Expected type 'string', but got 
+                '${value.reasonMessage}' from type '${typeof value.reasonMessage}'.`,
+                logger
+            );
+
+        // Check if type of amount is number
+        if (typeof value.amount !== 'number')
+            throw httpsError(
+                'invalid-argument',
+                `Couldn't parse ReasonTemplate parameter 'amount'. Expected type 'number', but got '${value.amount}' 
+                from type '${typeof value.amount}'.`,
+                logger
+            );
+        const amount = Amount.fromNumber(value.amount, logger.nextIndent);
+
+        // Check if type of importance is string
+        if (typeof value.importance !== 'string')
+            throw httpsError(
+                'invalid-argument',
+                `Couldn't parse ReasonTemplate parameter 'importance'. Expected type 'string', but got 
+                '${value.importance}' from type '${typeof value.importance}'.`,
+                logger
+            );
+        const importance = Importance.fromString(value.importance, logger.nextIndent);
+
+        // Return reason template
+        return new ReasonTemplate(id, value.reasonMessage, amount, importance);
     }
 
-    export class Builder {
+    /**
+     * Builds reason template from specified value.
+     * @param { any } value Value to build reason template from.
+     * @param { Logger } logger Logger to log this method.
+     * @return { ReasonTemplate | Deleted<guid> } Builded reason template.
+     */
+    export function fromValue(value: any, logger: Logger): ReasonTemplate | Deleted<guid> {
+        logger.append('ReasonTemplate.fromValue', { value });
 
-        public fromValue(value: any, loggingProperties: LoggingProperties): ReasonTemplate | Deleted<guid> {
-            loggingProperties.append("ReasonTemplate.Builder.fromValue", {value: value});
+        // Check if value is from type object
+        if (typeof value !== 'object')
+            throw httpsError(
+                'invalid-argument',
+                `Couldn't parse ReasonTemplate, expected type 'object', but bot ${value} from type '${typeof value}'`,
+                logger
+            );
 
-            // Check if value is from type object
-            if (typeof value !== "object")
-                throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate, expected type 'object', but bot ${value} from type '${typeof value}'`, loggingProperties);
+        // Return reason template
+        return ReasonTemplate.fromObject(value, logger.nextIndent);
+    }
 
-            // Check if type of id is string
-            if (typeof value.id !== "string")
-                throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`, loggingProperties);
-            const id = guid.fromString(value.id, loggingProperties.nextIndent);
+    /**
+     * Builds reason template from specified snapshot.
+     * @param { DataSnapshot } snapshot Snapshot to build reason template from.
+     * @param { Logger } logger Logger to log this method.
+     * @return { ReasonTemplate | Deleted<guid> } Builded reason template.
+     */
+    export function fromSnapshot(snapshot: DataSnapshot, logger: Logger): ReasonTemplate | Deleted<guid> {
+        logger.append('ReasonTemplate.fromSnapshot', { snapshot });
 
-            // Check if reason template is deleted
-            if (typeof value.deleted !== "undefined") {
-                if (typeof value.deleted !== "boolean" || !value.deleted)
-                    throw httpsError("invalid-argument", "Couldn't parse ReasonTemplate, deleted argument wasn't from type boolean or was false.", loggingProperties);
-                return new Deleted(id);
-            }
+        // Check if data exists in snapshot
+        if (!snapshot.exists())
+            throw httpsError(
+                'invalid-argument',
+                'Couldn\'t parse ReasonTemplate since no data exists in snapshot.',
+                logger
+            );
 
-            // Check if type of reason is string
-            if (typeof value.reason !== "string")
-                throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'reason'. Expected type 'string', but got '${value.reason}' from type '${typeof value.reason}'.`, loggingProperties);
+        // Get id
+        const idString = snapshot.key;
+        if (idString == null)
+            throw httpsError(
+                'invalid-argument',
+                'Couldn\'t parse ReasonTemplate since snapshot has an invalid key.',
+                logger
+            );
 
-            // Check if type of amount is number
-            if (typeof value.amount !== "number")
-                throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'amount'. Expected type 'number', but got '${value.amount}' from type '${typeof value.amount}'.`, loggingProperties);
-            const amount = new Amount.Builder().fromValue(value.amount, loggingProperties.nextIndent);
+        // Get data from snapshot
+        const data = snapshot.val();
+        if (typeof data !== 'object')
+            throw httpsError(
+                'invalid-argument',
+                `Couldn't parse ReasonTemplate from snapshot since data isn't an object: ${data}`,
+                logger
+            );
 
-            // Check if type of importance is string
-            if (typeof value.importance !== "string")
-                throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate parameter 'importance'. Expected type 'string', but got '${value.importance}' from type '${typeof value.importance}'.`, loggingProperties);
-            const importance = new Importance.Builder().fromValue(value.importance, loggingProperties.nextIndent);
+        return ReasonTemplate.fromObject({
+            id: idString,
+            ...data,
+        }, logger.nextIndent);
+    }
 
-            // Return reason template
-            return new ReasonTemplate(id, value.reason, amount, importance);
+    // eslint-disable-next-line valid-jsdoc
+    /**
+     * @deprecated Use `container.parameter(parameterName, 'object', logger.nextIndent,
+     * ReasonTemplate.fromObject)` instead.
+     */
+    export function fromParameterContainer(
+        container: ParameterContainer,
+        parameterName: string,
+        logger: Logger
+    ): ReasonTemplate | Deleted<guid> {
+        logger.append('ReasonTemplate.fromParameterContainer', { container, parameterName });
+
+        // Build and return reason template.
+        return ReasonTemplate.fromObject(
+            container.parameter(parameterName, 'object', logger.nextIndent),
+            logger.nextIndent
+        );
+    }
+
+    /**
+     * Statistic of a reason.
+     */
+    export class Statistic {
+
+        /**
+         * Constructs statistic with id and name.
+         * @param { guid } id Id of the statisitc reason.
+         * @param { string } reasonMessage Message of the statisitc reason.
+         * @param { Amount } amount Amount if the statisitc reason.
+         * @param { Importance } importance Importance of the statisitc reason.
+         */
+        public constructor(
+            public readonly id: guid,
+            public readonly reasonMessage: string,
+            public readonly amount: Amount,
+            public readonly importance: Importance
+        ) { }
+
+        /**
+         * Reason statistic object that will be stored in the database.
+         */
+        get databaseObject(): ReasonTemplate.Statistic.DatabaseObject {
+            return {
+                id: this.id.guidString,
+                reasonMessage: this.reasonMessage,
+                amount: this.amount.numberValue,
+                importance: this.importance.value,
+            };
         }
+    }
 
-        public fromSnapshot(snapshot: PrimitveDataSnapshot, loggingProperties: LoggingProperties): ReasonTemplate | Deleted<guid> {
-            loggingProperties.append("ReasonTemplate.Builder.fromSnapshot", {snapshot: snapshot});
+    export namespace Statistic {
 
-            // Check if data exists in snapshot
-            if (!snapshot.exists())
-                throw httpsError("invalid-argument", "Couldn't parse ReasonTemplate since no data exists in snapshot.", loggingProperties);
+        /**
+         * Reason statistic object that will be stored in the database.
+         */
+        export interface DatabaseObject {
 
-            // Get id
-            const idString = snapshot.key;
-            if (idString == null)
-                throw httpsError("invalid-argument", "Couldn't parse ReasonTemplate since snapshot has an invalid key.", loggingProperties);
+            /**
+             * Id of the statistic reason.
+             */
+            id: string;
 
-            // Get data from snapshot
-            const data = snapshot.val();
-            if (typeof data !== "object")
-                throw httpsError("invalid-argument", `Couldn't parse ReasonTemplate from snapshot since data isn't an object: ${data}`, loggingProperties);
+            /**
+             * Message of the statistic reason.
+             */
+            reasonMessage: string;
 
-            return this.fromValue({
-                id: idString,
-                ...data,
-            }, loggingProperties.nextIndent);
-        }
+            /**
+             * Amount of the statistic reason
+             */
+            amount: number;
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): ReasonTemplate | Deleted<guid> {
-            loggingProperties.append("ReasonTemplate.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
-            return this.fromValue(container.getParameter(parameterName, "object", loggingProperties.nextIndent), loggingProperties.nextIndent);
+            /**
+             * Importance of the statistic reason.
+             */
+            importance: string;
         }
     }
 }

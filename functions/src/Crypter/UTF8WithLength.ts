@@ -1,4 +1,5 @@
-import * as utf8 from "utf8";
+/* eslint-disable require-jsdoc */
+import * as utf8 from 'utf8';
 
 /**
  * Represents an utf-8 string with 16.
@@ -64,13 +65,13 @@ export namespace UTF8 {
      */
     export class UTF8Error implements Error {
 
-        public name = "UTF8Error";
+        public name = 'UTF8Error';
 
         public constructor(
             public readonly code: UTF8Error.Code
         ) {}
 
-        public get ["message"](): string {
+        public get ['message'](): string {
             return `${this.name}: ${this.code}`;
         }
     }

@@ -1,64 +1,64 @@
-import { assert, expect } from "chai";
-import { signOut } from "firebase/auth";
-import { privateKey } from "../src/privateKeys";
-import { guid } from "../src/TypeDefinitions/guid";
-import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
-import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
-import { auth, callFunction, firebaseError, signInTestUser } from "./utils";
+import { assert, expect } from 'chai';
+import { signOut } from 'firebase/auth';
+import { privateKey } from '../src/privateKeys';
+import { guid } from '../src/TypeDefinitions/guid';
+import { Logger } from '../src/TypeDefinitions/LoggingProperties';
+import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
+import { auth, callFunction, firebaseError, signInTestUser } from './utils';
 
-describe("ExistsClubWithIdentifier", () => {
+describe('ExistsClubWithIdentifier', () => {
 
-    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "existsClubWithIdentifierTest", undefined, "notice");
+    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'existsClubWithIdentifierTest', undefined, 'notice');
 
-    const clubId = guid.fromString("1a20bbc6-c1b4-4e6f-8919-77f01aa10749", loggingProperties.nextIndent);
+    const clubId = guid.fromString('1a20bbc6-c1b4-4e6f-8919-77f01aa10749', loggingProperties.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
-        await callFunction("newTestClub", {
+        await callFunction('newTestClub', {
             privateKey: privateKey,
-            clubLevel: "testing",
+            clubLevel: 'testing',
             clubId: clubId.guidString,
-            testClubType: "default",
+            testClubType: 'default',
         });
     });
 
     afterEach(async () => {
-        await callFunction("deleteTestClubs", {
+        await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: "testing",
+            clubLevel: 'testing',
         });
         await signOut(auth);
     });
 
-    it("No identifier", async () => {
+    it('No identifier', async () => {
         try {
-            await callFunction("existsClubWithIdentifier", {
+            await callFunction('existsClubWithIdentifier', {
                 privateKey: privateKey,
-                clubLevel: "testing",
+                clubLevel: 'testing',
             });
-            assert.fail("A statement above should throw an exception.");
+            assert.fail('A statement above should throw an exception.');
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
-                code: "functions/invalid-argument",
-                message: "Couldn't parse 'identifier'. Expected type 'string', but got undefined or null.",
+                code: 'functions/invalid-argument',
+                message: 'Couldn\'t parse \'identifier\'. Expected type \'string\', but got undefined or null.',
             });
         }
     });
 
-    it("With existsting identifier", async () => {
-        const httpResult = await callFunction("existsClubWithIdentifier", {
+    it('With existsting identifier', async () => {
+        const httpResult = await callFunction('existsClubWithIdentifier', {
             privateKey: privateKey,
-            clubLevel: "testing",
-            identifier: "demo-team",
+            clubLevel: 'testing',
+            identifier: 'demo-team',
         });
         expect(httpResult.data).to.be.true;
     });
 
-    it("With not existsting identifier", async () => {
-        const httpResult = await callFunction("existsClubWithIdentifier", {
+    it('With not existsting identifier', async () => {
+        const httpResult = await callFunction('existsClubWithIdentifier', {
             privateKey: privateKey,
-            clubLevel: "testing",
-            identifier: "invalid",
+            clubLevel: 'testing',
+            identifier: 'invalid',
         });
         expect(httpResult.data).to.be.false;
     });

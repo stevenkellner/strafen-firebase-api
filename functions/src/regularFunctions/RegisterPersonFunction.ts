@@ -1,23 +1,30 @@
-import * as admin from "firebase-admin";
-import { ClubLevel } from "../TypeDefinitions/ClubLevel";
-import { ClubProperties } from "../TypeDefinitions/ClubProperties";
-import { guid } from "../TypeDefinitions/guid";
-import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
-import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
-import { PersonPropertiesWithUserId } from "../TypeDefinitions/PersonPropertiesWithUserId";
-import { checkPrerequirements, FirebaseFunction, FunctionDefaultParameters, httpsError } from "../utils";
+import * as admin from 'firebase-admin';
+import {
+    checkPrerequirements,
+    IFirebaseFunction,
+    httpsError,
+    reference,
+} from '../utils';
+import { ParameterContainer } from '../ParameterContainer';
+import { guid } from '../TypeDefinitions/guid';
+import { DatabaseType } from '../TypeDefinitions/DatabaseType';
+import { Logger } from '../Logger';
+import { AuthData } from 'firebase-functions/lib/common/providers/https';
+import { ClubProperties } from '../TypeDefinitions/ClubProperties';
+import { PersonPropertiesWithUserId } from '../TypeDefinitions/PersonPropertiesWithUserId';
 
+// eslint-disable-next-line valid-jsdoc
 /**
  * @summary
  * Register person to club with given club id.
  *
  * @params
  *  - privateKey (string): private key to check whether the caller is authenticated to use this function
- *  - clubLevel ({@link ClubLevel}): level of the club (`regular`, `debug`, `testing`)
+ *  - clubLevel ({@link DatabaseType}): level of the club (`regular`, `debug`, `testing`)
  *  - clubId ({@link} guid): id of the club to register the person
  *  - personProperties ({@link PersonPropertiesWithUserId}): properties of the person signed in
  *
- * @returns
+ * @return
  *  - ...({@link ClubProperties.ServerObject}): properties of club
  *
  * @throws
@@ -26,51 +33,61 @@ import { checkPrerequirements, FirebaseFunction, FunctionDefaultParameters, http
  *    - invalid-argument: if a required parameter isn't give over or if a parameter hasn't the right type
  *    - internal: if couldn't create person in database
  */
-export class RegisterPersonFunction implements FirebaseFunction {
+export class RegisterPersonFunction implements IFirebaseFunction<
+    Parameters, ReturnType, ParameterParser
+> {
 
     /**
-     * Parameters needed for this function.
+     * All parameters passed by firebase function.
      */
-    private parameters: RegisterPersonFunction.Parameters;
-
-    private loggingProperties: LoggingProperties;
+    private parameterContainer: ParameterContainer;
 
     /**
-     * Initilizes function with given over data.
-     * @param {any} data Data to get parameters from.
+     * Parser to parse firebase function parameters from parameter container.
      */
-    constructor(data: any) {
-        const parameterContainer = new ParameterContainer(data);
-        this.loggingProperties = LoggingProperties.withFirst(parameterContainer, "RegisterPersonFunction.constructor", {data: data}, "notice");
-        this.parameters = RegisterPersonFunction.parseParameters(parameterContainer, this.loggingProperties.nextIndent);
+    public parameterParser: ParameterParser;
+
+    /**
+     * Logger to log this class.
+     */
+    private logger: Logger;
+
+    /**
+     * Constructs the firebase function with data and auth.
+     * @param { any } data Data passed to this firebase function.
+     * @param { AuthData | undefined } auth Authentication of person called this function.
+     */
+    public constructor(data: any, private readonly auth: AuthData | undefined) {
+        this.parameterContainer = new ParameterContainer(data);
+        this.logger = Logger.start(
+            this.parameterContainer,
+            'RegisterPersonFunction.constructor',
+            { data, auth },
+            'notice'
+        );
+        this.parameterParser = new ParameterParser(this.logger.nextIndent);
+        this.parameterParser.parseParameters(this.parameterContainer);
     }
 
     /**
-     * Parses parameters for this function from a parameter container.
-     * @param {ParameterContainer} container Parameter container to get parameters from.
-     * @return {Parameters} Parsed parameters for this function.
+     * Firebase function parameters passed to the firebase function.
      */
-    private static parseParameters(container: ParameterContainer, loggingProperties: LoggingProperties): RegisterPersonFunction.Parameters {
-        loggingProperties.append("RegisterPersonFunction.parseParameter", {container: container});
-        return {
-            privateKey: container.getParameter("privateKey", "string", loggingProperties.nextIndent),
-            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties.nextIndent),
-            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties.nextIndent),
-            personProperties: new PersonPropertiesWithUserId.Builder().fromParameterContainer(container, "personProperties", loggingProperties.nextIndent),
-        };
+    public get parameters(): Parameters {
+        return this.parameterParser.parameters;
     }
 
     /**
      * Executes this firebase function.
-     * @param {{uid: string} | undefined} auth Authentication state.
      */
-    async executeFunction(auth?: { uid: string }): Promise<ClubProperties.ServerObject> {
-        this.loggingProperties.append("RegisterPersonFunction.executeFunction", {auth: auth}, "info");
+    async executeFunction(): Promise<ReturnType> {
+        this.logger.append('RegisterPersonFunction.executeFunction', {}, 'info');
 
         // Check prerequirements
-        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
-        await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
-
+        await checkPrerequirements(
+            this.parameterContainer,
+            this.logger.nextIndent,
+            this.auth,
+        );
 
         // Get person properties
         const person = {
@@ -83,36 +100,146 @@ export class RegisterPersonFunction implements FirebaseFunction {
         };
 
         // Register person
-        const personRef = admin.database().ref(`${clubPath}/persons/${this.parameters.personProperties.id.guidString}`);
-        await personRef.set(person, error => {
+        await this.personReference.set(person, error => {
             if (error != null)
-                throw httpsError("internal", "Couldn't register person to database.", this.loggingProperties);
+                throw httpsError('internal', 'Couldn\'t register person to database (1).', this.logger);
         });
-        const personUserIdRef = admin.database().ref(`${clubPath}/personUserIds/${this.parameters.personProperties.userId}`);
-        await personUserIdRef.set(this.parameters.personProperties.id.guidString, error => {
+        await this.personUserIdReference.set(this.parameters.personProperties.id.guidString, error => {
             if (error != null)
-                throw httpsError("internal", "Couldn't register person to database.", this.loggingProperties);
+                throw httpsError('internal', 'Couldn\'t register person to database (2).', this.logger);
         });
 
         // Get club properties to return
-        const clubRef = admin.database().ref(clubPath);
-        const clubSnapshot = await clubRef.once("value");
-        const clubProperties = new ClubProperties.Builder().fromValue({
+        const clubSnapshot = await this.clubReference.once('value');
+        const clubProperties = ClubProperties.fromObject({
             id: clubSnapshot.key,
-            name: clubSnapshot.child("name").val(),
-            identifier: clubSnapshot.child("identifier").val(),
-            regionCode: clubSnapshot.child("regionCode").val(),
-            inAppPaymentActive: clubSnapshot.child("inAppPaymentActive").val(),
-        }, this.loggingProperties.nextIndent);
+            name: clubSnapshot.child('name').val(),
+            identifier: clubSnapshot.child('identifier').val(),
+            regionCode: clubSnapshot.child('regionCode').val(),
+            inAppPaymentActive: clubSnapshot.child('inAppPaymentActive').val(),
+        }, this.logger.nextIndent);
 
-        return clubProperties.serverObject;
+        return clubProperties.databaseObject;
+    }
+
+    /**
+     * Reference to the club the person will be registered.
+     */
+    private get clubReference(): admin.database.Reference {
+        return reference(
+            `${this.parameters.clubId.guidString}`,
+            this.parameterContainer,
+            this.logger.nextIndent
+        );
+    }
+
+    /**
+     * Reference to the person to register.
+     */
+    private get personReference(): admin.database.Reference {
+        return reference(
+            `${this.parameters.clubId.guidString}/persons/${this.parameters.personProperties.id.guidString}`,
+            this.parameterContainer,
+            this.logger.nextIndent
+        );
+    }
+
+    /**
+     * Reference to user id of the person to register.
+     */
+    private get personUserIdReference(): admin.database.Reference {
+        return reference(
+            `${this.parameters.clubId.guidString}/personUserIds/${this.parameters.personProperties.userId}`,
+            this.parameterContainer,
+            this.logger.nextIndent
+        );
     }
 }
 
-export namespace RegisterPersonFunction {
+/**
+ * Parameters of firebase function.
+ */
+interface Parameters {
 
-    export type Parameters = FunctionDefaultParameters & {
-        clubId: guid,
-        personProperties: PersonPropertiesWithUserId,
+    /**
+     * Private key to check whether the caller is authenticated to use this function
+     */
+    privateKey: string,
+
+    /**
+     * Database type of the change
+     */
+    databaseType: DatabaseType,
+
+    /**
+     * Id of the club to change the person
+     */
+    clubId: guid,
+
+    /**
+     * Properties of person to register.
+     */
+    personProperties: PersonPropertiesWithUserId,
+}
+
+/**
+ * Return type of firebase function.
+ */
+type ReturnType = ClubProperties.DatabaseObject;
+
+/**
+ * Parser to parse firebase function parameters from parameter container.
+ * @template Parameters Type of the fireabse function parameters.
+ */
+class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> {
+
+    /**
+     * Parsed firebase function parameters from parameter container.
+     */
+    private initialParameters?: Parameters;
+
+    /**
+     * Constructs parser with a logger.
+     * @param { Logger } logger Logger to log this class.
+     */
+    public constructor(private logger: Logger) {}
+
+    /**
+     * Parsed firebase function parameters from parameter container.
+     */
+    public get parameters(): Parameters {
+        if (this.initialParameters === undefined)
+            throw httpsError(
+                'internal',
+                'Tried to access parameters before those parameters were parsed.',
+                this.logger
+            );
+        return this.initialParameters;
+    }
+
+    /**
+     * Parse firebase function parameters from parameter container.
+     * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
+     */
+    public parseParameters(container: ParameterContainer): void {
+        this.logger.append('ParameterParser.parseParameters', { container });
+
+        // Parse parametes
+        this.initialParameters = {
+            privateKey: container.parameter('privateKey', 'string', this.logger.nextIndent),
+            databaseType: container.parameter(
+                'databaseType',
+                'string',
+                this.logger.nextIndent,
+                DatabaseType.fromString
+            ),
+            clubId: container.parameter('clubId', 'string', this.logger.nextIndent, guid.fromString),
+            personProperties: container.parameter(
+                'personProperties',
+                'object',
+                this.logger.nextIndent,
+                PersonPropertiesWithUserId.fromObject
+            ),
+        };
     }
 }

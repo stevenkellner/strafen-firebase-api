@@ -1,18 +1,18 @@
-import {initializeApp} from "firebase/app";
-import {getFunctions, httpsCallable, HttpsCallableResult} from "firebase/functions";
-import {getDatabase, ref, onValue} from "firebase/database";
-import {getAuth, signInWithEmailAndPassword, UserCredential} from "firebase/auth";
-import {firebaseConfig} from "./firebaseConfig";
-import { Fine } from "../src/TypeDefinitions/Fine";
-import {guid} from "../src/TypeDefinitions/guid";
-import {ReasonTemplate} from "../src/TypeDefinitions/ReasonTemplate";
-import {Person} from "../src/TypeDefinitions/Person";
-import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
-import { Deleted } from "../src/utils";
-import { getUpdatable, Updatable } from "../src/TypeDefinitions/UpdateProperties";
+import { initializeApp } from 'firebase/app';
+import { getFunctions, httpsCallable, HttpsCallableResult } from 'firebase/functions';
+import { getDatabase, ref, onValue } from 'firebase/database';
+import { getAuth, signInWithEmailAndPassword, UserCredential } from 'firebase/auth';
+import { firebaseConfig } from './firebaseConfig';
+import { Fine } from '../src/TypeDefinitions/Fine';
+import { guid } from '../src/TypeDefinitions/guid';
+import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
+import { Person } from '../src/TypeDefinitions/Person';
+import { Logger } from '../src/TypeDefinitions/LoggingProperties';
+import { Deleted } from '../src/utils';
+import { getUpdatable, Updatable } from '../src/TypeDefinitions/UpdateProperties';
 
 const app = initializeApp(firebaseConfig);
-const functions = getFunctions(app, "europe-west1");
+const functions = getFunctions(app, 'europe-west1');
 const database = getDatabase(app);
 export const auth = getAuth();
 
@@ -25,7 +25,7 @@ export async function signIn(email: string, password: string): Promise<UserCrede
 }
 
 export async function signInTestUser(): Promise<UserCredential> {
-    return await signIn("functions-tests-user@mail.com", "ghQshXA7rnDdGWj8GffSQN7VGrm9Qf3Z");
+    return await signIn('functions-tests-user@mail.com', 'ghQshXA7rnDdGWj8GffSQN7VGrm9Qf3Z');
 }
 
 export async function getDatabaseOptionalValue(referencePath: string): Promise<any | null> {
@@ -50,8 +50,8 @@ export async function getDatabaseValue(referencePath: string): Promise<any> {
     });
 }
 
-export async function getDatabaseFines(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<Fine | Deleted<guid>>[]> {
-    loggingProperties.append("getDatabaseFines", {clubId: clubId});
+export async function getDatabaseFines(clubId: guid, loggingProperties: Logger): Promise<Updatable<Fine | Deleted<guid>>[]> {
+    loggingProperties.append('getDatabaseFines', { clubId: clubId });
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/fines`)).map(value => {
         return getUpdatable({
             id: value[0],
@@ -60,8 +60,8 @@ export async function getDatabaseFines(clubId: guid, loggingProperties: LoggingP
     });
 }
 
-export async function getDatabaseReasonTemplates(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<ReasonTemplate | Deleted<guid>>[]> {
-    loggingProperties.append("getDatabaseReasonTemplates", {clubId: clubId});
+export async function getDatabaseReasonTemplates(clubId: guid, loggingProperties: Logger): Promise<Updatable<ReasonTemplate | Deleted<guid>>[]> {
+    loggingProperties.append('getDatabaseReasonTemplates', { clubId: clubId });
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/reasonTemplates`)).map(value => {
         return getUpdatable({
             id: value[0],
@@ -70,8 +70,8 @@ export async function getDatabaseReasonTemplates(clubId: guid, loggingProperties
     });
 }
 
-export async function getDatabasePersons(clubId: guid, loggingProperties: LoggingProperties): Promise<Updatable<Person | Deleted<guid>>[]> {
-    loggingProperties.append("getDatabasePersons", {clubId: clubId});
+export async function getDatabasePersons(clubId: guid, loggingProperties: Logger): Promise<Updatable<Person | Deleted<guid>>[]> {
+    loggingProperties.append('getDatabasePersons', { clubId: clubId });
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/persons`)).map(value => {
         return getUpdatable({
             id: value[0],
@@ -80,8 +80,8 @@ export async function getDatabasePersons(clubId: guid, loggingProperties: Loggin
     });
 }
 
-export async function getDatabaseStatistics(clubId: guid, loggingProperties: LoggingProperties): Promise<{id: guid, name: string, timestamp: number, properties: any}[]> {
-    loggingProperties.append("getDatabaseStatistics", {clubId: clubId});
+export async function getDatabaseStatistics(clubId: guid, loggingProperties: Logger): Promise<{id: guid, name: string, timestamp: number, properties: any}[]> {
+    loggingProperties.append('getDatabaseStatistics', { clubId: clubId });
     return Object.entries(await getDatabaseValue(`testableClubs/${clubId.guidString}/statistics`)).map(value => {
         return {
             id: guid.fromString(value[0], loggingProperties.nextIndent),
@@ -92,7 +92,7 @@ export async function getDatabaseStatistics(clubId: guid, loggingProperties: Log
     });
 }
 
-export async function getDatabaseStatisticsPropertiesWithName(clubId: guid, name: string, loggingProperties: LoggingProperties) {
+export async function getDatabaseStatisticsPropertiesWithName(clubId: guid, name: string, loggingProperties: Logger) {
     return (await getDatabaseStatistics(clubId, loggingProperties)).filter(statistic => statistic.name == name ).map(statistic => statistic.properties);
 }
 
@@ -103,13 +103,13 @@ interface ErrorCodeAndMessage {
 
 export function firebaseError(error: unknown): ErrorCodeAndMessage {
     const _errorCodeAndMessage = errorCodeAndMessage(error);
-    if ((error as any).hasOwnProperty("name") && (error as any).name == "FirebaseError")
+    if ((error as any).hasOwnProperty('name') && (error as any).name == 'FirebaseError')
         return _errorCodeAndMessage;
     throw error;
 }
 
 export function errorCodeAndMessage(error: unknown): ErrorCodeAndMessage {
-    if (typeof error == "object" && (error as any).hasOwnProperty("code") && (error as any).hasOwnProperty("message"))
+    if (typeof error == 'object' && (error as any).hasOwnProperty('code') && (error as any).hasOwnProperty('message'))
         return {
             code: (error as any).code,
             message: (error as any).message,

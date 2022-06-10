@@ -1,82 +1,182 @@
-import * as admin from "firebase-admin";
-import { ClubLevel } from "../TypeDefinitions/ClubLevel";
-import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
-import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
-import { checkPrerequirements, FirebaseFunction, FunctionDefaultParameters } from "../utils";
+import * as admin from 'firebase-admin';
+import {
+    checkPrerequirements,
+    httpsError,
+    IFirebaseFunction,
+    reference,
+} from '../utils';
+import { ParameterContainer } from '../ParameterContainer';
+import { DatabaseType } from '../TypeDefinitions/DatabaseType';
+import { Logger } from '../Logger';
+import { AuthData } from 'firebase-functions/lib/common/providers/https';
 
+// eslint-disable-next-line valid-jsdoc
 /**
  * @summary
  * Checks if a person with given user id exists.
  *
  * @params
  *  - privateKey (string): private key to check whether the caller is authenticated to use this function
- *  - clubLevel ({@link ClubLevel}): level of the club (`regular`, `debug`, `testing`)
+ *  - clubLevel ({@link DatabaseType}): level of the club (`regular`, `debug`, `testing`)
  *  - userId (string): user id to search in database
  *
- * @returns (boolean): `true`if a person with given user id exists
+ * @return (boolean): `true`if a person with given user id exists
  *
  * @throws
  *  - {@link functions.https.HttpsError}:
  *    - permission-denied: if private key isn't valid or the function is called while unauthendicated
  *    - invalid-argument: if a required parameter isn't give over or if a parameter hasn't the right type
  */
-export class ExistsPersonWithUserIdFunction implements FirebaseFunction {
+export class ExistsPersonWithUserIdFunction implements IFirebaseFunction<
+    Parameters, ReturnType, ParameterParser
+> {
 
     /**
-     * Parameters needed for this function.
+     * All parameters passed by firebase function.
      */
-    private parameters: ExistsPersonWithUserIdFunction.Parameters;
-
-    private loggingProperties: LoggingProperties;
+    private parameterContainer: ParameterContainer;
 
     /**
-     * Initilizes function with given over data.
-     * @param {any} data Data to get parameters from.
+     * Parser to parse firebase function parameters from parameter container.
      */
-    constructor(data: any) {
-        const parameterContainer = new ParameterContainer(data);
-        this.loggingProperties = LoggingProperties.withFirst(parameterContainer, "ExistsPersonWithUserIdFunction.constructor", {data: data}, "notice");
-        this.parameters = ExistsPersonWithUserIdFunction.parseParameters(parameterContainer, this.loggingProperties.nextIndent);
+    public parameterParser: ParameterParser;
+
+    /**
+     * Logger to log this class.
+     */
+    private logger: Logger;
+
+    /**
+     * Constructs the firebase function with data and auth.
+     * @param { any } data Data passed to this firebase function.
+     * @param { AuthData | undefined } auth Authentication of person called this function.
+     */
+    public constructor(data: any, private readonly auth: AuthData | undefined) {
+        this.parameterContainer = new ParameterContainer(data);
+        this.logger = Logger.start(
+            this.parameterContainer,
+            'ExistsPersonWithUserIdFunction.constructor',
+            { data, auth },
+            'notice'
+        );
+        this.parameterParser = new ParameterParser(this.logger.nextIndent);
+        this.parameterParser.parseParameters(this.parameterContainer);
     }
 
     /**
-     * Parses parameters for this function from a parameter container.
-     * @param {ParameterContainer} container Parameter container to get parameters from.
-     * @return {Parameters} Parsed parameters for this function.
+     * Firebase function parameters passed to the firebase function.
      */
-    private static parseParameters(container: ParameterContainer, loggingProperties: LoggingProperties): ExistsPersonWithUserIdFunction.Parameters {
-        loggingProperties.append("ExistsPersonWithUserIdFunction.parseParameter", {container: container});
-        return {
-            privateKey: container.getParameter("privateKey", "string", loggingProperties.nextIndent),
-            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties.nextIndent),
-            userId: container.getParameter("userId", "string", loggingProperties.nextIndent),
-        };
+    public get parameters(): Parameters {
+        return this.parameterParser.parameters;
     }
 
     /**
      * Executes this firebase function.
-     * @param {{uid: string} | undefined} auth Authentication state.
      */
-    async executeFunction(auth?: { uid: string }): Promise<boolean> {
-        this.loggingProperties.append("ExistsPersonWithUserIdFunction.executeFunction", {auth: auth}, "info");
+    async executeFunction(): Promise<boolean> {
+        this.logger.append('ExistsPersonWithUserIdFunction.executeFunction', {}, 'info');
 
         // Check prerequirements
-        await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth);
+        await checkPrerequirements(
+            this.parameterContainer,
+            this.logger.nextIndent,
+            this.auth,
+        );
 
         // Check if person exists
-        const reference = admin.database().ref(this.parameters.clubLevel.clubComponent);
         let personExists = false;
-        (await reference.once("value")).forEach(clubSnapshot => {
-            personExists = clubSnapshot.child("personUserIds").child(this.parameters.userId).exists();
+        (await this.allClubsReference.once('value')).forEach(clubSnapshot => {
+            personExists = clubSnapshot.child('personUserIds').child(this.parameters.userId).exists();
             return personExists;
         });
         return personExists;
     }
+
+    /**
+     * Reference to all clubs.
+     */
+    private get allClubsReference(): admin.database.Reference {
+        return reference(
+            '',
+            this.parameterContainer,
+            this.logger.nextIndent
+        );
+    }
 }
 
-export namespace ExistsPersonWithUserIdFunction {
+/**
+ * Parameters of firebase function.
+ */
+interface Parameters {
 
-    export type Parameters = FunctionDefaultParameters & {
-        userId: string,
+    /**
+     * Private key to check whether the caller is authenticated to use this function
+     */
+    privateKey: string,
+
+    /**
+     * Database type of the change
+     */
+    databaseType: DatabaseType,
+
+    /**
+     * User id of person to check if exitsts
+     */
+    userId: string
+}
+
+/**
+ * Return type of firebase function.
+ */
+type ReturnType = boolean;
+
+/**
+ * Parser to parse firebase function parameters from parameter container.
+ * @template Parameters Type of the fireabse function parameters.
+ */
+class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> {
+
+    /**
+     * Parsed firebase function parameters from parameter container.
+     */
+    private initialParameters?: Parameters;
+
+    /**
+     * Constructs parser with a logger.
+     * @param { Logger } logger Logger to log this class.
+     */
+    public constructor(private logger: Logger) {}
+
+    /**
+     * Parsed firebase function parameters from parameter container.
+     */
+    public get parameters(): Parameters {
+        if (this.initialParameters === undefined)
+            throw httpsError(
+                'internal',
+                'Tried to access parameters before those parameters were parsed.',
+                this.logger
+            );
+        return this.initialParameters;
+    }
+
+    /**
+     * Parse firebase function parameters from parameter container.
+     * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
+     */
+    public parseParameters(container: ParameterContainer): void {
+        this.logger.append('ParameterParser.parseParameters', { container });
+
+        // Parse parametes
+        this.initialParameters = {
+            privateKey: container.parameter('privateKey', 'string', this.logger.nextIndent),
+            databaseType: container.parameter(
+                'databaseType',
+                'string',
+                this.logger.nextIndent,
+                DatabaseType.fromString
+            ),
+            userId: container.parameter('userId', 'string', this.logger.nextIndent),
+        };
     }
 }

@@ -1,6 +1,7 @@
-import { Bit, uint32ToBytes } from "./BitAndByte";
-import { BytesToBitIterator } from "./BytesToBitIterator";
-import { PseudoRandom } from "./PseudoRandom";
+/* eslint-disable require-jsdoc */
+import { Bit, uint32ToBytes } from './BitAndByte';
+import { BytesToBitIterator } from './BytesToBitIterator';
+import { PseudoRandom } from './PseudoRandom';
 
 /**
  * Iterator to generate an endless steam of bits depending on specified seed.
@@ -10,16 +11,16 @@ export class RandomBitIterator implements Iterator<Bit, undefined, undefined> {
     /**
      * Pseudo random number generator
      */
-    private pseudoRandom: PseudoRandom
+    private pseudoRandom: PseudoRandom;
 
     /**
      * Iterator for bytes to bits
      */
-    private bytesToBitsIterator: BytesToBitIterator
+    private bytesToBitsIterator: BytesToBitIterator;
 
     /**
      * Initializes RandomBitIterator with a seed
-     * @param seed Seed of the random bit iterator
+     * @param { string } seed Seed of the random bit iterator
      */
     public constructor(seed: string) {
         this.pseudoRandom = new PseudoRandom(seed);

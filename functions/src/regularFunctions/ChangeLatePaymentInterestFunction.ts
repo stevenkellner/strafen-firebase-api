@@ -1,13 +1,26 @@
-import * as admin from "firebase-admin";
-import { ChangeType } from "../TypeDefinitions/ChangeType";
-import { ClubLevel } from "../TypeDefinitions/ClubLevel";
-import { guid} from "../TypeDefinitions/guid";
-import { ParameterContainer } from "../TypeDefinitions/ParameterContainer";
-import { Reference} from "@firebase/database-types";
-import { checkPrerequirements, checkUpdateTimestamp, Deleted, existsData, FirebaseFunction, FunctionDefaultParameters, httpsError, saveStatistic, StatisticsProperties } from "../utils";
-import { LatePaymentInterest } from "../TypeDefinitions/LatePaymentInterest";
-import { LoggingProperties } from "../TypeDefinitions/LoggingProperties";
-import { getUpdatable, Updatable } from "../TypeDefinitions/UpdateProperties";
+import * as admin from 'firebase-admin';
+import {
+    checkPrerequirements,
+    IFirebaseFunction,
+    existsData,
+    httpsError,
+    checkUpdateProperties,
+    Deleted,
+    reference,
+} from '../utils';
+import { ParameterContainer } from '../ParameterContainer';
+import { guid } from '../TypeDefinitions/guid';
+import { DatabaseType } from '../TypeDefinitions/DatabaseType';
+import { ChangeType } from '../TypeDefinitions/ChangeType';
+import { Logger } from '../Logger';
+import { Updatable } from '../TypeDefinitions/UpdateProperties';
+import { AuthData } from 'firebase-functions/lib/common/providers/https';
+import {
+    IStatisticProperty,
+    saveStatistic,
+    IStatistic,
+} from '../Statistic';
+import { LatePaymentInterest } from '../TypeDefinitions/LatePaymentInterest';
 
 /**
  * @summary
@@ -17,11 +30,12 @@ import { getUpdatable, Updatable } from "../TypeDefinitions/UpdateProperties";
  *  - name: changeLatePaymentInterest
  *  - properties:
  *      - previousInterest ({@link LatePaymentInterest} | null): Previous late payment interest
- *      - changedInterest ({@link LatePaymentInterest} | null): Changed late payment interest or null if change type is `delete`
+ *      - changedInterest ({@link LatePaymentInterest} | null): Changed late payment interest or null if
+ *          change type is `delete`
  *
  * @params
  *  - privateKey (string): private key to check whether the caller is authenticated to use this function
- *  - clubLevel ({@link ClubLevel}}): level of the club (`regular`, `debug`, `testing`)
+ *  - clubLevel ({@link DatabaseType}}): level of the club (`regular`, `debug`, `testing`)
  *  - clubId ({@link guid}): id of the club to change the late payment interest
  *  - changeType ({@link ChangeType}}): type of the change (`update`, `delete`)
  *  - latePaymentInterest ({@link Updatable}<{@link LatePaymentInterest} | {@link Deleted}>): interest to change
@@ -32,66 +46,76 @@ import { getUpdatable, Updatable } from "../TypeDefinitions/UpdateProperties";
  *    - invalid-argument: if a required parameter isn't give over or if a parameter hasn't the right type
  *    - internal: if couldn't change interest in database
  */
-export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
+export class ChangeLatePaymentInterestFunction implements IFirebaseFunction<
+    Parameters, ReturnType, ParameterParser
+> {
 
     /**
-     * Parameters needed for this function.
+     * All parameters passed by firebase function.
      */
-    private parameters: ChangeLatePaymentInterestFunction.Parameters;
-
-    private loggingProperties: LoggingProperties;
+    private parameterContainer: ParameterContainer;
 
     /**
-     * Initilizes function with given over data.
-     * @param {any} data Data to get parameters from.
+     * Parser to parse firebase function parameters from parameter container.
      */
-    constructor(data: any) {
-        const parameterContainer = new ParameterContainer(data);
-        this.loggingProperties = LoggingProperties.withFirst(parameterContainer, "ChangeLatePaymentInterestFunction.constructor", {data: data}, "notice");
-        this.parameters = ChangeLatePaymentInterestFunction.parseParameters(parameterContainer, this.loggingProperties.nextIndent);
+    public parameterParser: ParameterParser;
+
+    /**
+     * Logger to log this class.
+     */
+    private logger: Logger;
+
+    /**
+     * Constructs the firebase function with data and auth.
+     * @param { any } data Data passed to this firebase function.
+     * @param { AuthData | undefined } auth Authentication of person called this function.
+     */
+    public constructor(data: any, private readonly auth: AuthData | undefined) {
+        this.parameterContainer = new ParameterContainer(data);
+        this.logger = Logger.start(
+            this.parameterContainer,
+            'ChangeLatePaymentInterestFunction.constructor',
+            { data, auth },
+            'notice'
+        );
+        this.parameterParser = new ParameterParser(this.logger.nextIndent);
+        this.parameterParser.parseParameters(this.parameterContainer);
     }
 
     /**
-     * Parses parameters for this function from a parameter container.
-     * @param {ParameterContainer} container Parameter container to get parameters from.
-     * @return {FunctionParameters} Parsed parameters for this function.
+     * Firebase function parameters passed to the firebase function.
      */
-    private static parseParameters(container: ParameterContainer, loggingProperties: LoggingProperties): ChangeLatePaymentInterestFunction.Parameters {
-        loggingProperties.append("ChangeLatePaymentInterestFunction.parseParameter", {container: container});
-        return {
-            privateKey: container.getParameter("privateKey", "string", loggingProperties.nextIndent),
-            clubLevel: new ClubLevel.Builder().fromParameterContainer(container, "clubLevel", loggingProperties.nextIndent),
-            clubId: guid.fromParameterContainer(container, "clubId", loggingProperties.nextIndent),
-            changeType: new ChangeType.Builder().fromParameterContainer(container, "changeType", loggingProperties.nextIndent),
-            updatableInterest: getUpdatable<LatePaymentInterest | Deleted<null>, LatePaymentInterest.Builder>(container.getParameter("latePaymentInterest", "object", loggingProperties.nextIndent), new LatePaymentInterest.Builder(), loggingProperties.nextIndent),
-        };
-    }
-
-    private getInterestRef(): Reference {
-        const interestPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}/latePaymentInterest`;
-        return admin.database().ref(interestPath);
+    public get parameters(): Parameters {
+        return this.parameterParser.parameters;
     }
 
     /**
      * Executes this firebase function.
-     * @param {{uid: string} | undefined} auth Authentication state.
      */
-    async executeFunction(auth?: { uid: string }): Promise<void> {
-        this.loggingProperties.append("ChangeLatePaymentInterestFunction.executeFunction", {auth: auth}, "info");
+    async executeFunction(): Promise<void> {
+        this.logger.append('ChangeLatePaymentInterestFunction.executeFunction', {}, 'info');
 
         // Check prerequirements
-        const clubPath = `${this.parameters.clubLevel.clubComponent}/${this.parameters.clubId.guidString}`;
-        await checkPrerequirements(this.parameters, this.loggingProperties.nextIndent, auth, this.parameters.clubId);
+        await checkPrerequirements(
+            this.parameterContainer,
+            this.logger.nextIndent,
+            this.auth,
+            this.parameters.clubId
+        );
 
         // Check update timestamp
-        await checkUpdateTimestamp(`${clubPath}/latePaymentInterest/updateProperties`, this.parameters.updatableInterest.updateProperties, this.loggingProperties.nextIndent);
+        await checkUpdateProperties(
+            `${this.parameters.clubId.guidString}/latePaymentInterest/updateProperties`,
+            this.parameters.updatableInterest.updateProperties,
+            this.parameterContainer,
+            this.logger.nextIndent,
+        );
 
         // Get previous interest
-        const interestRef = this.getInterestRef();
-        const interestSnapshot = await interestRef.once("value");
+        const interestSnapshot = await this.interestReference.once('value');
         let previousInterest: LatePaymentInterest | null = null;
         if (interestSnapshot.exists()) {
-            const previousRawInterest = new LatePaymentInterest.Builder().fromSnapshot(interestSnapshot, this.loggingProperties.nextIndent);
+            const previousRawInterest = LatePaymentInterest.fromSnapshot(interestSnapshot, this.logger.nextIndent);
             if (previousRawInterest instanceof LatePaymentInterest)
                 previousInterest = previousRawInterest;
         }
@@ -99,75 +123,238 @@ export class ChangeLatePaymentInterestFunction implements FirebaseFunction {
         // Change interest
         let changedInterest: LatePaymentInterest | null = null;
         switch (this.parameters.changeType.value) {
-        case "delete":
+        case 'delete':
             await this.deleteItem();
             break;
 
-        case "update":
-            if (!(this.parameters.updatableInterest.property instanceof LatePaymentInterest))
-                throw httpsError("invalid-argument", "LatePaymentInterest property isn't from type 'LatePaymentInterest'.", this.loggingProperties);
+        case 'update':
             await this.updateItem();
-            changedInterest = this.parameters.updatableInterest.property;
+            changedInterest = this.parameters.updatableInterest.property as LatePaymentInterest;
             break;
         }
+
         // Save statistic
-        await saveStatistic(clubPath, {
-            name: "changeLatePaymentInterest",
-            properties: new ChangeLatePaymentInterestFunction.Statistic(previousInterest, changedInterest),
-        }, this.loggingProperties.nextIndent);
+        await saveStatistic(
+            new Statistic(new StatisticProperty(previousInterest, changedInterest)),
+            this.parameterContainer,
+            this.logger.nextIndent,
+        );
     }
 
+    /**
+     * Reference to the person to change.
+     */
+    private get interestReference(): admin.database.Reference {
+        return reference(
+            `${this.parameters.clubId.guidString}/latePaymentInterest`,
+            this.parameterContainer,
+            this.logger.nextIndent
+        );
+    }
+
+    /**
+     * Deletes late payment interest.
+     */
     private async deleteItem(): Promise<void> {
-        this.loggingProperties.append("ChangeLatePaymentInterestFunction.deleteItem");
+        this.logger.append('ChangePersonFunction.deleteItem');
+
+        // Check if parameters is valid for deleting.
         if (!(this.parameters.updatableInterest.property instanceof Deleted))
-            throw httpsError("invalid-argument", "LatePaymentInterest property isn't from type 'Deleted'.", this.loggingProperties);
-        const interestRef = this.getInterestRef();
-        if (await existsData(interestRef)) {
-            await interestRef.set(this.parameters.updatableInterest.serverObject, error => {
+            throw httpsError(
+                'invalid-argument',
+                'LatePaymentInterest property isn\'t from type \'Deleted\'.',
+                this.logger
+            );
+
+        // Delete item.
+        if (await existsData(this.interestReference)) {
+            await this.interestReference.set(this.parameters.updatableInterest.databaseObject, error => {
                 if (error != null)
-                    throw httpsError("internal", `Couldn't delete late payment interest, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
+                    throw httpsError('internal',
+                        `Couldn't delete late payment interest, underlying error: ${error.name}, ${error.message}`,
+                        this.logger
+                    );
             });
         }
     }
 
+    /**
+     * Updates late payment interest.
+     */
     private async updateItem(): Promise<void> {
-        this.loggingProperties.append("ChangeLatePaymentInterestFunction.updateItem");
-        const interestRef = this.getInterestRef();
-        await interestRef.set(this.parameters.updatableInterest.serverObject, error => {
-            if (error != null)
-                throw httpsError("internal", `Couldn't update delete late payment interest, underlying error: ${error.name}, ${error.message}`, this.loggingProperties);
+        this.logger.append('ChangeLatePaymentInterestFunction.updateItem');
+
+        // Check if parameters is valid for updating.
+        if (!(this.parameters.updatableInterest.property instanceof LatePaymentInterest))
+            throw httpsError(
+                'invalid-argument',
+                'LatePaymentInterest property isn\'t from type \'LatePaymentInterest\'.',
+                this.logger
+            );
+
+        // Set updated item.
+        await this.interestReference.set(this.parameters.updatableInterest.databaseObject, error => {
+            if (error !== null)
+                throw httpsError(
+                    'internal',
+                    `Couldn't update late payment interest, underlying error: ${error.name}, ${error.message}`,
+                    this.logger
+                );
         });
     }
 }
 
-export namespace ChangeLatePaymentInterestFunction {
+/**
+ * Parameters of firebase function.
+ */
+interface Parameters {
 
-    export type Parameters = FunctionDefaultParameters & {
-        clubId: guid,
-        changeType: ChangeType,
-        updatableInterest: Updatable<LatePaymentInterest | Deleted<null>>
+    /**
+     * Private key to check whether the caller is authenticated to use this function
+     */
+    privateKey: string,
+
+    /**
+     * Database type of the change
+     */
+    databaseType: DatabaseType,
+
+    /**
+     * Id of the club to change the late payment interest
+     */
+    clubId: guid,
+
+    /**
+     * Type of the change
+     */
+    changeType: ChangeType,
+
+    /**
+     * Late payment interest to change
+     */
+    updatableInterest: Updatable<LatePaymentInterest | Deleted<null>>
+}
+
+/**
+ * Return type of firebase function.
+ */
+type ReturnType = void;
+
+/**
+ * Parser to parse firebase function parameters from parameter container.
+ * @template Parameters Type of the fireabse function parameters.
+ */
+class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> {
+
+    /**
+     * Parsed firebase function parameters from parameter container.
+     */
+    private initialParameters?: Parameters;
+
+    /**
+     * Constructs parser with a logger.
+     * @param { Logger } logger Logger to log this class.
+     */
+    public constructor(private logger: Logger) {}
+
+    /**
+     * Parsed firebase function parameters from parameter container.
+     */
+    public get parameters(): Parameters {
+        if (this.initialParameters === undefined)
+            throw httpsError(
+                'internal',
+                'Tried to access parameters before those parameters were parsed.',
+                this.logger
+            );
+        return this.initialParameters;
     }
 
-    export class Statistic implements StatisticsProperties<Statistic.ServerObject> {
+    /**
+     * Parse firebase function parameters from parameter container.
+     * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
+     */
+    public parseParameters(container: ParameterContainer): void {
+        this.logger.append('ParameterParser.parseParameters', { container });
 
-        constructor(
-            public readonly previousInterest: LatePaymentInterest | null,
-            public readonly changedInterest: LatePaymentInterest | null
-        ) {}
-
-        get ["serverObject"](): Statistic.ServerObject {
-            return {
-                previousInterest: this.previousInterest,
-                changedInterest: this.changedInterest,
-            };
-        }
+        // Parse parametes
+        this.initialParameters = {
+            privateKey: container.parameter('privateKey', 'string', this.logger.nextIndent),
+            databaseType: container.parameter(
+                'databaseType',
+                'string',
+                this.logger.nextIndent,
+                DatabaseType.fromString
+            ),
+            clubId: container.parameter('clubId', 'string', this.logger.nextIndent, guid.fromString),
+            changeType: container.parameter('changeType', 'string', this.logger.nextIndent, ChangeType.fromString),
+            updatableInterest: Updatable.fromRawProperty(
+                container.parameter('updatableInterest', 'object', this.logger.nextIndent),
+                LatePaymentInterest.fromObject,
+                this.logger.nextIndent,
+            ),
+        };
     }
+}
 
-    export namespace Statistic {
+/**
+ * Statistic of this firebase function that will be stored in the database.
+ */
+class Statistic implements IStatistic<StatisticProperty> {
 
-        export interface ServerObject {
-            previousInterest: LatePaymentInterest | null;
-            changedInterest: LatePaymentInterest | null;
-        }
+    /**
+     * Identifier of the statistic of a database update.
+     */
+    readonly identifier: string = 'changePerson';
+
+    /**
+     * Constructs Statistic with statistic property.
+     * @param { StatisticProperty } property Property of the statistic of a database update.
+     */
+    constructor(readonly property: StatisticProperty) {}
+}
+
+/**
+ * Statistic property of this firebase function that will be stored in the database.
+ */
+class StatisticProperty implements IStatisticProperty<StatisticProperty.DatabaseObject> {
+
+    /**
+     * Constructs statistic with previous and changed late payment interest
+     * @param { LatePaymentInterest | null } previousInterest Previous late payment interest before change.
+     * @param { LatePaymentInterest | null } changedInterest Changed late payment interest after change.
+     */
+    public constructor(
+        public readonly previousInterest: LatePaymentInterest | null,
+        public readonly changedInterest: LatePaymentInterest | null
+    ) {}
+
+    /**
+     * Statistic property object that will be stored in the database.
+     */
+    public get databaseObject(): StatisticProperty.DatabaseObject {
+        return {
+            previousInterest: this.previousInterest?.databaseObject ?? null,
+            changedInterest: this.changedInterest?.databaseObject ?? null,
+        };
+    }
+}
+
+namespace StatisticProperty {
+
+    /**
+     * Statistic property object that will be stored in the database.
+     */
+    export interface DatabaseObject {
+
+        /**
+         * Previous late payment interest before change.
+         */
+        previousInterest: LatePaymentInterest.DatabaseObject | null;
+
+        /**
+         * Changed late payment interest after change.
+         */
+        changedInterest: LatePaymentInterest.DatabaseObject | null;
     }
 }

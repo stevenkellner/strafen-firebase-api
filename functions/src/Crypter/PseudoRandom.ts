@@ -1,4 +1,4 @@
-
+/* eslint-disable require-jsdoc */
 /**
  * Generates random numbers in [0.0, 1.0) depending on a specified seed.
  */
@@ -16,15 +16,15 @@ export class PseudoRandom {
 
     /**
      * Initializes PseudoRandom with a seed
-     * @param seed Seed of the pseudo random number generator
+     * @param { string } seed Seed of the pseudo random number generator
      */
     public constructor(seed: string) {
         let n = this.INITIAL_MASH_N;
-        n = PseudoRandom.mash(n, " ");
+        n = PseudoRandom.mash(n, ' ');
         let state0 = PseudoRandom.mashResult(n);
-        n = PseudoRandom.mash(n, " ");
+        n = PseudoRandom.mash(n, ' ');
         let state1 = PseudoRandom.mashResult(n);
-        n = PseudoRandom.mash(n, " ");
+        n = PseudoRandom.mash(n, ' ');
         let state2 = PseudoRandom.mashResult(n);
         n = PseudoRandom.mash(n, seed);
         state0 -= PseudoRandom.mashResult(n);
@@ -51,9 +51,9 @@ export class PseudoRandom {
 
     /**
      * Mashes number `m` and data to a number
-     * @param m Number `m`
-     * @param data Data to mash
-     * @returns Mashed number
+     * @param { number } m Number `m`
+     * @param { string } data Data to mash
+     * @return { number } Mashed number
      */
     static mash(m: number, data: string): number {
         let n = m;
@@ -72,8 +72,8 @@ export class PseudoRandom {
 
     /**
      * Mashes number `n`
-     * @param n Number `n`
-     * @returns Mashed number
+     * @param { number } n Number `n`
+     * @return { number } Mashed number
      */
     static mashResult(n: number): number {
         return Math.floor(n) * 2.3283064365386963e-10;
@@ -81,7 +81,7 @@ export class PseudoRandom {
 
     /**
      * Generates next pseudo random number between [0.0, 1.0).
-     * @returns Random number between [0.0, 1.0)
+     * @return { number } Random number between [0.0, 1.0)
      */
     public random(): number {
         const t = 2091639 * this.state.state0 + this.state.constant * 2.3283064365386963e-10;

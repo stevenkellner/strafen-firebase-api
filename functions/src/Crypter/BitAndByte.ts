@@ -1,3 +1,4 @@
+/* eslint-disable require-jsdoc */
 /**
  * Represents a bit; zero or one.
  */
@@ -37,7 +38,8 @@ export namespace Bit {
 export class Byte {
 
     public constructor(
-        public readonly bitList: [Bit, Bit, Bit, Bit, Bit, Bit, Bit, Bit] = [Bit.zero, Bit.zero, Bit.zero, Bit.zero, Bit.zero, Bit.zero, Bit.zero, Bit.zero]
+        public readonly bitList: [Bit, Bit, Bit, Bit, Bit, Bit, Bit, Bit]
+        = [Bit.zero, Bit.zero, Bit.zero, Bit.zero, Bit.zero, Bit.zero, Bit.zero, Bit.zero]
     ) {}
 
     static fromNumberByte(numberByte: number): Byte {
@@ -50,7 +52,7 @@ export class Byte {
         return new Byte(bitsArray);
     }
 
-    public get ["numberValue"](): number {
+    public get numberValue(): number {
         let number = 0;
         for (let index = 0; index < 8; index++) {
             number += Bit.toNumber(this.bitList[index]) * (1 << (8 - index - 1));
@@ -64,7 +66,9 @@ export class Byte {
     }
 
     public toString(): string {
-        return `${Bit.toNumber(this.bitList[0])}${Bit.toNumber(this.bitList[1])}${Bit.toNumber(this.bitList[2])}${Bit.toNumber(this.bitList[3])} ${Bit.toNumber(this.bitList[4])}${Bit.toNumber(this.bitList[5])}${Bit.toNumber(this.bitList[6])}${Bit.toNumber(this.bitList[7])}`;
+        return `${Bit.toNumber(this.bitList[0])}${Bit.toNumber(this.bitList[1])}${Bit.toNumber(this.bitList[2])}
+        ${Bit.toNumber(this.bitList[3])} ${Bit.toNumber(this.bitList[4])}${Bit.toNumber(this.bitList[5])}
+        ${Bit.toNumber(this.bitList[6])}${Bit.toNumber(this.bitList[7])}`;
     }
 }
 

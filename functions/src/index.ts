@@ -1,125 +1,91 @@
-import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
+import * as admin from 'firebase-admin';
 
-import { ChangeFinePayedFunction } from "./regularFunctions/ChangeFinePayedFunction";
-import { NewTestClubFunction } from "./testingFunctions/NewTestClubFunction";
-import { DeleteTestClubsFunction } from "./testingFunctions/DeleteTestClubsFunction";
-import { ChangeReasonTemplateFunction } from "./regularFunctions/ChangeReasonTemplateFunction";
-import { ChangeFineFunction } from "./regularFunctions/ChangeFineFunction";
-import { ChangePersonFunction } from "./regularFunctions/ChangePersonFunction";
-import { ChangeLatePaymentInterestFunction } from "./regularFunctions/ChangeLatePaymentInterestFunction";
-import { ExistsClubWithIdentifierFunction } from "./regularFunctions/ExistsClubWithIdentifierFunction";
-import { ExistsPersonWithUserIdFunction } from "./regularFunctions/ExistsPersonWithUserIdFunction";
-import { ForceSignOutFunction } from "./regularFunctions/ForceSignOutFunction";
-import { GetClubIdFunction } from "./regularFunctions/GetClubIdFunction";
-import { GetPersonPropertiesFunction } from "./regularFunctions/GetPersonPropertiesFunction";
-import { NewClubFunction } from "./regularFunctions/NewClubFunction";
-import { RegisterPersonFunction } from "./regularFunctions/RegisterPersonFunction";
+import { ChangeFinePayedFunction } from './regularFunctions/ChangeFinePayedFunction';
+import { NewTestClubFunction } from './testingFunctions/NewTestClubFunction';
+import { DeleteTestClubsFunction } from './testingFunctions/DeleteTestClubsFunction';
+import { ChangeReasonTemplateFunction } from './regularFunctions/ChangeReasonTemplateFunction';
+import { ChangeFineFunction } from './regularFunctions/ChangeFineFunction';
+import { ChangePersonFunction } from './regularFunctions/ChangePersonFunction';
+import { ChangeLatePaymentInterestFunction } from './regularFunctions/ChangeLatePaymentInterestFunction';
+import { ExistsClubWithIdentifierFunction } from './regularFunctions/ExistsClubWithIdentifierFunction';
+import { ExistsPersonWithUserIdFunction } from './regularFunctions/ExistsPersonWithUserIdFunction';
+import { ForceSignOutFunction } from './regularFunctions/ForceSignOutFunction';
+import { GetClubIdFunction } from './regularFunctions/GetClubIdFunction';
+import { GetPersonPropertiesFunction } from './regularFunctions/GetPersonPropertiesFunction';
+import { NewClubFunction } from './regularFunctions/NewClubFunction';
+import { RegisterPersonFunction } from './regularFunctions/RegisterPersonFunction';
+import { createFunction } from './utils';
 
 admin.initializeApp();
 
 /**
  * Changes payement state of fine with specified fine id.
  */
-export const changeFinePayed = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new ChangeFinePayedFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const changeFinePayed = createFunction((data, auth) => new ChangeFinePayedFunction(data, auth));
 
 /**
  * Changes a element of reason template list.
  */
-export const changeReasonTemplate = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new ChangeReasonTemplateFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const changeReasonTemplate = createFunction((data, auth) => new ChangeReasonTemplateFunction(data, auth));
 
 /**
  * Changes a element of fine list.
  */
-export const changeFine = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new ChangeFineFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const changeFine = createFunction((data, auth) => new ChangeFineFunction(data, auth));
 
 /**
  * Changes a element of person list.
  */
-export const changePerson = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new ChangePersonFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const changePerson = createFunction((data, auth) => new ChangePersonFunction(data, auth));
 
 /**
  * Changes the late payment interest.
  */
-export const changeLatePaymentInterest = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new ChangeLatePaymentInterestFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const changeLatePaymentInterest =
+    createFunction((data, auth) => new ChangeLatePaymentInterestFunction(data, auth));
 
 /**
  * Checks if club with given identifier already exists.
  */
-export const existsClubWithIdentifier = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new ExistsClubWithIdentifierFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const existsClubWithIdentifier =
+    createFunction((data, auth) => new ExistsClubWithIdentifierFunction(data, auth));
 
 /**
  * Checks if a person with given user id exists.
  */
-export const existsPersonWithUserId = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new ExistsPersonWithUserIdFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const existsPersonWithUserId = createFunction((data, auth) => new ExistsPersonWithUserIdFunction(data, auth));
 
 /**
  * Force sign out a person.
  */
-export const forceSignOut = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new ForceSignOutFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const forceSignOut = createFunction((data, auth) => new ForceSignOutFunction(data, auth));
 
 /**
  * Get club id with given club identifier.
  */
-export const getClubId = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new GetClubIdFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const getClubId = createFunction((data, auth) => new GetClubIdFunction(data, auth));
 
 /**
  * Returns club and person properties of user id.
  */
-export const getPersonProperties = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new GetPersonPropertiesFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const getPersonProperties = createFunction((data, auth) => new GetPersonPropertiesFunction(data, auth));
 
 /**
  * Creates a new club with given properties.
  */
-export const newClub = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new NewClubFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const newClub = createFunction((data, auth) => new NewClubFunction(data, auth));
 
 /**
  * Register person to club with given club id.
  */
-export const registerPerson = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new RegisterPersonFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+export const registerPerson = createFunction((data, auth) => new RegisterPersonFunction(data, auth));
 
-export const newTestClub = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new NewTestClubFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+/**
+ * Creates a new test club.
+ */
+export const newTestClub = createFunction((data, auth) => new NewTestClubFunction(data, auth));
 
-export const deleteTestClubs = functions.region("europe-west1").https.onCall(async (data, context) => {
-    const firebaseFunction = new DeleteTestClubsFunction(data);
-    return await firebaseFunction.executeFunction(context.auth);
-});
+/**
+ * Deletes a test club.
+ */
+export const deleteTestClubs = createFunction((data, auth) => new DeleteTestClubsFunction(data, auth));

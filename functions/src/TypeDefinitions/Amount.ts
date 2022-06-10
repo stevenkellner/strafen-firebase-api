@@ -1,40 +1,89 @@
-import { ParameterContainer } from "./ParameterContainer";
-import { httpsError } from "../utils";
-import { LoggingProperties } from "./LoggingProperties";
+import { ParameterContainer } from '../ParameterContainer';
+import { httpsError } from '../utils';
+import { Logger } from '../Logger';
 
+/**
+ * Contains an amount value with value and subunit value.
+ * Valid amount number: `42.50`.
+ */
 export class Amount {
 
+    /**
+     * Constructs an amount value with value and subunit value.
+     * @param { number } value Value of the amount.
+     * @param { number } subUnitValue Subunit value of the amount.
+     */
     public constructor(
-        private value: number,
-        private subUnitValue: number
+        private readonly value: number,
+        private readonly subUnitValue: number
     ) {}
 
-    get ["numberValue"](): number {
+    /**
+     * Number value of the amount.
+     */
+    get numberValue(): number {
         return this.value + this.subUnitValue / 100;
     }
 }
 
 export namespace Amount {
-    export class Builder {
-        public fromValue(value: any, loggingProperties: LoggingProperties): Amount {
-            loggingProperties.append("Amount.Builder.fromValue", {value: value});
 
-            // Check if value is from type number
-            if (typeof value !== "number")
-                throw httpsError("invalid-argument", `Couldn't parse amount, expected type 'number', but bot ${value} from type '${typeof value}'`, loggingProperties);
+    /**
+     * Builds amount from specified value.
+     * @param { any } value Value to build amount from.
+     * @param { Logger } logger Logger to log this method.
+     * @return { Amount } Builded amount.
+     */
+    export function fromNumber(value: number, logger: Logger): Amount {
+        logger.append('Amount.fromNumber', { value });
 
-            // Check if number is positiv
-            if (value < 0)
-                throw httpsError("invalid-argument", "Couldn't parse Amount since value is negative.", loggingProperties);
+        // Check if number is positiv
+        if (value < 0)
+            throw httpsError('invalid-argument', 'Couldn\'t parse Amount since value is negative.', logger);
 
-            const amountValue = Math.floor(value);
-            const subUnitValue = (value - amountValue) * 100;
-            return new Amount(amountValue, Math.floor(subUnitValue));
-        }
+        // Build and return amount.
+        const amountValue = Math.floor(value);
+        const subUnitValue = (value - amountValue) * 100;
+        return new Amount(amountValue, Math.floor(subUnitValue));
+    }
 
-        public fromParameterContainer(container: ParameterContainer, parameterName: string, loggingProperties: LoggingProperties): Amount {
-            loggingProperties.append("Amount.Builder.fromParameterContainer", {container: container, parameterName: parameterName});
-            return this.fromValue(container.getParameter(parameterName, "number", loggingProperties.nextIndent), loggingProperties.nextIndent);
-        }
+    /**
+     * Builds amount from specified value.
+     * @param { any } value Value to build amount from.
+     * @param { Logger } logger Logger to log this method.
+     * @return { Amount } Builded amount.
+     */
+    export function fromValue(value: any, logger: Logger): Amount {
+        logger.append('Amount.fromValue', { value });
+
+        // Check if value is from type number
+        if (typeof value !== 'number')
+            throw httpsError(
+                'invalid-argument',
+                `Couldn't parse amount, expected type 'number', but bot ${value} from type '${typeof value}'`,
+                logger
+            );
+
+        // Return amount.
+        return Amount.fromNumber(value, logger.nextIndent);
+    }
+
+    // eslint-disable-next-line valid-jsdoc
+    /**
+     * @deprecated Use `container.parameter(parameterName, 'number', logger.nextIndent,
+     * Amount.fromString)` instead.
+     */
+    export function fromParameterContainer(
+        container: ParameterContainer,
+        parameterName: string,
+        logger: Logger
+    ): Amount {
+        logger.append('Amount.fromParameterContainer', { container, parameterName });
+
+        // Build and return amount.
+        return Amount.fromNumber(
+            container.parameter(parameterName, 'number', logger.nextIndent),
+            logger.nextIndent
+        );
     }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable require-jsdoc */
 /**
  * Combines to iterators with an expression to combine both elements. If an iterator
  * has more elements than the other, these elements are droped.
@@ -6,9 +7,9 @@ export class CombineIterator<T1, T2, R> implements Iterator<R, undefined, undefi
 
     /**
      * Initializes with two iterators and transformation expression
-     * @param iterator1 First iterator
-     * @param iterator2 Second iterator
-     * @param combineElement Expression to combine elements of the iterators
+     * @param { Iterator<T1> } iterator1 First iterator
+     * @param { Iterator<T2> } iterator2 Second iterator
+     * @param { function(element1: T1, element2: T2): R } combineElement Expression to combine elements of the iterators
      */
     public constructor(
         private readonly iterator1: Iterator<T1>,

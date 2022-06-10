@@ -1,98 +1,98 @@
-import {privateKey} from "../src/privateKeys";
-import {guid} from "../src/TypeDefinitions/guid";
-import {auth, callFunction, firebaseError, getDatabaseOptionalValue, getDatabaseValue, signInTestUser} from "./utils";
-import {signOut} from "firebase/auth";
-import {assert, expect} from "chai";
-import { LoggingProperties } from "../src/TypeDefinitions/LoggingProperties";
-import { ParameterContainer } from "../src/TypeDefinitions/ParameterContainer";
-import { PersonPropertiesWithUserId } from "../src/TypeDefinitions/PersonPropertiesWithUserId";
-import { PersonName } from "../src/TypeDefinitions/PersonName";
-import { ClubProperties } from "../src/TypeDefinitions/ClubProperties";
+import { privateKey } from '../src/privateKeys';
+import { guid } from '../src/TypeDefinitions/guid';
+import { auth, callFunction, firebaseError, getDatabaseOptionalValue, getDatabaseValue, signInTestUser } from './utils';
+import { signOut } from 'firebase/auth';
+import { assert, expect } from 'chai';
+import { Logger } from '../src/TypeDefinitions/LoggingProperties';
+import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
+import { PersonPropertiesWithUserId } from '../src/TypeDefinitions/PersonPropertiesWithUserId';
+import { PersonName } from '../src/TypeDefinitions/PersonName';
+import { ClubProperties } from '../src/TypeDefinitions/ClubProperties';
 
-describe("NewClub", () => {
+describe('NewClub', () => {
 
-    const loggingProperties = LoggingProperties.withFirst(new ParameterContainer({verbose: true}), "newClubTest", undefined, "notice");
+    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'newClubTest', undefined, 'notice');
 
-    const clubId = guid.fromString("dd129fcd-3b4b-437c-83a7-0e5433cc4cac", loggingProperties.nextIndent);
+    const clubId = guid.fromString('dd129fcd-3b4b-437c-83a7-0e5433cc4cac', loggingProperties.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
     });
 
     afterEach(async () => {
-        await callFunction("deleteTestClubs", {
+        await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: "testing",
+            clubLevel: 'testing',
         });
         await signOut(auth);
     });
 
-    it("No club properties", async () => {
+    it('No club properties', async () => {
         try {
             const personId = guid.newGuid();
-            await callFunction("newClub", {
+            await callFunction('newClub', {
                 privateKey: privateKey,
-                clubLevel: "testing",
-                changeType: "upate",
+                clubLevel: 'testing',
+                changeType: 'upate',
                 personProperties: new PersonPropertiesWithUserId(
                     personId,
                     new Date(),
-                    "userId",
-                    new PersonName("first name", "last name")
+                    'userId',
+                    new PersonName('first name', 'last name')
                 ).serverObject,
             });
-            assert.fail("A statement above should throw an exception.");
+            assert.fail('A statement above should throw an exception.');
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
-                code: "functions/invalid-argument",
-                message: "Couldn't parse 'clubProperties'. Expected type 'object', but got undefined or null.",
+                code: 'functions/invalid-argument',
+                message: 'Couldn\'t parse \'clubProperties\'. Expected type \'object\', but got undefined or null.',
             });
         }
     });
 
-    it("No person properties", async () => {
+    it('No person properties', async () => {
         try {
-            await callFunction("newClub", {
+            await callFunction('newClub', {
                 privateKey: privateKey,
-                clubLevel: "testing",
-                changeType: "upate",
+                clubLevel: 'testing',
+                changeType: 'upate',
                 clubProperties: new ClubProperties(
                     clubId,
-                    "test club of new club test",
-                    "identifier1",
-                    "DE",
+                    'test club of new club test',
+                    'identifier1',
+                    'DE',
                     false,
                 ).serverObject,
             });
-            assert.fail("A statement above should throw an exception.");
+            assert.fail('A statement above should throw an exception.');
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
-                code: "functions/invalid-argument",
-                message: "Couldn't parse 'personProperties'. Expected type 'object', but got undefined or null.",
+                code: 'functions/invalid-argument',
+                message: 'Couldn\'t parse \'personProperties\'. Expected type \'object\', but got undefined or null.',
             });
         }
     });
 
-    it("Create new club", async () => {
+    it('Create new club', async () => {
 
         // Create new club
         const personId = guid.newGuid();
         const signInDate = new Date();
-        await callFunction("newClub", {
+        await callFunction('newClub', {
             privateKey: privateKey,
-            clubLevel: "testing",
-            changeType: "upate",
+            clubLevel: 'testing',
+            changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
                 signInDate,
-                "userId",
-                new PersonName("first name", "last name")
+                'userId',
+                new PersonName('first name', 'last name')
             ).serverObject,
             clubProperties: new ClubProperties(
                 clubId,
-                "test club of new club test",
-                "identifier1",
-                "DE",
+                'test club of new club test',
+                'identifier1',
+                'DE',
                 false,
             ).serverObject,
         });
@@ -100,49 +100,49 @@ describe("NewClub", () => {
         // Check club properties
         const clubProperties = await getDatabaseValue(`testableClubs/${clubId.guidString}`);
         expect(clubProperties).to.be.deep.equal({
-            identifier: "identifier1",
+            identifier: 'identifier1',
             inAppPaymentActive: false,
-            name: "test club of new club test",
+            name: 'test club of new club test',
             personUserIds: {
                 userId: personId.guidString,
             },
             persons: {
                 [personId.guidString]: {
                     name: {
-                        first: "first name",
-                        last: "last name",
+                        first: 'first name',
+                        last: 'last name',
                     },
                     signInData: {
                         admin: true,
                         signInDate: signInDate.toISOString(),
-                        userId: "userId",
+                        userId: 'userId',
                     },
                 },
             },
-            regionCode: "DE",
+            regionCode: 'DE',
         });
     });
 
-    it("Existing identifier", async () => {
+    it('Existing identifier', async () => {
 
         // Create first club
         const personId = guid.newGuid();
         const signInDate = new Date();
-        await callFunction("newClub", {
+        await callFunction('newClub', {
             privateKey: privateKey,
-            clubLevel: "testing",
-            changeType: "upate",
+            clubLevel: 'testing',
+            changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
                 signInDate,
-                "userId",
-                new PersonName("first name", "last name")
+                'userId',
+                new PersonName('first name', 'last name')
             ).serverObject,
             clubProperties: new ClubProperties(
                 clubId,
-                "test club of new club test",
-                "identifier1",
-                "DE",
+                'test club of new club test',
+                'identifier1',
+                'DE',
                 false,
             ).serverObject,
         });
@@ -153,53 +153,53 @@ describe("NewClub", () => {
 
         // Try create club with same identifier
         try {
-            await callFunction("newClub", {
+            await callFunction('newClub', {
                 privateKey: privateKey,
-                clubLevel: "testing",
-                changeType: "upate",
+                clubLevel: 'testing',
+                changeType: 'upate',
                 personProperties: new PersonPropertiesWithUserId(
                     personId,
                     signInDate,
-                    "userId asdf",
-                    new PersonName("first asdfname", "last nbsgfsame")
+                    'userId asdf',
+                    new PersonName('first asdfname', 'last nbsgfsame')
                 ).serverObject,
                 clubProperties: new ClubProperties(
                     guid.newGuid(),
-                    "test clubasdf of new club test",
-                    "identifier1",
-                    "DE",
+                    'test clubasdf of new club test',
+                    'identifier1',
+                    'DE',
                     true,
                 ).serverObject,
             });
-            assert.fail("A statement above should throw an exception.");
+            assert.fail('A statement above should throw an exception.');
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
-                code: "functions/already-exists",
-                message: "Club identifier already exists",
+                code: 'functions/already-exists',
+                message: 'Club identifier already exists',
             });
         }
     });
 
-    it("Same id", async () => {
+    it('Same id', async () => {
 
         // Create first club
         const personId = guid.newGuid();
         const signInDate = new Date();
-        await callFunction("newClub", {
+        await callFunction('newClub', {
             privateKey: privateKey,
-            clubLevel: "testing",
-            changeType: "upate",
+            clubLevel: 'testing',
+            changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
                 signInDate,
-                "userId",
-                new PersonName("first name", "last name")
+                'userId',
+                new PersonName('first name', 'last name')
             ).serverObject,
             clubProperties: new ClubProperties(
                 clubId,
-                "test club of new club test",
-                "identifier1",
-                "DE",
+                'test club of new club test',
+                'identifier1',
+                'DE',
                 false,
             ).serverObject,
         });
@@ -209,21 +209,21 @@ describe("NewClub", () => {
         expect(clubProperties1).to.be.not.null;
 
         // Create club with same id
-        await callFunction("newClub", {
+        await callFunction('newClub', {
             privateKey: privateKey,
-            clubLevel: "testing",
-            changeType: "upate",
+            clubLevel: 'testing',
+            changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
                 signInDate,
-                "userId asdf",
-                new PersonName("first asdfname", "last nbsgfsame")
+                'userId asdf',
+                new PersonName('first asdfname', 'last nbsgfsame')
             ).serverObject,
             clubProperties: new ClubProperties(
                 clubId,
-                "test clubasdf of new club test",
-                "identifier2",
-                "DE",
+                'test clubasdf of new club test',
+                'identifier2',
+                'DE',
                 true,
             ).serverObject,
         });
@@ -231,26 +231,26 @@ describe("NewClub", () => {
         // Check club properties
         const clubProperties2 = await getDatabaseValue(`testableClubs/${clubId.guidString}`);
         expect(clubProperties2).to.be.deep.equal({
-            identifier: "identifier1",
+            identifier: 'identifier1',
             inAppPaymentActive: false,
-            name: "test club of new club test",
+            name: 'test club of new club test',
             personUserIds: {
                 userId: personId.guidString,
             },
             persons: {
                 [personId.guidString]: {
                     name: {
-                        first: "first name",
-                        last: "last name",
+                        first: 'first name',
+                        last: 'last name',
                     },
                     signInData: {
                         admin: true,
                         signInDate: signInDate.toISOString(),
-                        userId: "userId",
+                        userId: 'userId',
                     },
                 },
             },
-            regionCode: "DE",
+            regionCode: 'DE',
         });
     });
 });
