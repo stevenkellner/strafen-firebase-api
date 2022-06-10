@@ -1,8 +1,8 @@
 import * as admin from "firebase-admin";
 import * as functions from "firebase-functions";
-import {privateKey} from "./privateKeys";
-import {guid} from "./TypeDefinitions/guid";
-import {ClubLevel} from "./TypeDefinitions/ClubLevel";
+import { privateKey } from "./privateKeys";
+import { guid } from "./TypeDefinitions/guid";
+import { ClubLevel } from "./TypeDefinitions/ClubLevel";
 import { LoggingProperties } from "./TypeDefinitions/LoggingProperties";
 import { UpdateProperties } from "./TypeDefinitions/UpdateProperties";
 
@@ -16,7 +16,7 @@ import { UpdateProperties } from "./TypeDefinitions/UpdateProperties";
  * @param {guid | undefined } clubId Id of club to check if person is in that club.
  */
 export async function checkPrerequirements(parameter: FunctionDefaultParameters, loggingProperties: LoggingProperties, auth?: { uid: string }, clubId?: guid) {
-    loggingProperties.append("checkPrerequirements", {parameter: parameter, auth: auth, clubId: clubId});
+    loggingProperties.append("checkPrerequirements", { parameter: parameter, auth: auth, clubId: clubId });
 
     // Check if key is valid
     if (parameter.privateKey != privateKey)
@@ -36,7 +36,7 @@ export async function checkPrerequirements(parameter: FunctionDefaultParameters,
 }
 
 export async function checkUpdateTimestamp(updatePropertiesPath: string, functionUpdateProperties: UpdateProperties, loggingProperties: LoggingProperties) {
-    loggingProperties.append("checkUpdateTimestamp", {updatePropertiesPath: updatePropertiesPath, functionUpdateProperties: functionUpdateProperties});
+    loggingProperties.append("checkUpdateTimestamp", { updatePropertiesPath: updatePropertiesPath, functionUpdateProperties: functionUpdateProperties });
 
     // Get server update properties
     const updatePropertiesRef = admin.database().ref(updatePropertiesPath);
@@ -60,12 +60,16 @@ export async function existsData(reference: admin.database.Reference): Promise<b
 
 /**
  * Returns same value, but null if specified value is undefined.
- * @param {any} value Value to get undefined value.
- * @return {any} Same value, but null if specified value is undefined.
+ * @param { T | undefined } value Value to get undefined value.
+ * @return { T | null } Same value, but null if specified value is undefined.
  */
+export function undefinedAsNull<T>(value: T): T;
+export function undefinedAsNull(value: undefined): null;
 export function undefinedAsNull<T>(value: T | undefined): T | null {
-    return typeof value === "undefined" ? null: value;
+    return value ?? null;
 }
+
+const t: string = "";
 
 export interface StatisticsProperties<StatisticsPropertiesObject> {
     serverObject: StatisticsPropertiesObject;
@@ -95,7 +99,7 @@ interface Statistic<Properties extends StatisticsProperties<StatisticsProperties
  * @param {Statistic} statistic Properties of statistic to save.
  */
 export async function saveStatistic<Properties extends StatisticsProperties<StatisticsPropertiesObject<Properties>>>(clubPath: string, statistic: Statistic<Properties>, loggingProperties: LoggingProperties) {
-    loggingProperties.append("saveStatistic", {clubPath: clubPath, statistic: statistic});
+    loggingProperties.append("saveStatistic", { clubPath: clubPath, statistic: statistic });
     const path = `${clubPath}/statistics/${guid.newGuid().guidString}`;
     const reference = admin.database().ref(path);
     await reference.set({
