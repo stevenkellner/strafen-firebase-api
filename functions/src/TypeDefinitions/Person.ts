@@ -77,8 +77,8 @@ export namespace Person {
         if (typeof value.id !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse Person parameter 'id'. Expected type 'string', but got '${value.id}' 
-                from type '${typeof value.id}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse Person parameter 'id'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`,
                 logger
             );
         const id = guid.fromString(value.id, logger.nextIndent);
@@ -98,8 +98,8 @@ export namespace Person {
         if (typeof value.name !== 'object')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse Person parameter 'name'. Expected type 'object', but got '${value.name}' 
-                from type '${typeof value.name}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse Person parameter 'name'. Expected type 'object', but got '${value.name}' from type '${typeof value.name}'.`,
                 logger
             );
         const name = PersonName.fromObject(value.name, logger.nextIndent);

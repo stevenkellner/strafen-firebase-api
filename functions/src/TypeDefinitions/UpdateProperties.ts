@@ -59,8 +59,8 @@ export namespace UpdateProperties {
         if (typeof value.personId !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse UpdateProperties parameter 'personId', expected type string but got 
-                '${value.personId}' from type ${typeof value.personId}`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse UpdateProperties parameter 'personId', expected type string but got '${value.personId}' from type ${typeof value.personId}`,
                 logger
             );
         const personId = guid.fromString(value.personId, logger.nextIndent);
@@ -69,8 +69,8 @@ export namespace UpdateProperties {
         if (typeof value.timestamp !== 'string' || isNaN(new Date(value.timestamp).getTime()))
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse UpdateProperties parameter 'timestamp', expected iso string but got 
-                '${value.timestamp}' from type ${typeof value.timestamp}`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse UpdateProperties parameter 'timestamp', expected iso string but got '${value.timestamp}' from type ${typeof value.timestamp}`,
                 logger
             );
 
@@ -91,8 +91,8 @@ export namespace UpdateProperties {
         if (typeof value !== 'object')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse update properties, expected type 'object', but bot ${value} from type 
-                '${typeof value}'`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse update properties, expected type 'object', but bot ${value} from type '${typeof value}'`,
                 logger
             );
 

@@ -18,7 +18,7 @@ import { AuthData } from 'firebase-functions/lib/common/providers/https';
  *
  * @params
  *  - privateKey (string): private key to check whether the caller is authenticated to use this function
- *  - clubLevel ({@link DatabaseType}): level of the club (`regular`, `debug`, `testing`)
+ *  - databaseType ({@link DatabaseType}): level of the club (`regular`, `debug`, `testing`)
  *  - clubId ({@link guid}): id of the club to force sign out the person
  *  - personId ({@link guid}): id of person to be force signed out
  *

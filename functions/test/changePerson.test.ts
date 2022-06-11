@@ -1,24 +1,31 @@
 import { privateKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
-import { auth, callFunction, firebaseError, getDatabasePersons, getDatabaseStatisticsPropertiesWithName, signInTestUser } from './utils';
+import {
+    auth,
+    callFunction,
+    firebaseError,
+    getDatabasePersons,
+    getDatabaseStatisticsPropertyWithIdentifier,
+    signInTestUser,
+} from './utils';
 import { signOut } from 'firebase/auth';
 import { assert, expect } from 'chai';
 import { Person } from '../src/TypeDefinitions/Person';
-import { Logger } from '../src/TypeDefinitions/LoggingProperties';
-import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
+import { Logger } from '../src/Logger';
+import { ParameterContainer } from '../src/ParameterContainer';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
 
 describe('ChangePerson', () => {
 
-    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'changePersonTest', undefined, 'notice');
+    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'changePersonTest', undefined, 'notice');
 
-    const clubId = guid.fromString('c5429fcd-3b4b-437c-83a7-0e5433cc4cac', loggingProperties.nextIndent);
+    const clubId = guid.fromString('c5429fcd-3b4b-437c-83a7-0e5433cc4cac', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
         });
@@ -27,7 +34,7 @@ describe('ChangePerson', () => {
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
         });
         await signOut(auth);
     });
@@ -36,7 +43,7 @@ describe('ChangePerson', () => {
         try {
             await callFunction('changePerson', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 changeType: 'upate',
                 person: 'some Person',
             });
@@ -53,7 +60,7 @@ describe('ChangePerson', () => {
         try {
             await callFunction('changePerson', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 person: 'some Person',
             });
@@ -70,7 +77,7 @@ describe('ChangePerson', () => {
         try {
             await callFunction('changePerson', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'invalid',
                 person: 'some Person',
@@ -88,7 +95,7 @@ describe('ChangePerson', () => {
         try {
             await callFunction('changePerson', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
             });
@@ -105,7 +112,7 @@ describe('ChangePerson', () => {
         try {
             await callFunction('changePerson', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
                 person: 'invalid',
@@ -114,7 +121,8 @@ describe('ChangePerson', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'person\'. Expected type \'object\', but got \'invalid\' from type \'string\'.',
+                // eslint-disable-next-line max-len
+                message: 'Couldn\'t parse \'person\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
             });
         }
     });
@@ -123,7 +131,7 @@ describe('ChangePerson', () => {
         try {
             await callFunction('changePerson', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'delete',
                 person: {
@@ -144,8 +152,9 @@ describe('ChangePerson', () => {
         }
     });
 
+    // eslint-disable-next-line require-jsdoc
     async function setPerson(variant: boolean, timestamp: Date): Promise<Person> {
-        const person = new Person.Builder().fromValue(variant ? {
+        const person = Person.fromObject(variant ? {
             id: '61756c29-ac8a-4471-a283-4dde2623a1b9',
             name: {
                 first: 'asdf',
@@ -157,21 +166,24 @@ describe('ChangePerson', () => {
                 first: 'wgn',
                 last: 'jzhtre',
             },
-        }, loggingProperties.nextIndent) as Person;
+        }, logger.nextIndent) as Person;
         expect(person).to.be.instanceOf(Person);
 
         // Set person
-        const updatablePerson = new Updatable<Person>(person, new UpdateProperties(timestamp, guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', loggingProperties.nextIndent)));
+        const updatablePerson = new Updatable<Person>(
+            person,
+            new UpdateProperties(timestamp, guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent))
+        );
         await callFunction('changePerson', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'update',
-            person: updatablePerson.serverObject,
+            person: updatablePerson.databaseObject,
         });
 
         // Check person
-        const personList = await getDatabasePersons(clubId, loggingProperties.nextIndent);
+        const personList = await getDatabasePersons(clubId, logger.nextIndent);
         const fetchedPerson = personList.find(_person => _person.property.id.equals(person.id));
         expect(fetchedPerson?.property).to.deep.equal(person);
 
@@ -182,10 +194,11 @@ describe('ChangePerson', () => {
         const person = await setPerson(false, new Date('2011-10-14T10:42:38+0000'));
 
         // Check statistic
-        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, 'changePerson', loggingProperties.nextIndent);
+        const statisticsList =
+            await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changePerson', logger.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            changedPerson: person.serverObject,
+            changedPerson: person.databaseObject,
         });
     });
 
@@ -194,14 +207,15 @@ describe('ChangePerson', () => {
         const person2 = await setPerson(true, new Date('2011-10-15T10:42:38+0000'));
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, 'changePerson', loggingProperties.nextIndent);
+        let statisticsList =
+            await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changePerson', logger.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousPerson!= null;
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousPerson: person1.serverObject,
-            changedPerson: person2.serverObject,
+            previousPerson: person1.databaseObject,
+            changedPerson: person2.databaseObject,
         });
     });
 
@@ -210,7 +224,7 @@ describe('ChangePerson', () => {
 
         await callFunction('changePerson', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'delete',
             person: {
@@ -224,20 +238,21 @@ describe('ChangePerson', () => {
         });
 
         // Check person
-        const personList = await getDatabasePersons(clubId, loggingProperties.nextIndent);
+        const personList = await getDatabasePersons(clubId, logger.nextIndent);
         const fetchedPerson = personList.find(_person => _person.property.id.equals(person.id))?.property;
-        expect(fetchedPerson?.serverObject).to.be.deep.equal({
+        expect(fetchedPerson?.databaseObject).to.be.deep.equal({
             deleted: true,
         });
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, 'changePerson', loggingProperties.nextIndent);
+        let statisticsList =
+            await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changePerson', logger.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousPerson != null;
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousPerson: person.serverObject,
+            previousPerson: person.databaseObject,
         });
     });
 });

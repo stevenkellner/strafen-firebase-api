@@ -36,7 +36,7 @@ export const defaultTestClub = {
             'fineReason': {
                 'amount': 1.1,
                 'importance': 'medium',
-                'reason': 'Das ist ein Test',
+                'reasonMessage': 'Das ist ein Test',
             },
             'updateProperties': {
                 'timestamp': '2011-10-13T10:42:38+0000',
@@ -59,7 +59,7 @@ export const defaultTestClub = {
             'fineReason': {
                 'amount': 1.1,
                 'importance': 'medium',
-                'reason': 'Das ist ein Test',
+                'reasonMessage': 'Das ist ein Test',
             },
             'updateProperties': {
                 'timestamp': '2011-10-13T10:42:38+0000',
@@ -125,7 +125,7 @@ export const defaultTestClub = {
         '062FB0CB-F730-497B-BCF5-A4F907A6DCD5': {
             'amount': 10,
             'importance': 'high',
-            'reason': 'Gelbe Karte Unsportlichkeit',
+            'reasonMessage': 'Gelbe Karte Unsportlichkeit',
             'updateProperties': {
                 'timestamp': '2011-10-13T10:42:38+0000',
                 'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
@@ -134,7 +134,7 @@ export const defaultTestClub = {
         '16805D21-5E8D-43E9-BB5C-7B4A790F0CE7': {
             'amount': 2,
             'importance': 'low',
-            'reason': 'Mit Stutzen Auslaufen',
+            'reasonMessage': 'Mit Stutzen Auslaufen',
             'updateProperties': {
                 'timestamp': '2011-10-13T10:42:38+0000',
                 'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
@@ -143,7 +143,7 @@ export const defaultTestClub = {
         '23A3412E-87DE-4A23-A08F-67214B8A8541': {
             'amount': 3,
             'importance': 'medium',
-            'reason': 'Spiel Ausrüstung Vergessen',
+            'reasonMessage': 'Spiel Ausrüstung Vergessen',
             'updateProperties': {
                 'timestamp': '2011-10-13T10:42:38+0000',
                 'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',

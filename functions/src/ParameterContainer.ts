@@ -152,8 +152,8 @@ export class ParameterContainer {
         if (typeof parameter !== expectedType)
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse '${parameterName.toString()}'. Expected type '${expectedType}', but got '${parameter}' 
-                from type '${typeof parameter}' instead.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse '${parameterName.toString()}'. Expected type '${expectedType}', but got '${parameter}' from type '${typeof parameter}' instead.`,
                 logger
             );
 
@@ -283,8 +283,8 @@ export class ParameterContainer {
         if (parameter == undefined)
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse '${parameterName.toString()}'. Expected type '${expectedType}', 
-                but got undefined or null.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse '${parameterName.toString()}'. Expected type '${expectedType}', but got undefined or null.`,
                 logger
             );
 

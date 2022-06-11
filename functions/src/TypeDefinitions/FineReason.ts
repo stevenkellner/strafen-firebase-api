@@ -120,8 +120,8 @@ export namespace FineReason {
         // Throw an error as fine reason couldn't build.
         throw httpsError(
             'invalid-argument',
-            `Couldn't parse fine reason, no fine reason with reason template id and no custom fine reason given, 
-            got instead: ${JSON.stringify(value)}`,
+            // eslint-disable-next-line max-len
+            `Couldn't parse fine reason, no fine reason message with reason template id and no custom fine reason given, got instead: ${JSON.stringify(value)}`,
             logger
         );
     }
@@ -218,7 +218,7 @@ export namespace FineReason {
 
             // Get fine reason properties from database.
             const reasonTemplateReference = reference(
-                `reasonTemplates/${fineReason.value.reasonTemplateId.guidString}`,
+                `${clubId.guidString}/reasonTemplates/${fineReason.value.reasonTemplateId.guidString}`,
                 parameterContainer,
                 logger.nextIndent,
             );

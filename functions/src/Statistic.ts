@@ -43,7 +43,8 @@ export interface IStatistic<Property extends IStatisticProperty<StatisticDatabas
 
 /**
  * Saves specifed statistic properties to specified club path.
- * @param {IStatistic} statistic Properties of statistic to save.
+ * @param { IStatistic } statistic Properties of statistic to save.
+ * @param { guid } clubId Id of the club to save statistic to.
  * @param { ParameterContainer } parameterContainer Parameter container of the firebase function to get the reference
  * to the statistic in the database.
  * @param { Logger } logger Logger to log this method.
@@ -52,13 +53,14 @@ export async function saveStatistic<
     Properties extends IStatisticProperty<StatisticDatabaseObject<Properties>>
 >(
     statistic: IStatistic<Properties>,
+    clubId: guid,
     parameterContainer: ParameterContainer,
     logger: Logger
 ) {
     logger.append('saveStatistic', { statistic });
 
     // Get reference to statistic.
-    const path = `statistics/${guid.newGuid().guidString}`;
+    const path = `${clubId.guidString}/statistics/${guid.newGuid().guidString}`;
     const statisticReference = reference(path, parameterContainer, logger.nextIndent);
 
     // Set statistic identifier, property and timestamp.

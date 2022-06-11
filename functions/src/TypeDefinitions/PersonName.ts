@@ -60,8 +60,8 @@ export namespace PersonName {
         if (typeof value.first !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse PersonName parameter 'first'. Expected type 'string', but got '${value.first}' 
-                from type '${typeof value.first}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse PersonName parameter 'first'. Expected type 'string', but got '${value.first}' from type '${typeof value.first}'.`,
                 logger
             );
 
@@ -74,8 +74,8 @@ export namespace PersonName {
 
         throw httpsError(
             'invalid-argument',
-            `Couldn't parse PersonName parameter 'last'. Expected type 'string' or undefined, but got '${value.last}' 
-            from type '${typeof value.last}'.`,
+            // eslint-disable-next-line max-len
+            `Couldn't parse PersonName parameter 'last'. Expected type 'string' or undefined, but got '${value.last}' from type '${typeof value.last}'.`,
             logger
         );
     }

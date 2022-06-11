@@ -103,8 +103,8 @@ export class ChangeFinePayedFunction implements IFirebaseFunction<
 
         // Check update timestamp
         await checkUpdateProperties(
-            `${this.parameters.clubId.guidString}/fines/${this.parameters.fineId.guidString}/payedState
-            /updateProperties`,
+            // eslint-disable-next-line max-len
+            `${this.parameters.clubId.guidString}/fines/${this.parameters.fineId.guidString}/payedState/updateProperties`,
             this.parameters.updatablePayedState.updateProperties,
             this.parameterContainer,
             this.logger.nextIndent,
@@ -126,6 +126,7 @@ export class ChangeFinePayedFunction implements IFirebaseFunction<
         // Save statistic
         await saveStatistic(
             new Statistic(new StatisticProperty(statisticsFine, this.parameters.updatablePayedState.property)),
+            this.parameters.clubId,
             this.parameterContainer,
             this.logger.nextIndent,
         );
@@ -298,8 +299,8 @@ class StatisticProperty implements IStatisticProperty<StatisticProperty.Database
      */
     public get databaseObject(): StatisticProperty.DatabaseObject {
         return {
-            previousPerson: this.previousFine?.databaseObject ?? null,
-            changedPerson: this.changedState?.databaseObject ?? null,
+            previousFine: this.previousFine?.databaseObject ?? null,
+            changedState: this.changedState?.databaseObject ?? null,
         };
     }
 }
@@ -314,11 +315,11 @@ namespace StatisticProperty {
         /**
          * Previous fine before change.
          */
-        previousPerson: Fine.Statistic.DatabaseObject | null;
+        previousFine: Fine.Statistic.DatabaseObject | null;
 
         /**
          * Changed payed state after change.
          */
-        changedPerson: PayedState.DatabaseObject | null;
+        changedState: PayedState.DatabaseObject | null;
     }
 }

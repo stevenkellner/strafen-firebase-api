@@ -94,8 +94,8 @@ export namespace ReasonTemplate {
         if (typeof value.id !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '${value.id}' 
-                from type '${typeof value.id}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse ReasonTemplate parameter 'id'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`,
                 logger
             );
         const id = guid.fromString(value.id, logger.nextIndent);
@@ -115,8 +115,8 @@ export namespace ReasonTemplate {
         if (typeof value.reasonMessage !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse ReasonTemplate parameter 'reason'. Expected type 'string', but got 
-                '${value.reasonMessage}' from type '${typeof value.reasonMessage}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse ReasonTemplate parameter 'reasonMessage'. Expected type 'string', but got '${value.reasonMessage}' from type '${typeof value.reasonMessage}'.`,
                 logger
             );
 
@@ -124,8 +124,8 @@ export namespace ReasonTemplate {
         if (typeof value.amount !== 'number')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse ReasonTemplate parameter 'amount'. Expected type 'number', but got '${value.amount}' 
-                from type '${typeof value.amount}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse ReasonTemplate parameter 'amount'. Expected type 'number', but got '${value.amount}' from type '${typeof value.amount}'.`,
                 logger
             );
         const amount = Amount.fromNumber(value.amount, logger.nextIndent);
@@ -134,8 +134,8 @@ export namespace ReasonTemplate {
         if (typeof value.importance !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse ReasonTemplate parameter 'importance'. Expected type 'string', but got 
-                '${value.importance}' from type '${typeof value.importance}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse ReasonTemplate parameter 'importance'. Expected type 'string', but got '${value.importance}' from type '${typeof value.importance}'.`,
                 logger
             );
         const importance = Importance.fromString(value.importance, logger.nextIndent);

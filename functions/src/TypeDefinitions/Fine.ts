@@ -120,8 +120,8 @@ export namespace Fine {
         if (typeof value.id !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse fine parameter 'id', expected type string but got '${value.id}' 
-                from type ${typeof value.id}`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse fine parameter 'id', expected type string but got '${value.id}' from type ${typeof value.id}`,
                 logger
             );
         const id = guid.fromString(value.id, logger.nextIndent);
@@ -141,8 +141,8 @@ export namespace Fine {
         if (typeof value.personId !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse fine parameter 'personId', expected type string but got '${value.personId}' 
-                from type ${typeof value.personId}`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse fine parameter 'personId', expected type string but got '${value.personId}' from type ${typeof value.personId}`,
                 logger
             );
         const personId = guid.fromString(value.personId, logger.nextIndent);
@@ -151,8 +151,8 @@ export namespace Fine {
         if (typeof value.payedState !== 'object')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse fine parameter 'payedState', expected type object but got '${value.payedState}' 
-                from type ${typeof value.payedState}`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse fine parameter 'payedState', expected type object but got '${value.payedState}' from type ${typeof value.payedState}`,
                 logger
             );
         const payedState = Updatable.fromRawProperty(
@@ -163,8 +163,8 @@ export namespace Fine {
         if (typeof value.number !== 'number' || value.number <= 0 || value.number != Number.parseInt(value.number))
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse fine parameter 'number', expected unsigned integer greater zero but got 
-                '${value.number}' from type ${typeof value.number}`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse fine parameter 'number', expected unsigned integer greater zero but got '${value.number}' from type ${typeof value.number}`,
                 logger
             );
 
@@ -172,8 +172,8 @@ export namespace Fine {
         if (typeof value.date !== 'string' || isNaN(new Date(value.date).getTime()))
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse fine parameter 'date', expected iso string but got '${value.date}' 
-                from type ${typeof value.date}`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse fine parameter 'date', expected iso string but got '${value.date}' from type ${typeof value.date}`,
                 logger
             );
 
@@ -181,8 +181,8 @@ export namespace Fine {
         if (typeof value.fineReason !== 'object')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse fine parameter 'fineReason', expected type object but got '${value.fineReason}' 
-                from type ${typeof value.fineReason}`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse fine parameter 'fineReason', expected type object but got '${value.fineReason}' from type ${typeof value.fineReason}`,
                 logger
             );
         const fineReason = FineReason.fromObject(value.fineReason, logger.nextIndent);

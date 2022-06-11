@@ -134,7 +134,7 @@ export function reference(
     );
 
     // Return reference.
-    return admin.app().database(databaseType.databaseUrl).ref(path);
+    return admin.app().database(databaseType.databaseUrl).ref(path || undefined);
 }
 
 /**

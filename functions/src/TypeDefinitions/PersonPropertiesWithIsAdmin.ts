@@ -77,8 +77,8 @@ export namespace PersonPropertiesWithIsAdmin {
         if (typeof value.id !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse person properties parameter 'id'. Expected type 'string', but got '${value.id}' 
-                from type '${typeof value.id}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse person properties parameter 'id'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`,
                 logger
             );
         const id = guid.fromString(value.id, logger.nextIndent);
@@ -87,8 +87,8 @@ export namespace PersonPropertiesWithIsAdmin {
         if (typeof value.signInDate !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse person properties parameter 'signInDate'. Expected type 'string', but got 
-                '${value.signInDate}' from type '${typeof value.signInDate}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse person properties parameter 'signInDate'. Expected type 'string', but got '${value.signInDate}' from type '${typeof value.signInDate}'.`,
                 logger
             );
         const signInDate = new Date(value.signInDate);
@@ -97,8 +97,8 @@ export namespace PersonPropertiesWithIsAdmin {
         if (typeof value.isAdmin !== 'boolean')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse person properties parameter 'isAdmin'. Expected type 'boolean', but got 
-                '${value.isAdmin}' from type '${typeof value.isAdmin}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse person properties parameter 'isAdmin'. Expected type 'boolean', but got '${value.isAdmin}' from type '${typeof value.isAdmin}'.`,
                 logger
             );
 
@@ -106,8 +106,8 @@ export namespace PersonPropertiesWithIsAdmin {
         if (typeof value.name !== 'object')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse person properties parameter 'name'. Expected type 'object', but got '${value.name}' 
-                from type '${typeof value.name}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse person properties parameter 'name'. Expected type 'object', but got '${value.name}' from type '${typeof value.name}'.`,
                 logger
             );
         const name = PersonName.fromObject(value.name, logger.nextIndent);
@@ -129,8 +129,8 @@ export namespace PersonPropertiesWithIsAdmin {
         if (typeof value !== 'object')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse person properties, expected type 'object', but bot ${value} from type 
-                '${typeof value}'`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse person properties, expected type 'object', but bot ${value} from type '${typeof value}'`,
                 logger
             );
 

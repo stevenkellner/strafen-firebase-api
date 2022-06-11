@@ -19,7 +19,7 @@ import { PersonPropertiesWithIsAdmin } from '../TypeDefinitions/PersonProperties
  *
  * @params
  *  - privateKey (string): private key to check whether the caller is authenticated to use this function
- *  - clubLevel ({@link DatabaseType}): level of the club (`regular`, `debug`, `testing`)
+ *  - databaseType ({@link DatabaseType}): level of the club (`regular`, `debug`, `testing`)
  *  - userId (string): user id to search in database
  *
  * @return:

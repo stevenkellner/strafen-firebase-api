@@ -2,23 +2,23 @@ import { assert, expect } from 'chai';
 import { signOut } from 'firebase/auth';
 import { privateKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
-import { Logger } from '../src/TypeDefinitions/LoggingProperties';
-import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
+import { Logger } from '../src/Logger';
+import { ParameterContainer } from '../src/ParameterContainer';
 import { PersonName } from '../src/TypeDefinitions/PersonName';
 import { PersonPropertiesWithUserId } from '../src/TypeDefinitions/PersonPropertiesWithUserId';
 import { auth, callFunction, firebaseError, getDatabaseValue, signInTestUser } from './utils';
 
 describe('RegisterPerson', () => {
 
-    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'registerPersonTest', undefined, 'notice');
+    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'registerPersonTest', {}, 'notice');
 
-    const clubId = guid.fromString('aab0bbc6-c1b4-4e6f-8919-77f01aa10749', loggingProperties.nextIndent);
+    const clubId = guid.fromString('aab0bbc6-c1b4-4e6f-8919-77f01aa10749', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
         });
@@ -27,7 +27,7 @@ describe('RegisterPerson', () => {
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
         });
         await signOut(auth);
     });
@@ -37,13 +37,13 @@ describe('RegisterPerson', () => {
             const personId = guid.newGuid();
             await callFunction('registerPerson', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 personProperties: new PersonPropertiesWithUserId(
                     personId,
                     new Date(),
                     'userId-123',
                     new PersonName('first name', 'last name')
-                ).serverObject,
+                ).databaseObject,
             });
             assert.fail('A statement above should throw an exception.');
         } catch (error) {
@@ -58,7 +58,7 @@ describe('RegisterPerson', () => {
         try {
             await callFunction('registerPerson', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
             });
             assert.fail('A statement above should throw an exception.');
@@ -77,14 +77,14 @@ describe('RegisterPerson', () => {
         const signInDate = new Date();
         const returnValue = await callFunction('registerPerson', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             personProperties: new PersonPropertiesWithUserId(
                 personId,
                 signInDate,
                 'userId-123',
                 new PersonName('first name', 'last name')
-            ).serverObject,
+            ).databaseObject,
         });
 
         // Check return value
@@ -97,11 +97,12 @@ describe('RegisterPerson', () => {
         });
 
         // Check database person user ids
-        const fetchedPersonId = await getDatabaseValue(`testableClubs/${clubId.guidString}/personUserIds/userId-123`);
+        const fetchedPersonId = await getDatabaseValue(`${clubId.guidString}/personUserIds/userId-123`);
         expect(fetchedPersonId).to.be.equal(personId.guidString);
 
         // Check database person
-        const fetchedPerson = await getDatabaseValue(`testableClubs/${clubId.guidString}/persons/${personId.guidString}`);
+        const fetchedPerson =
+            await getDatabaseValue(`${clubId.guidString}/persons/${personId.guidString}`);
         expect(fetchedPerson).to.be.deep.equal({
             name: {
                 first: 'first name',

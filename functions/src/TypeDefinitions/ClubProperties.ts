@@ -91,8 +91,8 @@ export namespace ClubProperties {
         if (typeof value.id !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse club properties parameter 'id'. Expected type 'string', but got '${value.id}' 
-                from type '${typeof value.id}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse club properties parameter 'id'. Expected type 'string', but got '${value.id}' from type '${typeof value.id}'.`,
                 logger
             );
         const id = guid.fromString(value.id, logger.nextIndent);
@@ -101,8 +101,8 @@ export namespace ClubProperties {
         if (typeof value.name !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse club properties parameter 'name'. Expected type 'string', but got '${value.name}' 
-                from type '${typeof value.name}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse club properties parameter 'name'. Expected type 'string', but got '${value.name}' from type '${typeof value.name}'.`,
                 logger
             );
 
@@ -110,8 +110,8 @@ export namespace ClubProperties {
         if (typeof value.identifier !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse club properties parameter 'identifier'. Expected type 'string', but got 
-                '${value.identifier}' from type '${typeof value.identifier}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse club properties parameter 'identifier'. Expected type 'string', but got '${value.identifier}' from type '${typeof value.identifier}'.`,
                 logger
             );
 
@@ -119,8 +119,8 @@ export namespace ClubProperties {
         if (typeof value.regionCode !== 'string')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse club properties parameter 'regionCode'. Expected type 'string', but got 
-                '${value.regionCode}' from type '${typeof value.regionCode}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse club properties parameter 'regionCode'. Expected type 'string', but got '${value.regionCode}' from type '${typeof value.regionCode}'.`,
                 logger
             );
 
@@ -128,8 +128,8 @@ export namespace ClubProperties {
         if (typeof value.inAppPaymentActive !== 'boolean')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse club properties parameter 'inAppPaymentActive'. Expected type 'boolean', 
-                but got '${value.inAppPaymentActive}' from type '${typeof value.inAppPaymentActive}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse club properties parameter 'inAppPaymentActive'. Expected type 'boolean', but got '${value.inAppPaymentActive}' from type '${typeof value.inAppPaymentActive}'.`,
                 logger
             );
 

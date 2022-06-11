@@ -3,17 +3,17 @@ import { guid } from '../src/TypeDefinitions/guid';
 import { auth, callFunction, firebaseError, getDatabaseOptionalValue, getDatabaseValue, signInTestUser } from './utils';
 import { signOut } from 'firebase/auth';
 import { assert, expect } from 'chai';
-import { Logger } from '../src/TypeDefinitions/LoggingProperties';
-import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
+import { Logger } from '../src/Logger';
+import { ParameterContainer } from '../src/ParameterContainer';
 import { PersonPropertiesWithUserId } from '../src/TypeDefinitions/PersonPropertiesWithUserId';
 import { PersonName } from '../src/TypeDefinitions/PersonName';
 import { ClubProperties } from '../src/TypeDefinitions/ClubProperties';
 
 describe('NewClub', () => {
 
-    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'newClubTest', undefined, 'notice');
+    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'newClubTest', {}, 'notice');
 
-    const clubId = guid.fromString('dd129fcd-3b4b-437c-83a7-0e5433cc4cac', loggingProperties.nextIndent);
+    const clubId = guid.fromString('dd129fcd-3b4b-437c-83a7-0e5433cc4cac', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
@@ -22,7 +22,7 @@ describe('NewClub', () => {
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
         });
         await signOut(auth);
     });
@@ -32,14 +32,14 @@ describe('NewClub', () => {
             const personId = guid.newGuid();
             await callFunction('newClub', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 changeType: 'upate',
                 personProperties: new PersonPropertiesWithUserId(
                     personId,
                     new Date(),
                     'userId',
                     new PersonName('first name', 'last name')
-                ).serverObject,
+                ).databaseObject,
             });
             assert.fail('A statement above should throw an exception.');
         } catch (error) {
@@ -54,7 +54,7 @@ describe('NewClub', () => {
         try {
             await callFunction('newClub', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 changeType: 'upate',
                 clubProperties: new ClubProperties(
                     clubId,
@@ -62,7 +62,7 @@ describe('NewClub', () => {
                     'identifier1',
                     'DE',
                     false,
-                ).serverObject,
+                ).databaseObject,
             });
             assert.fail('A statement above should throw an exception.');
         } catch (error) {
@@ -80,25 +80,25 @@ describe('NewClub', () => {
         const signInDate = new Date();
         await callFunction('newClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
                 signInDate,
                 'userId',
                 new PersonName('first name', 'last name')
-            ).serverObject,
+            ).databaseObject,
             clubProperties: new ClubProperties(
                 clubId,
                 'test club of new club test',
                 'identifier1',
                 'DE',
                 false,
-            ).serverObject,
+            ).databaseObject,
         });
 
         // Check club properties
-        const clubProperties = await getDatabaseValue(`testableClubs/${clubId.guidString}`);
+        const clubProperties = await getDatabaseValue(`${clubId.guidString}`);
         expect(clubProperties).to.be.deep.equal({
             identifier: 'identifier1',
             inAppPaymentActive: false,
@@ -130,46 +130,46 @@ describe('NewClub', () => {
         const signInDate = new Date();
         await callFunction('newClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
                 signInDate,
                 'userId',
                 new PersonName('first name', 'last name')
-            ).serverObject,
+            ).databaseObject,
             clubProperties: new ClubProperties(
                 clubId,
                 'test club of new club test',
                 'identifier1',
                 'DE',
                 false,
-            ).serverObject,
+            ).databaseObject,
         });
 
         // Check club properties
-        const clubProperties = await getDatabaseOptionalValue(`testableClubs/${clubId.guidString}`);
+        const clubProperties = await getDatabaseOptionalValue(`${clubId.guidString}`);
         expect(clubProperties).to.be.not.null;
 
         // Try create club with same identifier
         try {
             await callFunction('newClub', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 changeType: 'upate',
                 personProperties: new PersonPropertiesWithUserId(
                     personId,
                     signInDate,
                     'userId asdf',
                     new PersonName('first asdfname', 'last nbsgfsame')
-                ).serverObject,
+                ).databaseObject,
                 clubProperties: new ClubProperties(
                     guid.newGuid(),
                     'test clubasdf of new club test',
                     'identifier1',
                     'DE',
                     true,
-                ).serverObject,
+                ).databaseObject,
             });
             assert.fail('A statement above should throw an exception.');
         } catch (error) {
@@ -187,49 +187,49 @@ describe('NewClub', () => {
         const signInDate = new Date();
         await callFunction('newClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
                 signInDate,
                 'userId',
                 new PersonName('first name', 'last name')
-            ).serverObject,
+            ).databaseObject,
             clubProperties: new ClubProperties(
                 clubId,
                 'test club of new club test',
                 'identifier1',
                 'DE',
                 false,
-            ).serverObject,
+            ).databaseObject,
         });
 
         // Check club properties
-        const clubProperties1 = await getDatabaseOptionalValue(`testableClubs/${clubId.guidString}`);
+        const clubProperties1 = await getDatabaseOptionalValue(`${clubId.guidString}`);
         expect(clubProperties1).to.be.not.null;
 
         // Create club with same id
         await callFunction('newClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
                 signInDate,
                 'userId asdf',
                 new PersonName('first asdfname', 'last nbsgfsame')
-            ).serverObject,
+            ).databaseObject,
             clubProperties: new ClubProperties(
                 clubId,
                 'test clubasdf of new club test',
                 'identifier2',
                 'DE',
                 true,
-            ).serverObject,
+            ).databaseObject,
         });
 
         // Check club properties
-        const clubProperties2 = await getDatabaseValue(`testableClubs/${clubId.guidString}`);
+        const clubProperties2 = await getDatabaseValue(`${clubId.guidString}`);
         expect(clubProperties2).to.be.deep.equal({
             identifier: 'identifier1',
             inAppPaymentActive: false,

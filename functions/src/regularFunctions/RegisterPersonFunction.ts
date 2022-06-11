@@ -20,7 +20,7 @@ import { PersonPropertiesWithUserId } from '../TypeDefinitions/PersonPropertiesW
  *
  * @params
  *  - privateKey (string): private key to check whether the caller is authenticated to use this function
- *  - clubLevel ({@link DatabaseType}): level of the club (`regular`, `debug`, `testing`)
+ *  - databaseType ({@link DatabaseType}): level of the club (`regular`, `debug`, `testing`)
  *  - clubId ({@link} guid): id of the club to register the person
  *  - personProperties ({@link PersonPropertiesWithUserId}): properties of the person signed in
  *

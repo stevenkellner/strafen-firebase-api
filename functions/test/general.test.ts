@@ -2,17 +2,26 @@ import { signOut } from '@firebase/auth';
 import { expect, assert } from 'chai';
 import { privateKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
-import { Logger } from '../src/TypeDefinitions/LoggingProperties';
-import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
+import { Logger } from '../src/Logger';
+import { ParameterContainer } from '../src/ParameterContainer';
 import { callFunction, signInTestUser, auth, firebaseError } from './utils';
 
 describe('General', () => {
 
-    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'generalTest', undefined, 'notice');
+    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'generalTest', {}, 'notice');
 
     beforeEach(async () => {
-        if (auth.currentUser != null)
+        if (auth.currentUser !== null)
             await signOut(auth);
+    });
+
+    afterEach(async () => {
+        await signInTestUser();
+        await callFunction('deleteTestClubs', {
+            privateKey: privateKey,
+            databaseType: 'testing',
+        });
+        await signOut(auth);
     });
 
     it('No parameters', async () => {
@@ -22,7 +31,7 @@ describe('General', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'verbose\'. No parameters specified to this function.',
+                message: 'Couldn\'t parse \'verbose\'. No parameters hand over by the firebase function.',
             });
         }
     });
@@ -39,11 +48,11 @@ describe('General', () => {
         }
     });
 
-    it('Invalid club level', async () => {
+    it('Invalid database type', async () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: 'some key',
-                clubLevel: 'invalid level',
+                databaseType: 'invalid type',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
                 state: {
@@ -58,7 +67,8 @@ describe('General', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse ClubLevel, expected \'regular\', \'debug\' or \'testing\', but got invalid level instead.',
+                // eslint-disable-next-line max-len
+                message: 'Couldn\'t parse DatabaseType, expected \'release\', \'debug\' or \'testing\', but got invalid type instead.',
             });
         }
     });
@@ -67,7 +77,7 @@ describe('General', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: 'some key',
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: 'invalid guid',
                 fineId: guid.newGuid().guidString,
                 state: {
@@ -91,10 +101,10 @@ describe('General', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: 'invalidKey',
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
-                state: {
+                updatablePayedState: {
                     state: 'unpayed',
                     updateProperties: {
                         timestamp: '2011-10-14T10:42:38+0000',
@@ -115,10 +125,10 @@ describe('General', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
-                state: {
+                updatablePayedState: {
                     state: 'unpayed',
                     updateProperties: {
                         timestamp: '2011-10-14T10:42:38+0000',
@@ -140,10 +150,10 @@ describe('General', () => {
             await signInTestUser();
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
-                state: {
+                updatablePayedState: {
                     state: 'unpayed',
                     updateProperties: {
                         timestamp: '2011-10-14T10:42:38+0000',
@@ -163,20 +173,20 @@ describe('General', () => {
     it('Older function value', async () => {
         try {
             const clubId = guid.newGuid();
-            const fineId = guid.fromString('1B5F958E-9D7D-46E1-8AEE-F52F4370A95A', loggingProperties.nextIndent);
+            const fineId = guid.fromString('1B5F958E-9D7D-46E1-8AEE-F52F4370A95A', logger.nextIndent);
             await signInTestUser();
             await callFunction('newTestClub', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 testClubType: 'default',
             });
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 fineId: fineId.guidString,
-                state: {
+                updatablePayedState: {
                     state: 'unpayed',
                     updateProperties: {
                         timestamp: '2011-10-12T10:42:38+0000',
@@ -193,7 +203,7 @@ describe('General', () => {
         }
         await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
         });
         await signOut(auth);
     });
@@ -201,20 +211,20 @@ describe('General', () => {
     it('Same old function value', async () => {
         try {
             const clubId = guid.newGuid();
-            const fineId = guid.fromString('1B5F958E-9D7D-46E1-8AEE-F52F4370A95A', loggingProperties.nextIndent);
+            const fineId = guid.fromString('1B5F958E-9D7D-46E1-8AEE-F52F4370A95A', logger.nextIndent);
             await signInTestUser();
             await callFunction('newTestClub', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 testClubType: 'default',
             });
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 fineId: fineId.guidString,
-                state: {
+                updatablePayedState: {
                     state: 'unpayed',
                     updateProperties: {
                         timestamp: '2011-10-13T10:42:38+0000',
@@ -231,7 +241,7 @@ describe('General', () => {
         }
         await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
         });
         await signOut(auth);
     });

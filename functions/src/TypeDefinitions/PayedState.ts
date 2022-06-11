@@ -55,8 +55,8 @@ export namespace PayedState {
             if (typeof value.payDate !== 'string' || isNaN(new Date(value.payDate).getTime()))
                 throw httpsError(
                     'invalid-argument',
-                    `Couldn't parse PayedState parameter 'payDate', expected iso string, but got '${value.payDate}' 
-                    from type ${typeof value.payDate}`,
+                    // eslint-disable-next-line max-len
+                    `Couldn't parse PayedState parameter 'payDate', expected iso string, but got '${value.payDate}' from type ${typeof value.payDate}`,
                     logger
                 );
 
@@ -64,8 +64,8 @@ export namespace PayedState {
             if (typeof value.inApp !== 'boolean')
                 throw httpsError(
                     'invalid-argument',
-                    `Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', but got '${value.inApp}' 
-                    from type '${typeof value.inApp}'.`,
+                    // eslint-disable-next-line max-len
+                    `Couldn't parse PayedState parameter 'inApp'. Expected type 'boolean', but got '${value.inApp}' from type '${typeof value.inApp}'.`,
                     logger
                 );
 
@@ -85,8 +85,8 @@ export namespace PayedState {
         // Throw error since value.state isn't 'payed', 'settled' or 'unpayed'.
         throw httpsError(
             'invalid-argument',
-            `Couldn't parse PayedState parameter 'state'. Expected values 'payed', 'settled' or 'unpayed', but got 
-            '${value.state}' from type '${typeof value.state}'.`,
+            // eslint-disable-next-line max-len
+            `Couldn't parse PayedState parameter 'state'. Expected values 'payed', 'settled' or 'unpayed', but got '${value.state}' from type '${typeof value.state}'.`,
             logger
         );
     }

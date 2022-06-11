@@ -106,8 +106,8 @@ export class ChangePersonFunction implements IFirebaseFunction<
 
         // Check update timestamp
         await checkUpdateProperties(
-            `${this.parameters.clubId.guidString}/persons/${this.parameters.updatablePerson.property.id.guidString}
-            /updateProperties`,
+            // eslint-disable-next-line max-len
+            `${this.parameters.clubId.guidString}/persons/${this.parameters.updatablePerson.property.id.guidString}/updateProperties`,
             this.parameters.updatablePerson.updateProperties,
             this.parameterContainer,
             this.logger.nextIndent,
@@ -138,6 +138,7 @@ export class ChangePersonFunction implements IFirebaseFunction<
         // Save statistic
         await saveStatistic(
             new Statistic(new StatisticProperty(previousPerson, changedPerson)),
+            this.parameters.clubId,
             this.parameterContainer,
             this.logger.nextIndent,
         );

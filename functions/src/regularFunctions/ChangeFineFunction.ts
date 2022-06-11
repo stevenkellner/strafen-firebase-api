@@ -104,8 +104,8 @@ export class ChangeFineFunction implements IFirebaseFunction<
 
         // Check update timestamp
         await checkUpdateProperties(
-            `${this.parameters.clubId.guidString}/fines/${this.parameters.updatableFine.property.id.guidString}
-            /updateProperties`,
+            // eslint-disable-next-line max-len
+            `${this.parameters.clubId.guidString}/fines/${this.parameters.updatableFine.property.id.guidString}/updateProperties`,
             this.parameters.updatableFine.updateProperties,
             this.parameterContainer,
             this.logger.nextIndent,
@@ -143,6 +143,7 @@ export class ChangeFineFunction implements IFirebaseFunction<
         // Save statistic
         await saveStatistic(
             new Statistic(new StatisticProperty(previousFine, changedFine)),
+            this.parameters.clubId,
             this.parameterContainer,
             this.logger.nextIndent,
         );

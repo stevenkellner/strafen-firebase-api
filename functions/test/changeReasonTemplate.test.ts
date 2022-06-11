@@ -1,24 +1,31 @@
 import { privateKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
-import { auth, callFunction, firebaseError, getDatabaseReasonTemplates, getDatabaseStatisticsPropertiesWithName, signInTestUser } from './utils';
+import {
+    auth,
+    callFunction,
+    firebaseError,
+    getDatabaseReasonTemplates,
+    getDatabaseStatisticsPropertyWithIdentifier,
+    signInTestUser,
+} from './utils';
 import { signOut } from 'firebase/auth';
 import { assert, expect } from 'chai';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
-import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
-import { Logger } from '../src/TypeDefinitions/LoggingProperties';
+import { ParameterContainer } from '../src/ParameterContainer';
+import { Logger } from '../src/Logger';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
 
 describe('ChangeReasonTemplate', () => {
 
-    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'changeReasonTemplateTest', undefined, 'notice');
+    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'changeReasonTemplateTest', {}, 'notice');
 
-    const clubId = guid.fromString('9e00bbc6-c1b4-4e6f-8919-77f01aa10749', loggingProperties.nextIndent);
+    const clubId = guid.fromString('9e00bbc6-c1b4-4e6f-8919-77f01aa10749', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
         });
@@ -27,7 +34,7 @@ describe('ChangeReasonTemplate', () => {
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
         });
         await signOut(auth);
     });
@@ -36,7 +43,7 @@ describe('ChangeReasonTemplate', () => {
         try {
             await callFunction('changeReasonTemplate', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 changeType: 'upate',
                 reasonTemplate: 'some Fine',
             });
@@ -53,7 +60,7 @@ describe('ChangeReasonTemplate', () => {
         try {
             await callFunction('changeReasonTemplate', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 reasonTemplate: 'some Reason',
             });
@@ -70,7 +77,7 @@ describe('ChangeReasonTemplate', () => {
         try {
             await callFunction('changeReasonTemplate', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'invalid',
                 reasonTemplate: 'some Reason',
@@ -88,7 +95,7 @@ describe('ChangeReasonTemplate', () => {
         try {
             await callFunction('changeReasonTemplate', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
             });
@@ -96,6 +103,7 @@ describe('ChangeReasonTemplate', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
+                // eslint-disable-next-line max-len
                 message: 'Couldn\'t parse \'reasonTemplate\'. Expected type \'object\', but got undefined or null.',
             });
         }
@@ -105,7 +113,7 @@ describe('ChangeReasonTemplate', () => {
         try {
             await callFunction('changeReasonTemplate', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
                 reasonTemplate: 'invalid',
@@ -114,38 +122,47 @@ describe('ChangeReasonTemplate', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'reasonTemplate\'. Expected type \'object\', but got \'invalid\' from type \'string\'.',
+                // eslint-disable-next-line max-len
+                message: 'Couldn\'t parse \'reasonTemplate\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
             });
         }
     });
 
+    // eslint-disable-next-line require-jsdoc
     async function setReasonTemplate(variant: boolean, timestamp: Date): Promise<ReasonTemplate> {
-        const reasonTemplate = new ReasonTemplate.Builder().fromValue(variant ? {
+        const reasonTemplate = ReasonTemplate.fromObject(variant ? {
             id: '18ae484f-a1b7-456b-807e-339ff6679ad0',
-            reason: 'Reason',
+            reasonMessage: 'Reason',
             amount: 1.50,
             importance: 'high',
         } : {
             id: '18ae484f-a1b7-456b-807e-339ff6679ad0',
-            reason: 'Reason asdf',
+            reasonMessage: 'Reason asdf',
             amount: 150,
             importance: 'medium',
-        }, loggingProperties.nextIndent) as ReasonTemplate;
+        }, logger.nextIndent) as ReasonTemplate;
         expect(reasonTemplate).to.be.instanceOf(ReasonTemplate);
 
         // Set reason template
-        const updatableReasonTemplate = new Updatable<ReasonTemplate>(reasonTemplate, new UpdateProperties(timestamp, guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', loggingProperties.nextIndent)));
+        const updatableReasonTemplate = new Updatable<ReasonTemplate>(
+            reasonTemplate,
+            new UpdateProperties(
+                timestamp,
+                guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
+            )
+        );
         await callFunction('changeReasonTemplate', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'update',
-            reasonTemplate: updatableReasonTemplate.serverObject,
+            reasonTemplate: updatableReasonTemplate.databaseObject,
         });
 
         // Check reason template
-        const reasonTemplateList = await getDatabaseReasonTemplates(clubId, loggingProperties.nextIndent);
-        const fetchedReasonTemplate = reasonTemplateList.find(_reasonTemplate => _reasonTemplate.property.id.equals(reasonTemplate.id));
+        const reasonTemplateList = await getDatabaseReasonTemplates(clubId, logger.nextIndent);
+        const fetchedReasonTemplate =
+            reasonTemplateList.find(_reasonTemplate => _reasonTemplate.property.id.equals(reasonTemplate.id));
         expect(fetchedReasonTemplate?.property).to.deep.equal(reasonTemplate);
 
         return reasonTemplate;
@@ -155,10 +172,11 @@ describe('ChangeReasonTemplate', () => {
         const reasonTemplate = await setReasonTemplate(false, new Date('2011-10-15T10:42:38+0000'));
 
         // Check statistic
-        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, 'changeReasonTemplate', loggingProperties.nextIndent);
+        const statisticsList =
+            await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeReasonTemplate', logger.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            changedReasonTemplate: reasonTemplate.serverObject,
+            changedReasonTemplate: reasonTemplate.databaseObject,
         });
     });
 
@@ -167,14 +185,15 @@ describe('ChangeReasonTemplate', () => {
         const reasonTemplate2 = await setReasonTemplate(true, new Date('2011-10-16T10:42:38+0000'));
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, 'changeReasonTemplate', loggingProperties.nextIndent);
+        let statisticsList =
+            await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeReasonTemplate', logger.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousReasonTemplate != null;
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousReasonTemplate: reasonTemplate1.serverObject,
-            changedReasonTemplate: reasonTemplate2.serverObject,
+            previousReasonTemplate: reasonTemplate1.databaseObject,
+            changedReasonTemplate: reasonTemplate2.databaseObject,
         });
     });
 
@@ -183,7 +202,7 @@ describe('ChangeReasonTemplate', () => {
 
         await callFunction('changeReasonTemplate', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'delete',
             reasonTemplate: {
@@ -197,20 +216,22 @@ describe('ChangeReasonTemplate', () => {
         });
 
         // Check reasonTemplate
-        const reasonTemplateList = await getDatabaseReasonTemplates(clubId, loggingProperties.nextIndent);
-        const fetchedReasonTemplate = reasonTemplateList.find(_reasonTemplate => _reasonTemplate.property.id.equals(reasonTemplate.id));
-        expect(fetchedReasonTemplate?.property.serverObject).to.be.deep.equal({
+        const reasonTemplateList = await getDatabaseReasonTemplates(clubId, logger.nextIndent);
+        const fetchedReasonTemplate =
+            reasonTemplateList.find(_reasonTemplate => _reasonTemplate.property.id.equals(reasonTemplate.id));
+        expect(fetchedReasonTemplate?.property.databaseObject).to.be.deep.equal({
             deleted: true,
         });
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, 'changeReasonTemplate', loggingProperties.nextIndent);
+        let statisticsList =
+            await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeReasonTemplate', logger.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousReasonTemplate != null;
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousReasonTemplate: reasonTemplate.serverObject,
+            previousReasonTemplate: reasonTemplate.databaseObject,
         });
     });
 });

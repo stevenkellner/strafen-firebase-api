@@ -17,7 +17,7 @@ import { AuthData } from 'firebase-functions/lib/common/providers/https';
  *
  * @params
  *  - privateKey (string): private key to check whether the caller is authenticated to use this function
- *  - clubLevel ({@link DatabaseType}): level of the club (`regular`, `debug`, `testing`)
+ *  - databaseType ({@link DatabaseType}): level of the club (`regular`, `debug`, `testing`)
  *  - identifier (string): identifer of the club to search
  *
  * @return (string): club id of club with given identifer.

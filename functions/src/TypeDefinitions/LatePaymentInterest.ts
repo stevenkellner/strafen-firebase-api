@@ -86,8 +86,8 @@ export namespace LatePaymentInterest {
         if (typeof value.interestFreePeriod !== 'object')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse LatePaymentInterest parameter 'interestFreePeriod'. Expected type 'object', 
-                but got '${value.interestFreePeriod}' from type '${typeof value.interestFreePeriod}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse LatePaymentInterest parameter 'interestFreePeriod'. Expected type 'object', but got '${value.interestFreePeriod}' from type '${typeof value.interestFreePeriod}'.`,
                 logger
             );
         const interestFreePeriod = TimePeriod.fromObject(value.interestFreePeriod, logger.nextIndent);
@@ -96,8 +96,8 @@ export namespace LatePaymentInterest {
         if (typeof value.interestPeriod !== 'object')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse LatePaymentInterest parameter 'interestPeriod'. Expected type 'object', but got 
-                '${value.interestPeriod}' from type '${typeof value.interestPeriod}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse LatePaymentInterest parameter 'interestPeriod'. Expected type 'object', but got '${value.interestPeriod}' from type '${typeof value.interestPeriod}'.`,
                 logger
             );
         const interestPeriod = TimePeriod.fromObject(value.interestPeriod, logger.nextIndent);
@@ -106,8 +106,8 @@ export namespace LatePaymentInterest {
         if (typeof value.interestRate !== 'number')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse LatePaymentInterest parameter 'interestRate'. Expected type 'number', but got 
-                '${value.interestRate}' from type '${typeof value.interestRate}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse LatePaymentInterest parameter 'interestRate'. Expected type 'number', but got '${value.interestRate}' from type '${typeof value.interestRate}'.`,
                 logger
             );
 
@@ -115,8 +115,8 @@ export namespace LatePaymentInterest {
         if (typeof value.compoundInterest !== 'boolean')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse LatePaymentInterest parameter 'compoundInterest'. Expected type 'boolean', but got 
-                '${value.compoundInterest}' from type '${typeof value.compoundInterest}'.`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse LatePaymentInterest parameter 'compoundInterest'. Expected type 'boolean', but got '${value.compoundInterest}' from type '${typeof value.compoundInterest}'.`,
                 logger
             );
 
@@ -137,8 +137,8 @@ export namespace LatePaymentInterest {
         if (typeof value !== 'object')
             throw httpsError(
                 'invalid-argument',
-                `Couldn't parse LatePaymentInterest, expected type 'object', but bot ${value} 
-                from type '${typeof value}'`,
+                // eslint-disable-next-line max-len
+                `Couldn't parse LatePaymentInterest, expected type 'object', but bot ${value} from type '${typeof value}'`,
                 logger
             );
 
@@ -244,8 +244,8 @@ export namespace LatePaymentInterest {
             if (typeof value.value !== 'number')
                 throw httpsError(
                     'invalid-argument',
-                    `Couldn't parse TimePeriod parameter 'value'. Expected type 'number', but got '${value.value}' 
-                    from type '${typeof value.value}'.`,
+                    // eslint-disable-next-line max-len
+                    `Couldn't parse TimePeriod parameter 'value'. Expected type 'number', but got '${value.value}' from type '${typeof value.value}'.`,
                     logger
                 );
 
@@ -255,8 +255,8 @@ export namespace LatePaymentInterest {
                 !(value.unit == 'day' || value.unit == 'month' || value.unit == 'year'))
                 throw httpsError(
                     'invalid-argument',
-                    `Couldn't parse TimePeriod parameter 'unit'. Expected 'day', 'month' or 'year' from type 'string', 
-                    but got '${value.unit}' from type '${typeof value.unit}'.`,
+                    // eslint-disable-next-line max-len
+                    `Couldn't parse TimePeriod parameter 'unit'. Expected 'day', 'month' or 'year' from type 'string', but got '${value.unit}' from type '${typeof value.unit}'.`,
                     logger
                 );
 

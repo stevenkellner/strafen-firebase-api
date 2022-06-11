@@ -35,7 +35,7 @@ import { LatePaymentInterest } from '../TypeDefinitions/LatePaymentInterest';
  *
  * @params
  *  - privateKey (string): private key to check whether the caller is authenticated to use this function
- *  - clubLevel ({@link DatabaseType}}): level of the club (`regular`, `debug`, `testing`)
+ *  - databaseType ({@link DatabaseType}}): level of the club (`regular`, `debug`, `testing`)
  *  - clubId ({@link guid}): id of the club to change the late payment interest
  *  - changeType ({@link ChangeType}}): type of the change (`update`, `delete`)
  *  - latePaymentInterest ({@link Updatable}<{@link LatePaymentInterest} | {@link Deleted}>): interest to change
@@ -136,6 +136,7 @@ export class ChangeLatePaymentInterestFunction implements IFirebaseFunction<
         // Save statistic
         await saveStatistic(
             new Statistic(new StatisticProperty(previousInterest, changedInterest)),
+            this.parameters.clubId,
             this.parameterContainer,
             this.logger.nextIndent,
         );
@@ -305,7 +306,7 @@ class Statistic implements IStatistic<StatisticProperty> {
     /**
      * Identifier of the statistic of a database update.
      */
-    readonly identifier: string = 'changePerson';
+    readonly identifier: string = 'changeLatePaymentInterest';
 
     /**
      * Constructs Statistic with statistic property.

@@ -1,25 +1,33 @@
 import { privateKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
-import { auth, callFunction, firebaseError, getDatabaseOptionalValue, getDatabaseStatisticsPropertiesWithName, getDatabaseValue, signInTestUser } from './utils';
+import {
+    auth,
+    callFunction,
+    firebaseError,
+    getDatabaseOptionalValue,
+    getDatabaseStatisticsPropertyWithIdentifier,
+    getDatabaseValue,
+    signInTestUser,
+} from './utils';
 import { signOut } from 'firebase/auth';
 import { assert, expect } from 'chai';
-import { Logger } from '../src/TypeDefinitions/LoggingProperties';
-import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
+import { Logger } from '../src/Logger';
+import { ParameterContainer } from '../src/ParameterContainer';
 import { LatePaymentInterest } from '../src/TypeDefinitions/LatePaymentInterest';
-import { getUpdatable, Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
-import { Deleted } from '../src/utils';
+import { Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
 
 describe('ChangeLatePaymentInterest', () => {
 
-    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'changeLatePaymentInterestTest', undefined, 'notice');
+    const logger =
+        Logger.start(new ParameterContainer({ verbose: true }), 'changeLatePaymentInterestTest', {}, 'notice');
 
-    const clubId = guid.fromString('36cf0982-d1de-4316-ba67-a38ce64712fd', loggingProperties.nextIndent);
+    const clubId = guid.fromString('36cf0982-d1de-4316-ba67-a38ce64712fd', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
         });
@@ -28,7 +36,7 @@ describe('ChangeLatePaymentInterest', () => {
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
         });
         await signOut(auth);
     });
@@ -37,7 +45,7 @@ describe('ChangeLatePaymentInterest', () => {
         try {
             await callFunction('changeLatePaymentInterest', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 changeType: 'upate',
                 interest: 'some Interest',
             });
@@ -54,7 +62,7 @@ describe('ChangeLatePaymentInterest', () => {
         try {
             await callFunction('changeLatePaymentInterest', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 interest: 'some Interest',
             });
@@ -71,7 +79,7 @@ describe('ChangeLatePaymentInterest', () => {
         try {
             await callFunction('changeLatePaymentInterest', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'invalid',
                 interest: 'some Interest',
@@ -89,7 +97,7 @@ describe('ChangeLatePaymentInterest', () => {
         try {
             await callFunction('changeLatePaymentInterest', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
             });
@@ -97,7 +105,8 @@ describe('ChangeLatePaymentInterest', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'latePaymentInterest\'. Expected type \'object\', but got undefined or null.',
+                // eslint-disable-next-line max-len
+                message: 'Couldn\'t parse \'updatableInterest\'. Expected type \'object\', but got undefined or null.',
             });
         }
     });
@@ -106,22 +115,24 @@ describe('ChangeLatePaymentInterest', () => {
         try {
             await callFunction('changeLatePaymentInterest', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
-                latePaymentInterest: 'invalid',
+                updatableInterest: 'invalid',
             });
             assert.fail('A statement above should throw an exception.');
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'latePaymentInterest\'. Expected type \'object\', but got \'invalid\' from type \'string\'.',
+                // eslint-disable-next-line max-len
+                message: 'Couldn\'t parse \'updatableInterest\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
             });
         }
     });
 
+    // eslint-disable-next-line require-jsdoc
     async function setInterest(variant: boolean, timestamp: Date): Promise<LatePaymentInterest> {
-        const interest = new LatePaymentInterest.Builder().fromValue(variant ? {
+        const interest = LatePaymentInterest.fromObject(variant ? {
             interestFreePeriod: {
                 value: 1,
                 unit: 'month',
@@ -144,21 +155,28 @@ describe('ChangeLatePaymentInterest', () => {
             },
             interestRate: 0.05,
             compoundInterest: true,
-        }, loggingProperties.nextIndent) as LatePaymentInterest;
+        }, logger.nextIndent) as LatePaymentInterest;
         expect(interest).to.be.instanceOf(LatePaymentInterest);
 
         // Set interest
-        const updatableInterest = new Updatable<LatePaymentInterest>(interest, new UpdateProperties(timestamp, guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', loggingProperties.nextIndent)));
+        const updatableInterest = new Updatable<LatePaymentInterest>(
+            interest,
+            new UpdateProperties(timestamp, guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent))
+        );
         await callFunction('changeLatePaymentInterest', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'update',
-            latePaymentInterest: updatableInterest.serverObject,
+            updatableInterest: updatableInterest.databaseObject,
         });
 
         // TOOD: Check interest
-        const fetchedInterest = getUpdatable<LatePaymentInterest | Deleted<null>, LatePaymentInterest.Builder>(await getDatabaseValue(`testableClubs/${clubId.guidString}/latePaymentInterest`), new LatePaymentInterest.Builder(), loggingProperties.nextIndent);
+        const fetchedInterest = Updatable.fromRawProperty(
+            await getDatabaseValue(`${clubId.guidString}/latePaymentInterest`),
+            LatePaymentInterest.fromValue,
+            logger.nextIndent,
+        );
         expect(fetchedInterest?.property).to.deep.equal(interest);
 
         return interest;
@@ -168,10 +186,11 @@ describe('ChangeLatePaymentInterest', () => {
         const interest = await setInterest(false, new Date('2011-10-14T10:42:38+0000'));
 
         // Check statistic
-        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, 'changeLatePaymentInterest', loggingProperties.nextIndent);
+        const statisticsList =
+            await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeLatePaymentInterest', logger.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            changedInterest: interest.serverObject,
+            changedInterest: interest.databaseObject,
         });
     });
 
@@ -180,14 +199,15 @@ describe('ChangeLatePaymentInterest', () => {
         const interest2 = await setInterest(false, new Date('2011-10-15T10:42:38+0000'));
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, 'changeLatePaymentInterest', loggingProperties.nextIndent);
+        let statisticsList =
+            await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeLatePaymentInterest', logger.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousInterest!= null;
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            changedInterest: interest1.serverObject,
-            previousInterest: interest2.serverObject,
+            changedInterest: interest1.databaseObject,
+            previousInterest: interest2.databaseObject,
         });
     });
 
@@ -196,10 +216,10 @@ describe('ChangeLatePaymentInterest', () => {
 
         await callFunction('changeLatePaymentInterest', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'delete',
-            latePaymentInterest: {
+            updatableInterest: {
                 deleted: true,
                 updateProperties: {
                     timestamp: '2011-10-15T10:42:38+0000',
@@ -209,29 +229,34 @@ describe('ChangeLatePaymentInterest', () => {
         });
 
         // Check interest
-        const fetchedInterest = getUpdatable<LatePaymentInterest | Deleted<null>, LatePaymentInterest.Builder>(await getDatabaseValue(`testableClubs/${clubId.guidString}/latePaymentInterest`), new LatePaymentInterest.Builder(), loggingProperties.nextIndent);
-        expect(fetchedInterest?.property.serverObject).to.deep.equal({
+        const fetchedInterest = Updatable.fromRawProperty(
+            await getDatabaseValue(`${clubId.guidString}/latePaymentInterest`),
+            LatePaymentInterest.fromValue,
+            logger.nextIndent,
+        );
+        expect(fetchedInterest?.property.databaseObject).to.deep.equal({
             deleted: true,
         });
 
         // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, 'changeLatePaymentInterest', loggingProperties.nextIndent);
+        let statisticsList =
+            await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeLatePaymentInterest', logger.nextIndent);
         statisticsList = statisticsList.filter(statistic => {
             return statistic.previousInterest!= null;
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
-            previousInterest: interest.serverObject,
+            previousInterest: interest.databaseObject,
         });
     });
 
     it('delete before adding interest', async () => {
         await callFunction('changeLatePaymentInterest', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'delete',
-            latePaymentInterest: {
+            updatableInterest: {
                 deleted: true,
                 updateProperties: {
                     timestamp: '2011-10-15T10:42:38+0000',
@@ -241,7 +266,7 @@ describe('ChangeLatePaymentInterest', () => {
         });
 
         // Check interest
-        const interest = await getDatabaseOptionalValue(`testableClubs/${clubId.guidString}/latePaymentInterest`);
+        const interest = await getDatabaseOptionalValue(`${clubId.guidString}/latePaymentInterest`);
         expect(interest).to.be.null;
     });
 });

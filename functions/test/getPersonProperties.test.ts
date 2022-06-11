@@ -2,21 +2,21 @@ import { assert, expect } from 'chai';
 import { signOut } from 'firebase/auth';
 import { privateKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
-import { Logger } from '../src/TypeDefinitions/LoggingProperties';
-import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
+import { Logger } from '../src/Logger';
+import { ParameterContainer } from '../src/ParameterContainer';
 import { auth, callFunction, firebaseError, signInTestUser } from './utils';
 
 describe('GetPersonProperties', () => {
 
-    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'getPersonPropertiesTest', undefined, 'notice');
+    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'getPersonPropertiesTest', {}, 'notice');
 
-    const clubId = guid.fromString('7760bbc6-c1b4-4e6f-8919-77f01aa10749', loggingProperties.nextIndent);
+    const clubId = guid.fromString('7760bbc6-c1b4-4e6f-8919-77f01aa10749', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
         });
@@ -25,7 +25,7 @@ describe('GetPersonProperties', () => {
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
         });
         await signOut(auth);
     });
@@ -34,7 +34,7 @@ describe('GetPersonProperties', () => {
         try {
             await callFunction('getPersonProperties', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
             });
             assert.fail('A statement above should throw an exception.');
         } catch (error) {
@@ -48,7 +48,7 @@ describe('GetPersonProperties', () => {
     it('With existsting identifier', async () => {
         const httpResult = await callFunction('getPersonProperties', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             userId: 'LpAaeCz0BQfDHVYw02KiCyoTMS13',
         });
         expect(httpResult.data).to.be.deep.equal({
@@ -75,7 +75,7 @@ describe('GetPersonProperties', () => {
         try {
             await callFunction('getPersonProperties', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 userId: 'invalid',
             });
             assert.fail('A statement above should throw an exception.');

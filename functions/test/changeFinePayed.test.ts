@@ -1,26 +1,34 @@
 import { privateKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
-import { auth, callFunction, firebaseError, getDatabaseFines, getDatabaseReasonTemplates, getDatabaseStatisticsPropertiesWithName, signInTestUser } from './utils';
+import {
+    auth,
+    callFunction,
+    firebaseError,
+    getDatabaseFines,
+    getDatabaseReasonTemplates,
+    getDatabaseStatisticsPropertyWithIdentifier,
+    signInTestUser,
+} from './utils';
 import { assert, expect } from 'chai';
 import { signOut } from 'firebase/auth';
 import { Fine } from '../src/TypeDefinitions/Fine';
 import { FineReason } from '../src/TypeDefinitions/FineReason';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
-import { Logger } from '../src/TypeDefinitions/LoggingProperties';
-import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
+import { Logger } from '../src/Logger';
+import { ParameterContainer } from '../src/ParameterContainer';
 
 describe('ChangeFinePayed', () => {
 
-    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'changeFinePayedTest', undefined, 'notice');
+    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'changeFinePayedTest', {}, 'notice');
 
-    const clubId = guid.fromString('1992af26-8b42-4452-a564-7e376b6401db', loggingProperties.nextIndent);
+    const clubId = guid.fromString('1992af26-8b42-4452-a564-7e376b6401db', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
         });
@@ -29,7 +37,7 @@ describe('ChangeFinePayed', () => {
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
         });
         await signOut(auth);
     });
@@ -38,7 +46,7 @@ describe('ChangeFinePayed', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 fineId: guid.newGuid().guidString,
                 state: {
                     state: 'unpayed',
@@ -61,7 +69,7 @@ describe('ChangeFinePayed', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 state: {
                     state: 'unpayed',
@@ -84,7 +92,7 @@ describe('ChangeFinePayed', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
                 updateProperties: {
@@ -96,7 +104,8 @@ describe('ChangeFinePayed', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'state\'. Expected type \'object\', but got undefined or null.',
+                // eslint-disable-next-line max-len
+                message: 'Couldn\'t parse \'updatablePayedState\'. Expected type \'object\', but got undefined or null.',
             });
         }
     });
@@ -105,10 +114,10 @@ describe('ChangeFinePayed', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
-                state: {
+                updatablePayedState: {
                     state: 'invalid state',
                 },
                 updateProperties: {
@@ -120,6 +129,7 @@ describe('ChangeFinePayed', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
+                // eslint-disable-next-line max-len
                 message: 'Couldn\'t parse PayedState parameter \'state\'. Expected values \'payed\', \'settled\' or \'unpayed\', but got \'invalid state\' from type \'string\'.',
             });
         }
@@ -129,10 +139,10 @@ describe('ChangeFinePayed', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
-                state: {
+                updatablePayedState: {
                     state: 'payed',
                 },
                 updateProperties: {
@@ -144,6 +154,7 @@ describe('ChangeFinePayed', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
+                // eslint-disable-next-line max-len
                 message: 'Couldn\'t parse PayedState parameter \'payDate\', expected iso string, but got \'undefined\' from type undefined',
             });
         }
@@ -153,10 +164,10 @@ describe('ChangeFinePayed', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
-                state: {
+                updatablePayedState: {
                     state: 'payed',
                     payDate: '2011-10-14T10:42:38+0000',
                 },
@@ -169,6 +180,7 @@ describe('ChangeFinePayed', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
+                // eslint-disable-next-line max-len
                 message: 'Couldn\'t parse PayedState parameter \'inApp\'. Expected type \'boolean\', but got \'undefined\' from type \'undefined\'.',
             });
         }
@@ -178,10 +190,10 @@ describe('ChangeFinePayed', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
-                state: {
+                updatablePayedState: {
                     state: 'payed',
                     payDate: '2011-10-14T10:42:38+0000',
                     inApp: false,
@@ -191,7 +203,8 @@ describe('ChangeFinePayed', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
-                message: 'Couldn\'t get updateProperties.',
+                // eslint-disable-next-line max-len
+                message: 'Couldn\'t parse update properties, expected type \'object\', but bot undefined from type \'undefined\'',
             });
         }
     });
@@ -200,10 +213,10 @@ describe('ChangeFinePayed', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
-                state: {
+                updatablePayedState: {
                     state: 'payed',
                     payDate: '2011-10-14T10:42:38+0000',
                     inApp: false,
@@ -216,6 +229,7 @@ describe('ChangeFinePayed', () => {
         } catch (error) {
             expect(firebaseError(error)).to.be.deep.equal({
                 code: 'functions/invalid-argument',
+                // eslint-disable-next-line max-len
                 message: 'Couldn\'t parse UpdateProperties parameter \'personId\', expected type string but got \'undefined\' from type undefined',
             });
         }
@@ -225,10 +239,10 @@ describe('ChangeFinePayed', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 fineId: guid.newGuid().guidString,
-                state: {
+                updatablePayedState: {
                     state: 'unpayed',
                     updateProperties: {
                         timestamp: '2011-10-14T10:42:38+0000',
@@ -245,12 +259,16 @@ describe('ChangeFinePayed', () => {
         }
     });
 
-    async function addFinesAndReason(fine2PersonId: guid = guid.fromString('D1852AC0-A0E2-4091-AC7E-CB2C23F708D9', loggingProperties.nextIndent), addReason = true) {
+    // eslint-disable-next-line require-jsdoc
+    async function addFinesAndReason(
+        fine2PersonId: guid = guid.fromString('D1852AC0-A0E2-4091-AC7E-CB2C23F708D9', logger.nextIndent),
+        addReason = true
+    ) {
 
         // Add reason
-        const fine1 = new Fine.Builder().fromValue({
-            id: guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', loggingProperties.nextIndent).guidString,
-            personId: guid.fromString('D1852AC0-A0E2-4091-AC7E-CB2C23F708D9', loggingProperties.nextIndent).guidString,
+        const fine1 = Fine.fromObject({
+            id: guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent).guidString,
+            personId: guid.fromString('D1852AC0-A0E2-4091-AC7E-CB2C23F708D9', logger.nextIndent).guidString,
             date: '2011-10-14T10:42:38+0000',
             payedState: {
                 state: 'unpayed',
@@ -261,41 +279,53 @@ describe('ChangeFinePayed', () => {
             },
             number: 2,
             fineReason: {
-                reasonTemplateId: guid.fromString('9d0681f0-2045-4a1d-abbc-6bb289934ff9', loggingProperties.nextIndent).guidString,
+                reasonTemplateId: guid.fromString('9d0681f0-2045-4a1d-abbc-6bb289934ff9', logger.nextIndent).guidString,
             },
-        }, loggingProperties.nextIndent) as Fine;
+        }, logger.nextIndent) as Fine;
         expect(fine1).to.be.instanceOf(Fine);
-        const updatableFine1 = new Updatable<Fine>(fine1, new UpdateProperties(new Date('2011-10-14T10:42:38+0000'), guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', loggingProperties.nextIndent)));
-        const reason = new ReasonTemplate.Builder().fromValue({
+        const updatableFine1 = new Updatable<Fine>(
+            fine1,
+            new UpdateProperties(
+                new Date('2011-10-14T10:42:38+0000'),
+                guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
+            )
+        );
+        const reason = ReasonTemplate.fromObject({
             id: (fine1.fineReason.value as FineReason.Template).reasonTemplateId.guidString,
-            reason: 'asldkfj',
+            reasonMessage: 'asldkfj',
             importance: 'low',
             amount: 12.98,
-        }, loggingProperties.nextIndent) as ReasonTemplate;
+        }, logger.nextIndent) as ReasonTemplate;
         expect(reason).to.be.instanceOf(ReasonTemplate);
-        const updatableReason = new Updatable<ReasonTemplate>(reason, new UpdateProperties(new Date('2011-10-15T10:42:38+0000'), guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', loggingProperties.nextIndent)));
+        const updatableReason = new Updatable<ReasonTemplate>(
+            reason,
+            new UpdateProperties(
+                new Date('2011-10-15T10:42:38+0000'),
+                guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
+            )
+        );
         if (addReason) {
             await callFunction('changeReasonTemplate', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
-                reasonTemplate: updatableReason.serverObject,
+                reasonTemplate: updatableReason.databaseObject,
             });
         }
 
         // Add fine with reason template
         await callFunction('changeFine', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'update',
-            fine: updatableFine1.serverObject,
+            fine: updatableFine1.databaseObject,
         });
 
         // Add fine with custom reason
-        const fine2 = new Fine.Builder().fromValue({
-            id: guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', loggingProperties.nextIndent).guidString,
+        const fine2 = Fine.fromObject({
+            id: guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent).guidString,
             personId: fine2PersonId.guidString,
             date: '2011-10-14T10:42:38+0000',
             payedState: {
@@ -309,7 +339,7 @@ describe('ChangeFinePayed', () => {
             },
             number: 10,
             fineReason: {
-                reason: 'Reason',
+                reasonMessage: 'Reason',
                 amount: 1.50,
                 importance: 'high',
             },
@@ -317,26 +347,32 @@ describe('ChangeFinePayed', () => {
                 timestamp: '2011-10-14T10:42:38+0000',
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             },
-        }, loggingProperties.nextIndent) as Fine;
+        }, logger.nextIndent) as Fine;
         expect(fine2).to.be.instanceOf(Fine);
-        const updatableFine2 = new Updatable<Fine>(fine2, new UpdateProperties(new Date('2011-10-14T10:42:38+0000'), guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', loggingProperties.nextIndent)));
+        const updatableFine2 = new Updatable<Fine>(
+            fine2,
+            new UpdateProperties(
+                new Date('2011-10-14T10:42:38+0000'),
+                guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
+            )
+        );
         await callFunction('changeFine', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'update',
-            fine: updatableFine2.serverObject,
+            fine: updatableFine2.databaseObject,
         });
 
         // Check fines and reason
-        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fineList = await getDatabaseFines(clubId, logger.nextIndent);
         const fetchedFine1 = fineList.find(fine => fine.property.id.equals(fine1.id))?.property;
         const fetchedFine2 = fineList.find(fine => fine.property.id.equals(fine2.id))?.property;
         expect(fetchedFine1).to.deep.equal(fine1);
         expect(fetchedFine2).to.deep.equal(fine2);
 
         if (addReason) {
-            const reasonList = await getDatabaseReasonTemplates(clubId, loggingProperties.nextIndent);
+            const reasonList = await getDatabaseReasonTemplates(clubId, logger.nextIndent);
             const fetchedReason = reasonList.find(_reason => _reason.property.id.equals(reason.id));
             expect(fetchedReason?.property).to.deep.equal(reason);
         }
@@ -348,14 +384,14 @@ describe('ChangeFinePayed', () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', loggingProperties.nextIndent);
+        const fineId = guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
         await callFunction('changeFinePayed', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             verbose: true,
             fineId: fineId.guidString,
-            state: {
+            updatablePayedState: {
                 state: 'payed',
                 payDate: '2011-10-14T10:42:38+0000',
                 inApp: false,
@@ -367,10 +403,10 @@ describe('ChangeFinePayed', () => {
         });
 
         // Check fine payed
-        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fineList = await getDatabaseFines(clubId, logger.nextIndent);
         const fetchedFine = fineList.find(fine => fine.property.id.equals(fineId))?.property as Fine;
         expect(fetchedFine).to.be.an.instanceOf(Fine);
-        expect(fetchedFine?.payedState.serverObject).to.deep.equal({
+        expect(fetchedFine?.payedState.databaseObject).to.deep.equal({
             state: 'payed',
             payDate: '2011-10-14T10:42:38.000Z',
             inApp: false,
@@ -381,7 +417,8 @@ describe('ChangeFinePayed', () => {
         });
 
         // Check statistic
-        const statisticsList = await getDatabaseStatisticsPropertiesWithName(clubId, 'changeFinePayed', loggingProperties.nextIndent);
+        const statisticsList =
+            await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFinePayed', logger.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
             changedState: {
@@ -407,7 +444,7 @@ describe('ChangeFinePayed', () => {
                     amount: 12.98,
                     id: '9D0681F0-2045-4A1D-ABBC-6BB289934FF9',
                     importance: 'low',
-                    reason: 'asldkfj',
+                    reasonMessage: 'asldkfj',
                 },
             },
         });
@@ -419,13 +456,13 @@ describe('ChangeFinePayed', () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', loggingProperties.nextIndent);
+        const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
         await callFunction('changeFinePayed', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             fineId: fineId.guidString,
-            state: {
+            updatablePayedState: {
                 state: 'payed',
                 payDate: '2011-10-14T10:42:38+0000',
                 inApp: true,
@@ -437,10 +474,10 @@ describe('ChangeFinePayed', () => {
         });
 
         // Check fine payed
-        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fineList = await getDatabaseFines(clubId, logger.nextIndent);
         const fetchedFine = fineList.find(fine => fine.property.id.equals(fineId))?.property as Fine;
         expect(fetchedFine).to.be.an.instanceOf(Fine);
-        expect(fetchedFine?.payedState.serverObject).to.deep.equal({
+        expect(fetchedFine?.payedState.databaseObject).to.deep.equal({
             state: 'payed',
             payDate: '2011-10-14T10:42:38.000Z',
             inApp: true,
@@ -451,8 +488,8 @@ describe('ChangeFinePayed', () => {
         });
 
         // Check statistic
-        expect(await getDatabaseStatisticsPropertiesWithName(clubId, 'changeFinePayed', loggingProperties.nextIndent)).to.be.deep.equal([
-            {
+        expect(await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFinePayed', logger.nextIndent))
+            .to.be.deep.equal([{
                 changedState: {
                     state: 'payed',
                     payDate: '2011-10-14T10:42:38.000Z',
@@ -477,11 +514,10 @@ describe('ChangeFinePayed', () => {
                     fineReason: {
                         amount: 1.50,
                         importance: 'high',
-                        reason: 'Reason',
+                        reasonMessage: 'Reason',
                     },
                 },
-            },
-        ]);
+            }]);
     });
 
     it('Change fine payed to unpayed', async () => {
@@ -490,13 +526,13 @@ describe('ChangeFinePayed', () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', loggingProperties.nextIndent);
+        const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
         await callFunction('changeFinePayed', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             fineId: fineId.guidString,
-            state: {
+            updatablePayedState: {
                 state: 'unpayed',
                 updateProperties: {
                     timestamp: '2011-10-15T10:42:38+0000',
@@ -506,10 +542,10 @@ describe('ChangeFinePayed', () => {
         });
 
         // Check fine payed
-        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fineList = await getDatabaseFines(clubId, logger.nextIndent);
         const fetchedFine = fineList.find(fine => fine.property.id.equals(fineId))?.property as Fine;
         expect(fetchedFine).to.be.an.instanceOf(Fine);
-        expect(fetchedFine?.payedState.serverObject).to.deep.equal({
+        expect(fetchedFine?.payedState.databaseObject).to.deep.equal({
             state: 'unpayed',
             inApp: null,
             payDate: null,
@@ -520,8 +556,8 @@ describe('ChangeFinePayed', () => {
         });
 
         // Check statistic
-        expect(await getDatabaseStatisticsPropertiesWithName(clubId, 'changeFinePayed', loggingProperties.nextIndent)).to.be.deep.equal([
-            {
+        expect(await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFinePayed', logger.nextIndent))
+            .to.be.deep.equal([{
                 changedState: {
                     state: 'unpayed',
                 },
@@ -544,11 +580,10 @@ describe('ChangeFinePayed', () => {
                     fineReason: {
                         amount: 1.50,
                         importance: 'high',
-                        reason: 'Reason',
+                        reasonMessage: 'Reason',
                     },
                 },
-            },
-        ]);
+            }]);
     });
 
     it('Change fine payed to settled', async () => {
@@ -557,13 +592,13 @@ describe('ChangeFinePayed', () => {
         await addFinesAndReason();
 
         // Change fine payed
-        const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', loggingProperties.nextIndent);
+        const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
         await callFunction('changeFinePayed', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             fineId: fineId.guidString,
-            state: {
+            updatablePayedState: {
                 state: 'settled',
                 updateProperties: {
                     timestamp: '2011-10-15T10:42:38+0000',
@@ -573,10 +608,10 @@ describe('ChangeFinePayed', () => {
         });
 
         // Check fine payed
-        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fineList = await getDatabaseFines(clubId, logger.nextIndent);
         const fetchedFine = fineList.find(fine => fine.property.id.equals(fineId))?.property as Fine;
         expect(fetchedFine).to.be.an.instanceOf(Fine);
-        expect(fetchedFine?.payedState.serverObject).to.deep.equal({
+        expect(fetchedFine?.payedState.databaseObject).to.deep.equal({
             state: 'settled',
             inApp: null,
             payDate: null,
@@ -587,8 +622,8 @@ describe('ChangeFinePayed', () => {
         });
 
         // Check statistic
-        expect(await getDatabaseStatisticsPropertiesWithName(clubId, 'changeFinePayed', loggingProperties.nextIndent)).to.be.deep.equal([
-            {
+        expect(await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFinePayed', logger.nextIndent))
+            .to.be.deep.equal([{
                 changedState: {
                     state: 'settled',
                 },
@@ -611,11 +646,10 @@ describe('ChangeFinePayed', () => {
                     fineReason: {
                         amount: 1.50,
                         importance: 'high',
-                        reason: 'Reason',
+                        reasonMessage: 'Reason',
                     },
                 },
-            },
-        ]);
+            }]);
     });
 
     it('Change state of deleted fine', async () => {
@@ -624,10 +658,10 @@ describe('ChangeFinePayed', () => {
         await addFinesAndReason();
 
         // Delete fine
-        const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', loggingProperties.nextIndent);
+        const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
         await callFunction('changeFine', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'delete',
             fine: {
@@ -641,9 +675,9 @@ describe('ChangeFinePayed', () => {
         });
 
         // Check if fine is deleted
-        const fineList = await getDatabaseFines(clubId, loggingProperties.nextIndent);
+        const fineList = await getDatabaseFines(clubId, logger.nextIndent);
         const fetchedFine = fineList.find(fine => fine.property.id.equals(fineId));
-        expect(fetchedFine?.serverObject).to.be.deep.equal({
+        expect(fetchedFine?.databaseObject).to.be.deep.equal({
             deleted: true,
             updateProperties: {
                 timestamp: '2011-10-15T10:42:38.000Z',
@@ -655,10 +689,10 @@ describe('ChangeFinePayed', () => {
         try {
             await callFunction('changeFinePayed', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
                 fineId: fineId.guidString,
-                state: {
+                updatablePayedState: {
                     state: 'settled',
                     updateProperties: {
                         timestamp: '2011-10-15T10:42:38+0000',

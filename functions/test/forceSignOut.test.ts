@@ -2,21 +2,21 @@ import { assert, expect } from 'chai';
 import { signOut } from 'firebase/auth';
 import { privateKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
-import { Logger } from '../src/TypeDefinitions/LoggingProperties';
-import { ParameterContainer } from '../src/TypeDefinitions/ParameterContainer';
+import { Logger } from '../src/Logger';
+import { ParameterContainer } from '../src/ParameterContainer';
 import { auth, callFunction, firebaseError, getDatabaseOptionalValue, signInTestUser } from './utils';
 
 describe('ForceSignOut', () => {
 
-    const loggingProperties = Logger.withFirst(new ParameterContainer({ verbose: true }), 'forceSignOutTest', undefined, 'notice');
+    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'forceSignOutTest', {}, 'notice');
 
-    const clubId = guid.fromString('32c0bbc6-c1b4-4e6f-8919-77f01aa10749', loggingProperties.nextIndent);
+    const clubId = guid.fromString('32c0bbc6-c1b4-4e6f-8919-77f01aa10749', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
         });
@@ -25,7 +25,7 @@ describe('ForceSignOut', () => {
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
         });
         await signOut(auth);
     });
@@ -34,7 +34,7 @@ describe('ForceSignOut', () => {
         try {
             await callFunction('forceSignOut', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 personId: guid.newGuid().guidString,
             });
             assert.fail('A statement above should throw an exception.');
@@ -50,7 +50,7 @@ describe('ForceSignOut', () => {
         try {
             await callFunction('forceSignOut', {
                 privateKey: privateKey,
-                clubLevel: 'testing',
+                databaseType: 'testing',
                 clubId: clubId.guidString,
             });
             assert.fail('A statement above should throw an exception.');
@@ -66,17 +66,17 @@ describe('ForceSignOut', () => {
         const personId = '76025DDE-6893-46D2-BC34-9864BB5B8DAD';
         await callFunction('forceSignOut', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             personId: personId,
         });
 
         // Check sign in data
-        const signInData = await getDatabaseOptionalValue(`testableClubs/${clubId.guidString}/persons/${personId}/signInData`);
+        const signInData = await getDatabaseOptionalValue(`${clubId.guidString}/persons/${personId}/signInData`);
         expect(signInData).to.be.null;
 
         // Check person ids
-        const fetchedPersonId = await getDatabaseOptionalValue(`testableClubs/${clubId.guidString}/personUserIds/asdnfl`);
+        const fetchedPersonId = await getDatabaseOptionalValue(`${clubId.guidString}/personUserIds/asdnfl`);
         expect(fetchedPersonId).to.be.null;
     });
 
@@ -85,7 +85,7 @@ describe('ForceSignOut', () => {
         // Nothing should happen
         await callFunction('forceSignOut', {
             privateKey: privateKey,
-            clubLevel: 'testing',
+            databaseType: 'testing',
             clubId: clubId.guidString,
             personId: guid.newGuid().guidString,
         });

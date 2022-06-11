@@ -105,8 +105,8 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
 
         // Check update timestamp
         await checkUpdateProperties(
-            `${this.parameters.clubId.guidString}/templateReasons
-            /${this.parameters.updatableReasonTemplate.property.id.guidString}/updateProperties`,
+            // eslint-disable-next-line max-len
+            `${this.parameters.clubId.guidString}/templateReasons/${this.parameters.updatableReasonTemplate.property.id.guidString}/updateProperties`,
             this.parameters.updatableReasonTemplate.updateProperties,
             this.parameterContainer,
             this.logger.nextIndent,
@@ -140,6 +140,7 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
         // Save statistic
         await saveStatistic(
             new Statistic(new StatisticProperty(previousReasonTemplate, changedReasonTemplate)),
+            this.parameters.clubId,
             this.parameterContainer,
             this.logger.nextIndent,
         );
@@ -150,8 +151,8 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
      */
     private get reasonTemplateReference(): admin.database.Reference {
         return reference(
-            `${this.parameters.clubId.guidString}/reasonTemplates
-            /${this.parameters.updatableReasonTemplate.property.id.guidString}`,
+            // eslint-disable-next-line max-len
+            `${this.parameters.clubId.guidString}/reasonTemplates/${this.parameters.updatableReasonTemplate.property.id.guidString}`,
             this.parameterContainer,
             this.logger.nextIndent
         );

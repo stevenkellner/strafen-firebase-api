@@ -70,8 +70,7 @@ export namespace Amount {
 
     // eslint-disable-next-line valid-jsdoc
     /**
-     * @deprecated Use `container.parameter(parameterName, 'number', logger.nextIndent,
-     * Amount.fromString)` instead.
+     * @deprecated Use `container.parameter(parameterName, 'number', logger.nextIndent,* Amount.fromString)` instead.
      */
     export function fromParameterContainer(
         container: ParameterContainer,
