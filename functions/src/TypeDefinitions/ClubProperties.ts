@@ -1,7 +1,6 @@
 import { httpsError } from '../utils';
 import { guid } from './guid';
 import { Logger } from '../Logger';
-import { ParameterContainer } from '../ParameterContainer';
 
 /**
  * Contains all properties of a club.
@@ -157,21 +156,5 @@ export namespace ClubProperties {
 
         // Return club properties
         return ClubProperties.fromObject(value, logger.nextIndent);
-    }
-
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'object', logger.nextIndent,
-     * ChangeType.fromObject)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer, parameterName: string, logger: Logger): ClubProperties {
-        logger.append('ClubProperties.fromParameterContainer', { container, parameterName });
-
-        // Build and return club properties
-        return ClubProperties.fromValue(
-            container.parameter(parameterName, 'object', logger.nextIndent),
-            logger.nextIndent
-        );
     }
 }

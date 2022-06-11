@@ -1,6 +1,5 @@
 import { guid } from './guid';
 import { Deleted, httpsError, DataSnapshot } from '../utils';
-import { ParameterContainer } from '../ParameterContainer';
 import { PersonName } from './PersonName';
 import { Logger } from '../Logger';
 
@@ -162,25 +161,6 @@ export namespace Person {
             id: idString,
             ...data,
         }, logger.nextIndent);
-    }
-
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'object', logger.nextIndent,
-     * Person.fromObject)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): Person | Deleted<guid> {
-        logger.append('Person.fromParameterContainer', { container, parameterName });
-
-        // Build and return person.
-        return Person.fromObject(
-            container.parameter(parameterName, 'object', logger.nextIndent),
-            logger.nextIndent
-        );
     }
 
     /**

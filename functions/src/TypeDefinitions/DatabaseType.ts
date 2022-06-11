@@ -1,6 +1,5 @@
 import { httpsError } from '../utils';
 import { Logger } from '../Logger';
-import { ParameterContainer } from '../ParameterContainer';
 
 /**
  * Database type of firebase function.
@@ -13,17 +12,6 @@ export class DatabaseType {
      * @param { 'release' | 'debug' | 'testing' } value Raw value of the database type.
      */
     public constructor(public readonly value: 'release' | 'debug' | 'testing') {}
-
-    /**
-     * @deprecated use `reference` to create a database reference
-     */
-    public get ['clubComponent'](): string {
-        switch (this.value) {
-        case 'release': return 'clubs';
-        case 'debug': return 'debugClubs';
-        case 'testing': return 'testableClubs';
-        }
-    }
 
     /**
      * Url to the database based on the database type.
@@ -79,24 +67,5 @@ export namespace DatabaseType {
 
         // Return database type.
         return DatabaseType.fromString(value, logger.nextIndent);
-    }
-
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'string', logger.nextIndent,
-     * DatabaseType.fromString)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): DatabaseType {
-        logger.append('DatabaseType.Builder.fromParameterContainer', { container, parameterName });
-
-        // Build and return database type.
-        return DatabaseType.fromString(
-            container.parameter(parameterName, 'string', logger.nextIndent),
-            logger.nextIndent
-        );
     }
 }

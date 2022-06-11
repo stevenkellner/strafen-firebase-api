@@ -1,7 +1,6 @@
 import { httpsError } from '../utils';
 import { guid } from './guid';
 import { Logger } from '../Logger';
-import { ParameterContainer } from '../ParameterContainer';
 import { PersonName } from './PersonName';
 
 /**
@@ -136,24 +135,5 @@ export namespace PersonPropertiesWithIsAdmin {
 
         // Return person properties
         return PersonPropertiesWithIsAdmin.fromObject(value, logger.nextIndent);
-    }
-
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'object', logger.nextIndent,
-     * PersonPropertiesWithIsAdmin.fromObject)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): PersonPropertiesWithIsAdmin {
-        logger.append('PersonProperties.fromParameterContainer', { container, parameterName });
-
-        // Build and return person properties
-        return PersonPropertiesWithIsAdmin.fromValue(
-            container.parameter(parameterName, 'object', logger.nextIndent),
-            logger.nextIndent
-        );
     }
 }

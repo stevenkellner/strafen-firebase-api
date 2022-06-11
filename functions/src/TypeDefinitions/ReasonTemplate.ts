@@ -1,5 +1,4 @@
 import { Importance } from './Importance';
-import { ParameterContainer } from '../ParameterContainer';
 import { Amount } from './Amount';
 import { guid } from './guid';
 import { Deleted, httpsError, DataSnapshot } from '../utils';
@@ -204,25 +203,6 @@ export namespace ReasonTemplate {
             id: idString,
             ...data,
         }, logger.nextIndent);
-    }
-
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'object', logger.nextIndent,
-     * ReasonTemplate.fromObject)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): ReasonTemplate | Deleted<guid> {
-        logger.append('ReasonTemplate.fromParameterContainer', { container, parameterName });
-
-        // Build and return reason template.
-        return ReasonTemplate.fromObject(
-            container.parameter(parameterName, 'object', logger.nextIndent),
-            logger.nextIndent
-        );
     }
 
     /**

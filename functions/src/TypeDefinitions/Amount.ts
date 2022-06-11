@@ -1,4 +1,3 @@
-import { ParameterContainer } from '../ParameterContainer';
 import { httpsError } from '../utils';
 import { Logger } from '../Logger';
 
@@ -66,23 +65,5 @@ export namespace Amount {
 
         // Return amount.
         return Amount.fromNumber(value, logger.nextIndent);
-    }
-
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'number', logger.nextIndent,* Amount.fromString)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): Amount {
-        logger.append('Amount.fromParameterContainer', { container, parameterName });
-
-        // Build and return amount.
-        return Amount.fromNumber(
-            container.parameter(parameterName, 'number', logger.nextIndent),
-            logger.nextIndent
-        );
     }
 }

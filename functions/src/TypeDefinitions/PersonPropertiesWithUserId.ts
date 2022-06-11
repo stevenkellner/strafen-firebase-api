@@ -1,7 +1,6 @@
 import { httpsError } from '../utils';
 import { guid } from './guid';
 import { Logger } from '../Logger';
-import { ParameterContainer } from '../ParameterContainer';
 import { PersonName } from './PersonName';
 
 /**
@@ -137,24 +136,5 @@ export namespace PersonPropertiesWithUserId {
 
         // Return person properties
         return PersonPropertiesWithUserId.fromObject(value, logger.nextIndent);
-    }
-
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'object', logger.nextIndent,
-     * PersonPropertiesWithUserId.fromObject)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): PersonPropertiesWithUserId {
-        logger.append('PersonProperties.fromParameterContainer', { container, parameterName });
-
-        // Build and return person properties.
-        return PersonPropertiesWithUserId.fromObject(
-            container.parameter(parameterName, 'object', logger.nextIndent),
-            logger.nextIndent
-        );
     }
 }

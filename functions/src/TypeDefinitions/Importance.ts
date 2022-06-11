@@ -1,6 +1,5 @@
 import { httpsError } from '../utils';
 import { Logger } from '../Logger';
-import { ParameterContainer } from '../ParameterContainer';
 
 /**
  * Importance of a fine.
@@ -57,24 +56,5 @@ export namespace Importance {
 
         // Return importance.
         return Importance.fromString(value, logger.nextIndent);
-    }
-
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'string', logger.nextIndent,
-     * Importance.fromObject)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): Importance {
-        logger.append('Importance.fromParameterContainer', { container, parameterName });
-
-        // Build and return importance.
-        return Importance.fromValue(
-            container.parameter(parameterName, 'string', logger.nextIndent),
-            logger.nextIndent
-        );
     }
 }

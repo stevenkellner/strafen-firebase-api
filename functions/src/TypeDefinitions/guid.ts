@@ -65,21 +65,6 @@ export namespace guid {
     }
 
     /**
-     * Constructs guid from parameter of parameter container with specified parameter name
-     * or throws a HttpsError if parsing failed.
-     * @deprecated Use `container.parameter(parameterName, 'string', logger.nextIndent,
-     * guid.fromObject)` instead.
-     * @param { ParameterContainer } container Parameter container to get parameter from.
-     * @param { string } parameterName Name of parameter from parameter container.
-     * @param { Logger } logger Logger to log this method.
-     * @return { guid } Builded guid.
-     */
-    export function fromParameterContainer(container: ParameterContainer, parameterName: string, logger: Logger): guid {
-        logger.append('guid.fromParameterContainer', { container, parameterName });
-        return guid.fromString(container.parameter(parameterName, 'string', logger.nextIndent), logger.nextIndent);
-    }
-
-    /**
      * Generates a new guid.
      * @return { guid } Generated guid.
      */

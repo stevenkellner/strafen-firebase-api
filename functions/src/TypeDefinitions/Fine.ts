@@ -247,25 +247,6 @@ export namespace Fine {
         }, logger.nextIndent);
     }
 
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'object', logger.nextIndent,
-     * Fine.fromObject)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): Fine | Deleted<guid> {
-        logger.append('Fine.fromParameterContainer', { container, parameterName });
-
-        // Build and return fine.
-        return Fine.fromValue(
-            container.parameter(parameterName, 'object', logger.nextIndent),
-            logger.nextIndent
-        );
-    }
-
     /**
      * Statistic of a fine.
      */

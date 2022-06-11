@@ -147,25 +147,6 @@ export namespace FineReason {
         return FineReason.fromObject(value, logger.nextIndent);
     }
 
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'object', logger.nextIndent,
-     * FineReason.fromObject)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): FineReason {
-        logger.append('FineReason.fromObject', { container, parameterName });
-
-        // Build and return fine reason.
-        return FineReason.fromObject(
-            container.parameter(parameterName, 'object', logger.nextIndent),
-            logger.nextIndent
-        );
-    }
-
     /**
      * Fine reason object that will be stored in the database.
      */

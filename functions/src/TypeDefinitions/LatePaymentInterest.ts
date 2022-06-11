@@ -1,4 +1,3 @@
-import { ParameterContainer } from '../ParameterContainer';
 import { Deleted, httpsError, DataSnapshot } from '../utils';
 import { Logger } from '../Logger';
 
@@ -168,23 +167,6 @@ export namespace LatePaymentInterest {
             );
 
         return LatePaymentInterest.fromObject(data, logger.nextIndent);
-    }
-
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'object', logger.nextIndent,
-     * LatePaymentInterest.fromObject)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): LatePaymentInterest | Deleted<null> {
-        logger.append('LatePaymentInterest.fromParameterContainer', { container, parameterName });
-        return LatePaymentInterest.fromValue(
-            container.parameter(parameterName, 'object', logger.nextIndent),
-            logger.nextIndent
-        );
     }
 
     /**

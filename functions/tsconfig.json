@@ -15,5 +15,8 @@
   "include": [
     "src",
     "test"
+  ],
+  "exclude": [
+    "docs"
   ]
 }

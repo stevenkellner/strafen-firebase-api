@@ -100,18 +100,6 @@ export async function existsData(reference: admin.database.Reference): Promise<b
 }
 
 /**
- * @deprecated Please use null-coalescing operator: `value ?? null`.
- *
- * Returns same value, but null if specified value is undefined.
- * @template T Type of the value that can be undefined.
- * @param { T | undefined } value Value to get undefined value.
- * @return { T | null } Same value, but null if specified value is undefined.
- */
-export function undefinedAsNull<T>(value: T | undefined): T | null {
-    return value ?? null;
-}
-
-/**
  * Get the database reference t0 specified path.
  * @param { string } path Path to get the database reference to.
  * @param { ParameterContainer } parameterContainer Parameter container to get the database type.

@@ -1,4 +1,3 @@
-import { ParameterContainer } from '../ParameterContainer';
 import { httpsError } from '../utils';
 import { Logger } from '../Logger';
 
@@ -57,24 +56,5 @@ export namespace ChangeType {
 
         // Return change type.
         return ChangeType.fromString(value, logger.nextIndent);
-    }
-
-    // eslint-disable-next-line valid-jsdoc
-    /**
-     * @deprecated Use `container.parameter(parameterName, 'string', logger.nextIndent,
-     * ChangeType.fromString)` instead.
-     */
-    export function fromParameterContainer(
-        container: ParameterContainer,
-        parameterName: string,
-        logger: Logger
-    ): ChangeType {
-        logger.append('ChangeType.fromParameterContainer', { container, parameterName });
-
-        // Build and return change type.
-        return ChangeType.fromValue(
-            container.parameter(parameterName, 'string', logger.nextIndent),
-            logger.nextIndent
-        );
     }
 }
