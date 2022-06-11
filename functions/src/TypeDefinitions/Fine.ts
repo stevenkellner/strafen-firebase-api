@@ -5,7 +5,7 @@ import { Deleted, httpsError, DataSnapshot, reference } from '../utils';
 import { Person } from './Person';
 import { PayedState } from './PayedState';
 import { Logger } from '../Logger';
-import { Updatable } from './UpdateProperties';
+import { Updatable } from './Updatable';
 
 /**
  * Contains all properties of a fine.

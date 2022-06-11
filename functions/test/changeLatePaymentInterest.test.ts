@@ -14,7 +14,7 @@ import { assert, expect } from 'chai';
 import { Logger } from '../src/Logger';
 import { ParameterContainer } from '../src/ParameterContainer';
 import { LatePaymentInterest } from '../src/TypeDefinitions/LatePaymentInterest';
-import { Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
+import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
 
 describe('ChangeLatePaymentInterest', () => {
 

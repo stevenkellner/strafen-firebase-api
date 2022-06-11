@@ -16,7 +16,7 @@ import { PersonName } from '../src/TypeDefinitions/PersonName';
 import { PersonPropertiesWithIsAdmin } from '../src/TypeDefinitions/PersonPropertiesWithIsAdmin';
 import { PersonPropertiesWithUserId } from '../src/TypeDefinitions/PersonPropertiesWithUserId';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
-import { Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
+import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
 import { Deleted } from '../src/utils';
 import { errorCodeAndMessage } from './utils';
 

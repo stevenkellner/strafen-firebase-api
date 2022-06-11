@@ -14,7 +14,7 @@ import { DatabaseType } from '../TypeDefinitions/DatabaseType';
 import { ChangeType } from '../TypeDefinitions/ChangeType';
 import { ReasonTemplate } from '../TypeDefinitions/ReasonTemplate';
 import { Logger } from '../Logger';
-import { Updatable } from '../TypeDefinitions/UpdateProperties';
+import { Updatable } from '../TypeDefinitions/Updatable';
 import { AuthData } from 'firebase-functions/lib/common/providers/https';
 import {
     IStatisticProperty,

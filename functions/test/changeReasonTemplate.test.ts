@@ -13,7 +13,7 @@ import { assert, expect } from 'chai';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
 import { ParameterContainer } from '../src/ParameterContainer';
 import { Logger } from '../src/Logger';
-import { Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
+import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
 
 describe('ChangeReasonTemplate', () => {
 

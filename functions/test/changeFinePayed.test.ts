@@ -14,7 +14,7 @@ import { signOut } from 'firebase/auth';
 import { Fine } from '../src/TypeDefinitions/Fine';
 import { FineReason } from '../src/TypeDefinitions/FineReason';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
-import { Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
+import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
 import { Logger } from '../src/Logger';
 import { ParameterContainer } from '../src/ParameterContainer';
 

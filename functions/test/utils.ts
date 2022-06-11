@@ -9,7 +9,7 @@ import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
 import { Person } from '../src/TypeDefinitions/Person';
 import { Logger } from '../src/Logger';
 import { Deleted } from '../src/utils';
-import { Updatable } from '../src/TypeDefinitions/UpdateProperties';
+import { Updatable } from '../src/TypeDefinitions/Updatable';
 
 const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app, 'europe-west1');

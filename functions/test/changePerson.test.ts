@@ -13,7 +13,7 @@ import { assert, expect } from 'chai';
 import { Person } from '../src/TypeDefinitions/Person';
 import { Logger } from '../src/Logger';
 import { ParameterContainer } from '../src/ParameterContainer';
-import { Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
+import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
 
 describe('ChangePerson', () => {
 

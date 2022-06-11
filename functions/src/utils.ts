@@ -4,7 +4,7 @@ import { privateKey as expectedPrivateKey } from './privateKeys';
 import { guid } from './TypeDefinitions/guid';
 import { DatabaseType } from './TypeDefinitions/DatabaseType';
 import { Logger } from './Logger';
-import { UpdateProperties } from './TypeDefinitions/UpdateProperties';
+import { UpdateProperties } from './TypeDefinitions/Updatable';
 import { ParameterContainer } from './ParameterContainer';
 import { AuthData } from 'firebase-functions/lib/common/providers/tasks';
 

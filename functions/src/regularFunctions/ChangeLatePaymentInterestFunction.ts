@@ -13,7 +13,7 @@ import { guid } from '../TypeDefinitions/guid';
 import { DatabaseType } from '../TypeDefinitions/DatabaseType';
 import { ChangeType } from '../TypeDefinitions/ChangeType';
 import { Logger } from '../Logger';
-import { Updatable } from '../TypeDefinitions/UpdateProperties';
+import { Updatable } from '../TypeDefinitions/Updatable';
 import { AuthData } from 'firebase-functions/lib/common/providers/https';
 import {
     IStatisticProperty,

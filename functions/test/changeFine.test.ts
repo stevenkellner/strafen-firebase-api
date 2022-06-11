@@ -15,7 +15,7 @@ import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
 import { Fine } from '../src/TypeDefinitions/Fine';
 import { Logger } from '../src/Logger';
 import { ParameterContainer } from '../src/ParameterContainer';
-import { Updatable, UpdateProperties } from '../src/TypeDefinitions/UpdateProperties';
+import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
 
 describe('ChangeFine', () => {
 
