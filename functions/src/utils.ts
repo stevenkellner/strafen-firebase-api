@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import { privateKey as expectedPrivateKey } from './privateKeys';
+import { functionCallKey } from './privateKeys';
 import { guid } from './TypeDefinitions/guid';
 import { DatabaseType } from './TypeDefinitions/DatabaseType';
 import { Logger } from './Logger';
@@ -29,7 +29,9 @@ export async function checkPrerequirements(
 
     // Check if private key is valid.
     const privateKey = parameterContainer.parameter('privateKey', 'string', logger.nextIndent);
-    if (privateKey !== expectedPrivateKey)
+    const databaseType =
+        parameterContainer.parameter('databaseType', 'string', logger.nextIndent, DatabaseType.fromString);
+    if (privateKey !== functionCallKey(databaseType))
         throw httpsError('permission-denied', 'Private key is invalid.', logger);
 
     // Check if user is authorized to call a function.
@@ -203,6 +205,30 @@ export interface IFirebaseFunction<
     executeFunction(): Promise<ReturnType>;
 }
 
+type FirebaseFunctionReturnType<T> = T extends IFirebaseFunction<any, infer ReturnType, any> ? ReturnType : never;
+
+/**
+ *
+ * @template T
+ * @param { Promise<T> } promise
+ * @return { Promise<T> }
+ */
+function throwRejection<T>(promise: Promise<T>): Promise<T> {
+    let error: Error | undefined = undefined;
+    const p = promise.catch<Error>(reason => error = reason);
+    if (error !== undefined) throw error;
+    return p as Promise<T>;
+}
+
+/* // eslint-disable-next-line require-jsdoc
+function test(error: Error) {
+    console.log('asdf', error.name);
+    if (error instanceof functions.https.HttpsError) {
+        console.log(1);
+    }
+    console.log(2);
+}*/
+
 // eslint-disable-next-line valid-jsdoc
 /**
  * Create a server firebase function.
@@ -212,13 +238,18 @@ export interface IFirebaseFunction<
  * @return { functions.HttpsFunction & functions.Runnable<any> } Server firebase function.
  */
 export function createFunction<
-    FirebaseFunction extends IFirebaseFunction<any, any, any>
+    FirebaseFunction extends IFirebaseFunction<any, FirebaseFunctionReturnType<FirebaseFunction>, any>
 >(
     createFirebaseFunction: (data: any, auth: AuthData | undefined) => FirebaseFunction
 ): functions.HttpsFunction & functions.Runnable<any> {
     return functions.region('europe-west1').https.onCall(async (data, context) => {
+        // try {
         const firebaseFunction = createFirebaseFunction(data, context.auth);
-        return await firebaseFunction.executeFunction();
+        return await throwRejection(firebaseFunction.executeFunction());
+        // } catch (error: any) {
+        //     test(error);
+        //     throw error;
+        // }
     });
 }
 

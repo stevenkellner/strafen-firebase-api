@@ -6,10 +6,6 @@ export const defaultTestClub = {
             'number': 1,
             'payedState': {
                 'state': 'unpayed',
-                'updateProperties': {
-                    'timestamp': '2011-10-13T10:42:38+0000',
-                    'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
             },
             'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             'fineReason': {
@@ -27,10 +23,6 @@ export const defaultTestClub = {
                 'payDate': '2011-09-13T10:42:38+0000',
                 'state': 'payed',
                 'inApp': false,
-                'updateProperties': {
-                    'timestamp': '2011-10-13T10:42:38+0000',
-                    'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
             },
             'personId': '76025DDE-6893-46D2-BC34-9864BB5B8DAD',
             'fineReason': {
@@ -50,10 +42,6 @@ export const defaultTestClub = {
                 'payDate': '2011-09-13T10:42:38+0000',
                 'state': 'payed',
                 'inApp': true,
-                'updateProperties': {
-                    'timestamp': '2011-10-13T10:42:38+0000',
-                    'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
             },
             'personId': 'D1852AC0-A0E2-4091-AC7E-CB2C23F708D9',
             'fineReason': {
@@ -70,10 +58,6 @@ export const defaultTestClub = {
     'identifier': 'demo-team',
     'inAppPaymentActive': true,
     'name': 'Neuer Verein',
-    'updateProperties': {
-        'timestamp': '2011-10-13T10:42:38+0000',
-        'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-    },
     'personUserIds': {
         'asdnfl': '76025DDE-6893-46D2-BC34-9864BB5B8DAD',
         'LpAaeCz0BQfDHVYw02KiCyoTMS13': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
@@ -151,30 +135,4 @@ export const defaultTestClub = {
         },
     },
     'regionCode': 'DE',
-    'transactions': {
-        '2MQQXVPV': {
-            'approved': true,
-            'fineIds': ['0B5F958E-9D7D-46E1-8AEE-F52F4370A95A'],
-            'name': {
-                'first': 'Max',
-                'last': 'Mustermann',
-            },
-            'payDate': '2011-09-13T10:42:38+0000',
-            'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-            'updateProperties': {
-                'timestamp': '2011-10-13T10:42:38+0000',
-                'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-            },
-        },
-        '7RQYM2DQ': {
-            'approved': false,
-            'fineIds': ['02462A8B-107F-4BAE-A85B-EFF1F727C00F'],
-            'payDate': '2011-09-13T10:42:38+0000',
-            'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-            'updateProperties': {
-                'timestamp': '2011-10-13T10:42:38+0000',
-                'personId': '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-            },
-        },
-    },
 };

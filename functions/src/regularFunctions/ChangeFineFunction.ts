@@ -297,7 +297,7 @@ class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> 
             clubId: container.parameter('clubId', 'string', this.logger.nextIndent, guid.fromString),
             changeType: container.parameter('changeType', 'string', this.logger.nextIndent, ChangeType.fromString),
             updatableFine: Updatable.fromRawProperty(
-                container.parameter('fine', 'object', this.logger.nextIndent),
+                container.parameter('updatableFine', 'object', this.logger.nextIndent),
                 Fine.fromObject,
                 this.logger.nextIndent,
             ),

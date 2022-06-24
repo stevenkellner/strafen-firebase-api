@@ -42,7 +42,7 @@ export namespace Amount {
 
         // Build and return amount.
         const amountValue = Math.floor(value);
-        const subUnitValue = (value - amountValue) * 100;
+        const subUnitValue = (value * 100 - amountValue * 100);
         return new Amount(amountValue, Math.floor(subUnitValue));
     }
 
