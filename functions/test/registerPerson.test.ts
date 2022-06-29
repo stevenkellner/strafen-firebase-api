@@ -1,23 +1,23 @@
 import { assert, expect } from 'chai';
 import { signOut } from 'firebase/auth';
-import { privateKey } from '../src/privateKeys';
+import { functionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import { Logger } from '../src/Logger';
-import { ParameterContainer } from '../src/ParameterContainer';
 import { PersonName } from '../src/TypeDefinitions/PersonName';
 import { PersonPropertiesWithUserId } from '../src/TypeDefinitions/PersonPropertiesWithUserId';
 import { auth, callFunction, firebaseError, getDatabaseValue, signInTestUser } from './utils';
+import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 
 describe('RegisterPerson', () => {
 
-    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'registerPersonTest', {}, 'notice');
+    const logger = Logger.start(true, 'registerPersonTest', {}, 'notice');
 
     const clubId = guid.fromString('aab0bbc6-c1b4-4e6f-8919-77f01aa10749', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
@@ -26,7 +26,7 @@ describe('RegisterPerson', () => {
 
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);
@@ -36,7 +36,7 @@ describe('RegisterPerson', () => {
         try {
             const personId = guid.newGuid();
             await callFunction('registerPerson', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 personProperties: new PersonPropertiesWithUserId(
                     personId,
@@ -57,7 +57,7 @@ describe('RegisterPerson', () => {
     it('No person properties', async () => {
         try {
             await callFunction('registerPerson', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
             });
@@ -76,7 +76,7 @@ describe('RegisterPerson', () => {
         const personId = guid.newGuid();
         const signInDate = new Date();
         const returnValue = await callFunction('registerPerson', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             personProperties: new PersonPropertiesWithUserId(

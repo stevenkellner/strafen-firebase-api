@@ -1,6 +1,7 @@
 import { httpsError } from '../utils';
 import { guid } from './guid';
 import { Logger } from '../Logger';
+import { ValidBuilder } from '../ParameterParser';
 
 /**
  * Contains all properties of a club.
@@ -45,6 +46,11 @@ export class ClubProperties {
 }
 
 export namespace ClubProperties {
+
+    /**
+     * Properties used to build this type.
+     */
+    export const buildProperties: ValidBuilder<ClubProperties> = ['object', ClubProperties.fromObject];
 
     /**
      * Club properties object that will be stored in the database.

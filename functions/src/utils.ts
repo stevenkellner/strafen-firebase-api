@@ -1,37 +1,37 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import { functionCallKey } from './privateKeys';
+import { cryptionKeys, functionCallKey } from './privateKeys';
 import { guid } from './TypeDefinitions/guid';
 import { DatabaseType } from './TypeDefinitions/DatabaseType';
 import { Logger } from './Logger';
 import { UpdateProperties } from './TypeDefinitions/Updatable';
-import { ParameterContainer } from './ParameterContainer';
 import { AuthData } from 'firebase-functions/lib/common/providers/tasks';
+import { Crypter } from './crypter/Crypter';
+import { CanonicalErrorCodeName } from 'firebase-functions/lib/common/providers/https';
 
 /**
  * Checks prerequirements for firebase function:
  *  - Checks if private key is valid.
  *  - Checks if authentication isn't undefined.
  *  - If specified club id isn't undefined, checks if person is in that club.
- * @param { ParameterContainer } parameterContainer Parameter container to get private key and possible database type.
+ * @param { DatabaseType } databaseType Database type.
+ * @param { string } privateKey Private key.
  * @param { Logger } logger Logger to log this method.
  * @param { { uid: string } | undefined } auth Authentication state of person called the firebase function.
  * @param { guid | undefined } clubId Id of the club to check if person that challed the firebase function
  * is in that club.
  */
 export async function checkPrerequirements(
-    parameterContainer: ParameterContainer,
+    databaseType: DatabaseType,
+    privateKey: string,
     logger: Logger,
     auth?: AuthData,
     clubId?: guid
 ) {
-    logger.append('checkPrerequirements', { parameterContainer, auth, clubId });
+    logger.append('checkPrerequirements', { databaseType, auth, clubId });
 
     // Check if private key is valid.
-    const privateKey = parameterContainer.parameter('privateKey', 'string', logger.nextIndent);
-    const databaseType =
-        parameterContainer.parameter('databaseType', 'string', logger.nextIndent, DatabaseType.fromString);
-    if (privateKey !== functionCallKey(databaseType))
+    if (Crypter.sha512(privateKey) !== functionCallKey(databaseType))
         throw httpsError('permission-denied', 'Private key is invalid.', logger);
 
     // Check if user is authorized to call a function.
@@ -46,7 +46,7 @@ export async function checkPrerequirements(
     if (clubId !== undefined) {
         const personUserIdReference = reference(
             `${clubId.guidString}/personUserIds/${auth.uid}`,
-            parameterContainer,
+            databaseType,
             logger.nextIndent,
         );
         if (!await existsData(personUserIdReference))
@@ -62,21 +62,21 @@ export async function checkPrerequirements(
  * Check the update properties of updated database.
  * @param { string } updatePropertiesPath Path to update properties in the database.
  * @param { UpdateProperties } functionUpdateProperties Update properties of called firebase function.
- * @param { ParameterContainer } parameterContainer Parameter container to get database reference.
+ * @param { DatabaseType } databaseType Database type to get database reference.
  * @param { Logger } logger Logger to log this method.
  */
 export async function checkUpdateProperties(
     updatePropertiesPath: string,
     functionUpdateProperties: UpdateProperties,
-    parameterContainer: ParameterContainer,
+    databaseType: DatabaseType,
     logger: Logger
 ) {
-    logger.append('checkUpdateProperties', { updatePropertiesPath, functionUpdateProperties, parameterContainer });
+    logger.append('checkUpdateProperties', { updatePropertiesPath, functionUpdateProperties, databaseType });
 
     // Get server update properties.
     const updatePropertiesReference = reference(
         updatePropertiesPath,
-        parameterContainer,
+        databaseType,
         logger.nextIndent
     );
     const updatePropertiesSnapshot = await updatePropertiesReference.once('value');
@@ -104,24 +104,16 @@ export async function existsData(reference: admin.database.Reference): Promise<b
 /**
  * Get the database reference t0 specified path.
  * @param { string } path Path to get the database reference to.
- * @param { ParameterContainer } parameterContainer Parameter container to get the database type.
+ * @param { DatabaseType } databaseType Database type.
  * @param { Logger } logger Logger to log this method.
  * @return { admin.database.Reference } Database reference t0 specified path.
  */
 export function reference(
     path: string,
-    parameterContainer: ParameterContainer,
+    databaseType: DatabaseType,
     logger: Logger,
 ): admin.database.Reference {
-    logger.append('reference', { path, parameterContainer });
-
-    // Get database type
-    const databaseType = parameterContainer.parameter(
-        'databaseType',
-        'string',
-        logger.nextIndent,
-        DatabaseType.fromString
-    );
+    logger.append('reference', { path, databaseType });
 
     // Return reference.
     return admin.app().database(databaseType.databaseUrl).ref(path || undefined);
@@ -160,43 +152,17 @@ export class Deleted<ID> {
     public readonly databaseObject = { deleted: true };
 }
 
-export namespace IFirebaseFunction {
-
-    /**
-     * Parser to parse firebase function parameters from parameter container.
-     * @template Parameters Type of the fireabse function parameters.
-     */
-    export interface IParameterParser<Parameters> {
-
-        /**
-         * Parsed firebase function parameters from parameter container.
-         */
-        parameters: Parameters;
-
-        /**
-         * Parse firebase function parameters from parameter container.
-         * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
-         */
-        parseParameters(container: ParameterContainer): void;
-    }
-}
-
 /**
  * Declares an interface for a firebase function to execute this function.
  * @template Parameters Type of the parameters of this fireabse function.
  * @template ReturnType Type of the return value of this firebase function.
- * @template ParameterParser Parser to parse firebase function parameters from parameter container.
  */
-export interface IFirebaseFunction<
-    Parameters,
-    ReturnType,
-    ParameterParser extends IFirebaseFunction.IParameterParser<Parameters>
-> {
+export interface IFirebaseFunction<Parameters, ReturnType> {
 
     /**
      * Parser to parse firebase function parameters from parameter container.
      */
-    parameterParser: ParameterParser;
+    parameters: Parameters;
 
     /**
      * Execute this firebase function.
@@ -205,13 +171,13 @@ export interface IFirebaseFunction<
     executeFunction(): Promise<ReturnType>;
 }
 
-type FirebaseFunctionReturnType<T> = T extends IFirebaseFunction<any, infer ReturnType, any> ? ReturnType : never;
+type FirebaseFunctionReturnType<T> = T extends IFirebaseFunction<any, infer ReturnType> ? ReturnType : never;
 
 /**
- *
- * @template T
- * @param { Promise<T> } promise
- * @return { Promise<T> }
+ * Throws a error if promise is rejected.
+ * @template T Type of the promise.
+ * @param { Promise<T> } promise Promise to get error from.
+ * @return { Promise<T> } Return promise.
  */
 function throwRejection<T>(promise: Promise<T>): Promise<T> {
     let error: Error | undefined = undefined;
@@ -220,14 +186,51 @@ function throwRejection<T>(promise: Promise<T>): Promise<T> {
     return p as Promise<T>;
 }
 
-/* // eslint-disable-next-line require-jsdoc
-function test(error: Error) {
-    console.log('asdf', error.name);
-    if (error instanceof functions.https.HttpsError) {
-        console.log(1);
-    }
-    console.log(2);
-}*/
+interface FirebaseFunctionResultError {
+    status: CanonicalErrorCodeName,
+    message: string,
+    details?: unknown,
+    stack?: string,
+}
+
+/**
+ * Check if specified status is a canonical error code name.
+ * @param { string | undefined } status Status to check.
+ * @return { boolean } true if status is a canonical error code name, false otherwise.
+ */
+function isCanonicalErrorCodeName(status: string | undefined): status is CanonicalErrorCodeName {
+    if (status === undefined) return false;
+    return [
+        'OK', 'CANCELLED', 'UNKNOWN', 'INVALID_ARGUMENT', 'DEADLINE_EXCEEDED', 'NOT_FOUND', 'ALREADY_EXISTS',
+        'PERMISSION_DENIED', 'UNAUTHENTICATED', 'RESOURCE_EXHAUSTED', 'FAILED_PRECONDITION', 'ABORTED', 'OUT_OF_RANGE',
+        'UNIMPLEMENTED', 'INTERNAL', 'UNAVAILABLE', 'DATA_LOSS',
+    ].includes(status);
+}
+
+/**
+ * Convert any error to a firebase function result error.
+ * @param { any } error Error to conver.
+ * @return { FirebaseFunctionResultError } Converted firebase function result error.
+ */
+function convertToFunctionResultError(error: any): FirebaseFunctionResultError {
+    const hasMessage = error.message !== undefined && error.message !== null && error.message !== '';
+    const hasStack = error.stack !== undefined && error.stack !== null && error.stack !== '';
+    return {
+        status: isCanonicalErrorCodeName(error.status) ? error.status : 'UNKNOWN',
+        message: hasMessage ? `${error.message}` : 'Unknown error occured, see details for more infos.',
+        details: hasMessage ? error.details : error,
+        stack: hasStack !== undefined ? `${error.stack}` : undefined,
+    };
+}
+
+
+type FirebaseFunctionResult = {
+    state: 'success',
+    returnValue: any,
+} | {
+    state: 'failure',
+    error: FirebaseFunctionResultError,
+};
 
 // eslint-disable-next-line valid-jsdoc
 /**
@@ -238,18 +241,39 @@ function test(error: Error) {
  * @return { functions.HttpsFunction & functions.Runnable<any> } Server firebase function.
  */
 export function createFunction<
-    FirebaseFunction extends IFirebaseFunction<any, FirebaseFunctionReturnType<FirebaseFunction>, any>
+    FirebaseFunction extends IFirebaseFunction<any, FirebaseFunctionReturnType<FirebaseFunction>>
 >(
     createFirebaseFunction: (data: any, auth: AuthData | undefined) => FirebaseFunction
 ): functions.HttpsFunction & functions.Runnable<any> {
     return functions.region('europe-west1').https.onCall(async (data, context) => {
-        // try {
-        const firebaseFunction = createFirebaseFunction(data, context.auth);
-        return await throwRejection(firebaseFunction.executeFunction());
-        // } catch (error: any) {
-        //     test(error);
-        //     throw error;
-        // }
+
+        // Get database
+        const logger = Logger.start(false, 'createFunction', undefined, 'notice');
+        const databaseType = DatabaseType.fromValue(data.databaseType, logger.nextIndent);
+
+        // Get result of function call
+        let result: FirebaseFunctionResult;
+        try {
+
+            // Call firebase function and set result if succeded
+            const firebaseFunction = createFirebaseFunction(data, context.auth);
+            const returnValue = await throwRejection(firebaseFunction.executeFunction());
+            result = {
+                state: 'success',
+                returnValue: returnValue,
+            };
+        } catch (error: any) {
+
+            // Set result error.
+            result = {
+                state: 'failure',
+                error: convertToFunctionResultError(error),
+            };
+        }
+
+        // Encrypt result
+        const crypter = new Crypter(cryptionKeys(databaseType));
+        return crypter.encodeEncrypt(result);
     });
 }
 
@@ -308,6 +332,32 @@ export interface DataSnapshot {
      * @return { any } Value of this snapshot.
      */
     val(): any;
+}
+
+/**
+ * Encodes unishort buffer to string.
+ * @param { buffer } buffer Buffer to encode.
+ * @return { string } Encoded string.
+ */
+export function unishortString(buffer: Buffer): string {
+    let string = '';
+    for (const byte of buffer) {
+        string += String.fromCharCode(byte);
+    }
+    return string;
+}
+
+/**
+ * Encodes unishort string to buffer.
+ * @param { string } string String to encode.
+ * @return { buffer } Encoded buffer.
+ */
+export function unishortBuffer(string: string): Buffer {
+    const bytes: number[] = [];
+    for (let index = 0; index < string.length; index++) {
+        bytes.push(string.charCodeAt(index));
+    }
+    return Buffer.from(bytes);
 }
 
 /* eslint-disable no-extend-native */

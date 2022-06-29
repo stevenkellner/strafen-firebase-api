@@ -1,4 +1,4 @@
-import { privateKey } from '../src/privateKeys';
+import { functionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import {
     auth,
@@ -12,21 +12,21 @@ import {
 import { signOut } from 'firebase/auth';
 import { assert, expect } from 'chai';
 import { Logger } from '../src/Logger';
-import { ParameterContainer } from '../src/ParameterContainer';
 import { LatePaymentInterest } from '../src/TypeDefinitions/LatePaymentInterest';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
+import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 
 describe('ChangeLatePaymentInterest', () => {
 
     const logger =
-        Logger.start(new ParameterContainer({ verbose: true }), 'changeLatePaymentInterestTest', {}, 'notice');
+        Logger.start(true, 'changeLatePaymentInterestTest', {}, 'notice');
 
     const clubId = guid.fromString('36cf0982-d1de-4316-ba67-a38ce64712fd', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
@@ -35,7 +35,7 @@ describe('ChangeLatePaymentInterest', () => {
 
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);
@@ -44,7 +44,7 @@ describe('ChangeLatePaymentInterest', () => {
     it('No club id', async () => {
         try {
             await callFunction('changeLatePaymentInterest', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 changeType: 'upate',
                 interest: 'some Interest',
@@ -61,7 +61,7 @@ describe('ChangeLatePaymentInterest', () => {
     it('No change type', async () => {
         try {
             await callFunction('changeLatePaymentInterest', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 interest: 'some Interest',
@@ -78,7 +78,7 @@ describe('ChangeLatePaymentInterest', () => {
     it('Invalid change type', async () => {
         try {
             await callFunction('changeLatePaymentInterest', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'invalid',
@@ -96,7 +96,7 @@ describe('ChangeLatePaymentInterest', () => {
     it('No interest', async () => {
         try {
             await callFunction('changeLatePaymentInterest', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
@@ -114,7 +114,7 @@ describe('ChangeLatePaymentInterest', () => {
     it('Invalid interest', async () => {
         try {
             await callFunction('changeLatePaymentInterest', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
@@ -164,7 +164,7 @@ describe('ChangeLatePaymentInterest', () => {
             new UpdateProperties(timestamp, guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent))
         );
         await callFunction('changeLatePaymentInterest', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'update',
@@ -215,7 +215,7 @@ describe('ChangeLatePaymentInterest', () => {
         const interest = await setInterest(false, new Date('2011-10-14T10:42:38+0000'));
 
         await callFunction('changeLatePaymentInterest', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'delete',
@@ -252,7 +252,7 @@ describe('ChangeLatePaymentInterest', () => {
 
     it('delete before adding interest', async () => {
         await callFunction('changeLatePaymentInterest', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'delete',

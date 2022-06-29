@@ -1,5 +1,6 @@
 import { httpsError } from '../utils';
 import { Logger } from '../Logger';
+import { ValidBuilder } from '../ParameterParser';
 
 /**
  * Database type of firebase function.
@@ -26,6 +27,11 @@ export class DatabaseType {
 }
 
 export namespace DatabaseType {
+
+    /**
+     * Properties used to build this type.
+     */
+    export const buildProperties: ValidBuilder<DatabaseType> = ['string', DatabaseType.fromString];
 
     /**
      * Builds database type from specified value.

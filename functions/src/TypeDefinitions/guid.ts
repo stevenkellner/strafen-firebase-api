@@ -1,6 +1,6 @@
 import { httpsError } from '../utils';
 import { Logger } from '../Logger';
-import { ParameterContainer } from '../ParameterContainer';
+import { ValidBuilder } from '../ParameterParser';
 
 /**
  * Represents a guid; used to generate a new guid.
@@ -24,6 +24,11 @@ export class guid {
 }
 
 export namespace guid {
+
+    /**
+     * Properties used to build this type.
+     */
+    export const buildProperties: ValidBuilder<guid> = ['string', guid.fromString];
 
     /**
      * Constructs guid from an string or throws a HttpsError if parsing failed.
@@ -74,7 +79,7 @@ export namespace guid {
             const v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
-        const logger = Logger.start(new ParameterContainer({ verbose: true }), 'guid.newGuid');
+        const logger = Logger.start(true, 'guid.newGuid');
         return guid.fromString(guidString, logger);
     }
 }

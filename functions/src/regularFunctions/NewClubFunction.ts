@@ -12,6 +12,9 @@ import { Logger } from '../Logger';
 import { AuthData } from 'firebase-functions/lib/common/providers/https';
 import { ClubProperties } from '../TypeDefinitions/ClubProperties';
 import { PersonPropertiesWithUserId } from '../TypeDefinitions/PersonPropertiesWithUserId';
+import { ParameterParser } from '../ParameterParser';
+import { Crypter } from '../crypter/Crypter';
+import { cryptionKeys } from '../privateKeys';
 
 /**
  * @summary
@@ -32,18 +35,15 @@ import { PersonPropertiesWithUserId } from '../TypeDefinitions/PersonPropertiesW
  *    - already-exists: if already a club with given identifier exists
  */
 export class NewClubFunction implements IFirebaseFunction<
-    Parameters, ReturnType, ParameterParser
+    NewClubFunction.Parameters,
+    NewClubFunction.ReturnType
 > {
 
-    /**
-     * All parameters passed by firebase function.
-     */
-    private parameterContainer: ParameterContainer;
 
     /**
-     * Parser to parse firebase function parameters from parameter container.
+     * Firebase function parameters passed to the firebase function.
      */
-    public parameterParser: ParameterParser;
+    public parameters: NewClubFunction.Parameters;
 
     /**
      * Logger to log this class.
@@ -56,36 +56,42 @@ export class NewClubFunction implements IFirebaseFunction<
      * @param { AuthData | undefined } auth Authentication of person called this function.
      */
     public constructor(data: any, private readonly auth: AuthData | undefined) {
-        this.parameterContainer = new ParameterContainer(data);
         this.logger = Logger.start(
-            this.parameterContainer,
+            !!data.verbose,
             'NewClubFunction.constructor',
             { data, auth },
             'notice'
         );
-        this.parameterParser = new ParameterParser(this.logger.nextIndent);
-        this.parameterParser.parseParameters(this.parameterContainer);
-    }
-
-    /**
-     * Firebase function parameters passed to the firebase function.
-     */
-    public get parameters(): Parameters {
-        return this.parameterParser.parameters;
+        const parameterContainer = new ParameterContainer(data, this.logger.nextIndent);
+        const parameterParser = new ParameterParser<NewClubFunction.Parameters>(
+            {
+                privateKey: 'string',
+                databaseType: DatabaseType.buildProperties,
+                clubProperties: ClubProperties.buildProperties,
+                personProperties: PersonPropertiesWithUserId.buildProperties,
+            },
+            this.logger.nextIndent
+        );
+        parameterParser.parseParameters(parameterContainer);
+        this.parameters = parameterParser.parameters;
     }
 
     /**
      * Executes this firebase function.
      */
-    async executeFunction(): Promise<void> {
+    async executeFunction(): Promise<NewClubFunction.ReturnType> {
         this.logger.append('NewClubFunction.executeFunction', {}, 'info');
 
         // Check prerequirements
         await checkPrerequirements(
-            this.parameterContainer,
+            this.parameters.databaseType,
+            this.parameters.privateKey,
             this.logger.nextIndent,
             this.auth,
         );
+
+        // Get crypter
+        const crypter = new Crypter(cryptionKeys(this.parameters.databaseType));
 
         // Check if club with identifier already exists
         let clubExists = false;
@@ -108,14 +114,14 @@ export class NewClubFunction implements IFirebaseFunction<
                 [this.parameters.personProperties.userId]: this.parameters.personProperties.id.guidString,
             },
             persons: {
-                [this.parameters.personProperties.id.guidString]: {
+                [this.parameters.personProperties.id.guidString]: crypter.encodeEncrypt({
                     name: this.parameters.personProperties.name.databaseObject,
                     signInData: {
                         admin: true,
                         userId: this.parameters.personProperties.userId,
                         signInDate: this.parameters.personProperties.signInDate.toISOString(),
                     },
-                },
+                }),
             },
         };
 
@@ -136,7 +142,7 @@ export class NewClubFunction implements IFirebaseFunction<
     private get allClubsReference(): admin.database.Reference {
         return reference(
             '',
-            this.parameterContainer,
+            this.parameters.databaseType,
             this.logger.nextIndent,
         );
     }
@@ -147,101 +153,42 @@ export class NewClubFunction implements IFirebaseFunction<
     private get clubReference(): admin.database.Reference {
         return reference(
             this.parameters.clubProperties.id.guidString,
-            this.parameterContainer,
+            this.parameters.databaseType,
             this.logger.nextIndent
         );
     }
 }
 
-/**
- * Parameters of firebase function.
- */
-interface Parameters {
+export namespace NewClubFunction {
 
     /**
-     * Private key to check whether the caller is authenticated to use this function
+     * Parameters of firebase function.
      */
-    privateKey: string,
+    export interface Parameters {
 
-    /**
-     * Database type of the change
-     */
-    databaseType: DatabaseType,
+        /**
+         * Private key to check whether the caller is authenticated to use this function
+         */
+        privateKey: string,
 
-    /**
-     * Properties of the club to be created.
-     */
-    clubProperties: ClubProperties,
+        /**
+         * Database type of the change
+         */
+        databaseType: DatabaseType,
 
-    /**
-     * Properties of the person creating the club.
-     */
-    personProperties: PersonPropertiesWithUserId,
-}
+        /**
+         * Properties of the club to be created.
+         */
+        clubProperties: ClubProperties,
 
-/**
- * Return type of firebase function.
- */
-type ReturnType = void;
-
-/**
- * Parser to parse firebase function parameters from parameter container.
- * @template Parameters Type of the fireabse function parameters.
- */
-class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> {
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    private initialParameters?: Parameters;
-
-    /**
-     * Constructs parser with a logger.
-     * @param { Logger } logger Logger to log this class.
-     */
-    public constructor(private logger: Logger) {}
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    public get parameters(): Parameters {
-        if (this.initialParameters === undefined)
-            throw httpsError(
-                'internal',
-                'Tried to access parameters before those parameters were parsed.',
-                this.logger
-            );
-        return this.initialParameters;
+        /**
+         * Properties of the person creating the club.
+         */
+        personProperties: PersonPropertiesWithUserId,
     }
 
     /**
-     * Parse firebase function parameters from parameter container.
-     * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
+     * Return type of firebase function.
      */
-    public parseParameters(container: ParameterContainer): void {
-        this.logger.append('ParameterParser.parseParameters', { container });
-
-        // Parse parametes
-        this.initialParameters = {
-            privateKey: container.parameter('privateKey', 'string', this.logger.nextIndent),
-            databaseType: container.parameter(
-                'databaseType',
-                'string',
-                this.logger.nextIndent,
-                DatabaseType.fromString
-            ),
-            clubProperties: container.parameter(
-                'clubProperties',
-                'object',
-                this.logger.nextIndent,
-                ClubProperties.fromObject
-            ),
-            personProperties: container.parameter(
-                'personProperties',
-                'object',
-                this.logger.nextIndent,
-                PersonPropertiesWithUserId.fromObject
-            ),
-        };
-    }
+    export type ReturnType = void;
 }

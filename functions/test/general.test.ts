@@ -1,14 +1,14 @@
 import { signOut } from '@firebase/auth';
 import { expect, assert } from 'chai';
-import { privateKey } from '../src/privateKeys';
+import { functionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import { Logger } from '../src/Logger';
-import { ParameterContainer } from '../src/ParameterContainer';
 import { callFunction, signInTestUser, auth, firebaseError } from './utils';
+import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 
 describe('General', () => {
 
-    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'generalTest', {}, 'notice');
+    const logger = Logger.start(true, 'generalTest', {}, 'notice');
 
     beforeEach(async () => {
         if (auth.currentUser !== null)
@@ -18,7 +18,7 @@ describe('General', () => {
     afterEach(async () => {
         await signInTestUser();
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);
@@ -124,7 +124,7 @@ describe('General', () => {
     it('No user signed in', async () => {
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
@@ -149,7 +149,7 @@ describe('General', () => {
         try {
             await signInTestUser();
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
@@ -176,13 +176,13 @@ describe('General', () => {
             const fineId = guid.fromString('1B5F958E-9D7D-46E1-8AEE-F52F4370A95A', logger.nextIndent);
             await signInTestUser();
             await callFunction('newTestClub', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 testClubType: 'default',
             });
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 fineId: fineId.guidString,
@@ -202,7 +202,7 @@ describe('General', () => {
             });
         }
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);
@@ -214,13 +214,13 @@ describe('General', () => {
             const fineId = guid.fromString('1B5F958E-9D7D-46E1-8AEE-F52F4370A95A', logger.nextIndent);
             await signInTestUser();
             await callFunction('newTestClub', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 testClubType: 'default',
             });
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 fineId: fineId.guidString,
@@ -240,7 +240,7 @@ describe('General', () => {
             });
         }
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);

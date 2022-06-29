@@ -18,10 +18,10 @@ export function bits(byte: number): (0 | 1)[] {
 }
 
 /**
- * 
- * @param { 0 | 1 } bit1 
- * @param { 0 | 1 } bit2 
- * @return { 0 | 1 } 
+ *
+ * @param { 0 | 1 } bit1
+ * @param { 0 | 1 } bit2
+ * @return { 0 | 1 }
  */
 export function xor(bit1: 0 | 1, bit2: 0 | 1): 0 | 1 {
     if (bit1 == bit2) return 0;
@@ -29,9 +29,9 @@ export function xor(bit1: 0 | 1, bit2: 0 | 1): 0 | 1 {
 }
 
 /**
- * 
- * @param { Iterator<0 | 1> } iterator 
- * @return { Buffer } 
+ *
+ * @param { Iterator<0 | 1> } iterator
+ * @return { Buffer }
  */
 export function bitIteratorToBuffer(iterator: Iterator<0 | 1>): Buffer {
     const bytes: number[] = [];

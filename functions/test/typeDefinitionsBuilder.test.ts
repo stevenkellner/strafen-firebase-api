@@ -9,7 +9,6 @@ import { guid } from '../src/TypeDefinitions/guid';
 import { Importance } from '../src/TypeDefinitions/Importance';
 import { LatePaymentInterest } from '../src/TypeDefinitions/LatePaymentInterest';
 import { Logger } from '../src/Logger';
-import { ParameterContainer } from '../src/ParameterContainer';
 import { PayedState } from '../src/TypeDefinitions/PayedState';
 import { Person } from '../src/TypeDefinitions/Person';
 import { PersonName } from '../src/TypeDefinitions/PersonName';
@@ -22,7 +21,7 @@ import { errorCodeAndMessage } from './utils';
 
 describe('TypeDefinitionsBuilder', () => {
 
-    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'typeDefinitionsBuilderTest', {}, 'notice');
+    const logger = Logger.start(true, 'typeDefinitionsBuilderTest', {}, 'notice');
 
     describe('AmountBuilder', () => {
 

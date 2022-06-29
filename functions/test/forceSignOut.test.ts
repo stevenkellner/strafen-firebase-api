@@ -1,21 +1,21 @@
 import { assert, expect } from 'chai';
 import { signOut } from 'firebase/auth';
-import { privateKey } from '../src/privateKeys';
+import { functionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import { Logger } from '../src/Logger';
-import { ParameterContainer } from '../src/ParameterContainer';
+import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 import { auth, callFunction, firebaseError, getDatabaseOptionalValue, signInTestUser } from './utils';
 
 describe('ForceSignOut', () => {
 
-    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'forceSignOutTest', {}, 'notice');
+    const logger = Logger.start(true, 'forceSignOutTest', {}, 'notice');
 
     const clubId = guid.fromString('32c0bbc6-c1b4-4e6f-8919-77f01aa10749', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
@@ -24,7 +24,7 @@ describe('ForceSignOut', () => {
 
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);
@@ -33,7 +33,7 @@ describe('ForceSignOut', () => {
     it('No club id', async () => {
         try {
             await callFunction('forceSignOut', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 personId: guid.newGuid().guidString,
             });
@@ -49,7 +49,7 @@ describe('ForceSignOut', () => {
     it('No person id', async () => {
         try {
             await callFunction('forceSignOut', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
             });
@@ -65,7 +65,7 @@ describe('ForceSignOut', () => {
     it('With signed in person', async () => {
         const personId = '76025DDE-6893-46D2-BC34-9864BB5B8DAD';
         await callFunction('forceSignOut', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             personId: personId,
@@ -84,7 +84,7 @@ describe('ForceSignOut', () => {
 
         // Nothing should happen
         await callFunction('forceSignOut', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             personId: guid.newGuid().guidString,

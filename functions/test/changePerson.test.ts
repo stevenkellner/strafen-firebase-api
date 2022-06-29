@@ -1,4 +1,4 @@
-import { privateKey } from '../src/privateKeys';
+import { functionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import {
     auth,
@@ -12,19 +12,19 @@ import { signOut } from 'firebase/auth';
 import { assert, expect } from 'chai';
 import { Person } from '../src/TypeDefinitions/Person';
 import { Logger } from '../src/Logger';
-import { ParameterContainer } from '../src/ParameterContainer';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
+import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 
 describe('ChangePerson', () => {
 
-    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'changePersonTest', undefined, 'notice');
+    const logger = Logger.start(true, 'changePersonTest', undefined, 'notice');
 
     const clubId = guid.fromString('c5429fcd-3b4b-437c-83a7-0e5433cc4cac', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
@@ -33,7 +33,7 @@ describe('ChangePerson', () => {
 
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);
@@ -42,7 +42,7 @@ describe('ChangePerson', () => {
     it('No club id', async () => {
         try {
             await callFunction('changePerson', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 changeType: 'upate',
                 person: 'some Person',
@@ -59,7 +59,7 @@ describe('ChangePerson', () => {
     it('No change type', async () => {
         try {
             await callFunction('changePerson', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 person: 'some Person',
@@ -76,7 +76,7 @@ describe('ChangePerson', () => {
     it('Invalid change type', async () => {
         try {
             await callFunction('changePerson', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'invalid',
@@ -94,7 +94,7 @@ describe('ChangePerson', () => {
     it('No person', async () => {
         try {
             await callFunction('changePerson', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
@@ -111,7 +111,7 @@ describe('ChangePerson', () => {
     it('Invalid person', async () => {
         try {
             await callFunction('changePerson', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
@@ -130,7 +130,7 @@ describe('ChangePerson', () => {
     it('Already signed in', async () => {
         try {
             await callFunction('changePerson', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'delete',
@@ -175,7 +175,7 @@ describe('ChangePerson', () => {
             new UpdateProperties(timestamp, guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent))
         );
         await callFunction('changePerson', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'update',
@@ -223,7 +223,7 @@ describe('ChangePerson', () => {
         const person = await setPerson(true, new Date('2011-10-14T10:42:38+0000'));
 
         await callFunction('changePerson', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'delete',

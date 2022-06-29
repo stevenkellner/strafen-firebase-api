@@ -1,17 +1,17 @@
-import { privateKey } from '../src/privateKeys';
+import { functionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import { auth, callFunction, firebaseError, getDatabaseOptionalValue, getDatabaseValue, signInTestUser } from './utils';
 import { signOut } from 'firebase/auth';
 import { assert, expect } from 'chai';
 import { Logger } from '../src/Logger';
-import { ParameterContainer } from '../src/ParameterContainer';
 import { PersonPropertiesWithUserId } from '../src/TypeDefinitions/PersonPropertiesWithUserId';
 import { PersonName } from '../src/TypeDefinitions/PersonName';
+import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 import { ClubProperties } from '../src/TypeDefinitions/ClubProperties';
 
 describe('NewClub', () => {
 
-    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'newClubTest', {}, 'notice');
+    const logger = Logger.start(true, 'newClubTest', {}, 'notice');
 
     const clubId = guid.fromString('dd129fcd-3b4b-437c-83a7-0e5433cc4cac', logger.nextIndent);
 
@@ -21,7 +21,7 @@ describe('NewClub', () => {
 
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);
@@ -31,7 +31,7 @@ describe('NewClub', () => {
         try {
             const personId = guid.newGuid();
             await callFunction('newClub', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 changeType: 'upate',
                 personProperties: new PersonPropertiesWithUserId(
@@ -53,7 +53,7 @@ describe('NewClub', () => {
     it('No person properties', async () => {
         try {
             await callFunction('newClub', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 changeType: 'upate',
                 clubProperties: new ClubProperties(
@@ -79,7 +79,7 @@ describe('NewClub', () => {
         const personId = guid.newGuid();
         const signInDate = new Date();
         await callFunction('newClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
@@ -129,7 +129,7 @@ describe('NewClub', () => {
         const personId = guid.newGuid();
         const signInDate = new Date();
         await callFunction('newClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
@@ -154,7 +154,7 @@ describe('NewClub', () => {
         // Try create club with same identifier
         try {
             await callFunction('newClub', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 changeType: 'upate',
                 personProperties: new PersonPropertiesWithUserId(
@@ -186,7 +186,7 @@ describe('NewClub', () => {
         const personId = guid.newGuid();
         const signInDate = new Date();
         await callFunction('newClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
@@ -210,7 +210,7 @@ describe('NewClub', () => {
 
         // Create club with same id
         await callFunction('newClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(

@@ -1,21 +1,21 @@
 import { assert, expect } from 'chai';
 import { signOut } from 'firebase/auth';
-import { privateKey } from '../src/privateKeys';
+import { functionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import { Logger } from '../src/Logger';
-import { ParameterContainer } from '../src/ParameterContainer';
+import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 import { auth, callFunction, firebaseError, signInTestUser } from './utils';
 
 describe('GetPersonProperties', () => {
 
-    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'getPersonPropertiesTest', {}, 'notice');
+    const logger = Logger.start(true, 'getPersonPropertiesTest', {}, 'notice');
 
     const clubId = guid.fromString('7760bbc6-c1b4-4e6f-8919-77f01aa10749', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
@@ -24,7 +24,7 @@ describe('GetPersonProperties', () => {
 
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);
@@ -33,7 +33,7 @@ describe('GetPersonProperties', () => {
     it('No user id', async () => {
         try {
             await callFunction('getPersonProperties', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
             });
             assert.fail('A statement above should throw an exception.');
@@ -47,7 +47,7 @@ describe('GetPersonProperties', () => {
 
     it('With existsting identifier', async () => {
         const httpResult = await callFunction('getPersonProperties', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             userId: 'LpAaeCz0BQfDHVYw02KiCyoTMS13',
         });
@@ -74,7 +74,7 @@ describe('GetPersonProperties', () => {
     it('With not existsting identifier', async () => {
         try {
             await callFunction('getPersonProperties', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 userId: 'invalid',
             });

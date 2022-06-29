@@ -1,4 +1,4 @@
-import { privateKey } from '../src/privateKeys';
+import { functionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import {
     auth,
@@ -16,18 +16,18 @@ import { FineReason } from '../src/TypeDefinitions/FineReason';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
 import { Logger } from '../src/Logger';
-import { ParameterContainer } from '../src/ParameterContainer';
+import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 
 describe('ChangeFinePayed', () => {
 
-    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'changeFinePayedTest', {}, 'notice');
+    const logger = Logger.start(true, 'changeFinePayedTest', {}, 'notice');
 
     const clubId = guid.fromString('1992af26-8b42-4452-a564-7e376b6401db', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
@@ -36,7 +36,7 @@ describe('ChangeFinePayed', () => {
 
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);
@@ -45,7 +45,7 @@ describe('ChangeFinePayed', () => {
     it('No club id', async () => {
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 fineId: guid.newGuid().guidString,
                 state: {
@@ -68,7 +68,7 @@ describe('ChangeFinePayed', () => {
     it('No fine id', async () => {
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 state: {
@@ -91,7 +91,7 @@ describe('ChangeFinePayed', () => {
     it('No state', async () => {
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
@@ -113,7 +113,7 @@ describe('ChangeFinePayed', () => {
     it('Invalid state.state', async () => {
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
@@ -138,7 +138,7 @@ describe('ChangeFinePayed', () => {
     it('Invalid state payed no payDate', async () => {
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
@@ -163,7 +163,7 @@ describe('ChangeFinePayed', () => {
     it('Invalid state payed no inApp', async () => {
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
@@ -189,7 +189,7 @@ describe('ChangeFinePayed', () => {
     it('No update properties', async () => {
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
@@ -212,7 +212,7 @@ describe('ChangeFinePayed', () => {
     it('Invalid update properties', async () => {
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: guid.newGuid().guidString,
                 fineId: guid.newGuid().guidString,
@@ -238,7 +238,7 @@ describe('ChangeFinePayed', () => {
     it('Not existing fine', async () => {
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 fineId: guid.newGuid().guidString,
@@ -306,7 +306,7 @@ describe('ChangeFinePayed', () => {
         );
         if (addReason) {
             await callFunction('changeReasonTemplate', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
@@ -316,7 +316,7 @@ describe('ChangeFinePayed', () => {
 
         // Add fine with reason template
         await callFunction('changeFine', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'update',
@@ -357,7 +357,7 @@ describe('ChangeFinePayed', () => {
             )
         );
         await callFunction('changeFine', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'update',
@@ -386,7 +386,7 @@ describe('ChangeFinePayed', () => {
         // Change fine payed
         const fineId = guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
         await callFunction('changeFinePayed', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             verbose: true,
@@ -458,7 +458,7 @@ describe('ChangeFinePayed', () => {
         // Change fine payed
         const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
         await callFunction('changeFinePayed', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             fineId: fineId.guidString,
@@ -528,7 +528,7 @@ describe('ChangeFinePayed', () => {
         // Change fine payed
         const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
         await callFunction('changeFinePayed', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             fineId: fineId.guidString,
@@ -594,7 +594,7 @@ describe('ChangeFinePayed', () => {
         // Change fine payed
         const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
         await callFunction('changeFinePayed', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             fineId: fineId.guidString,
@@ -660,7 +660,7 @@ describe('ChangeFinePayed', () => {
         // Delete fine
         const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
         await callFunction('changeFine', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'delete',
@@ -688,7 +688,7 @@ describe('ChangeFinePayed', () => {
         // Change fine payed
         try {
             await callFunction('changeFinePayed', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 fineId: fineId.guidString,

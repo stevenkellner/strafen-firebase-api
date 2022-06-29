@@ -1,9 +1,10 @@
-import { createCipheriv, createDecipheriv } from 'crypto';
+import { createCipheriv, createDecipheriv, createHash } from 'crypto';
 import { RandomBitIterator } from './RandomBitIterator';
 import { UTF8WithLength16, UTF8WithLength32 } from './UTF8WithLength';
 import { BufferToBitIterator } from './BufferToBitIterator';
 import { CombineIterator } from './CombineIterator';
 import { bitIteratorToBuffer, randomKey, xor } from './utils';
+import { unishortBuffer, unishortString } from '../utils';
 
 /**
  * Used to en- and decrypt vernam and aes.
@@ -88,6 +89,29 @@ export class Crypter {
         const aesDecrypted = this.decryptAes(bytes);
         return this.decryptVernamCipher(aesDecrypted);
     }
+
+    /**
+     * Decryptes and decodes data.
+     * @param { string } data Data to decrypt and decode.
+     * @return { any } Decrypted and decoded data.
+     */
+    public decryptDecode(data: string): any {
+        const dataBuffer = unishortBuffer(data);
+        const decryptedData = this.decryptAesAndVernam(dataBuffer);
+        return JSON.parse(decryptedData.toString('utf8'));
+    }
+
+    /**
+     * Encodes and encryptes data.
+     * @param { any } data Data to encode or encrypt.
+     * @return { string } Encoded and encrypted data.
+     */
+    public encodeEncrypt(data: any): string {
+        const encodedData = JSON.stringify(data);
+        const dataBuffer = Buffer.from(encodedData, 'utf8');
+        const encryptedData = this.encryptVernamAndAes(dataBuffer);
+        return unishortString(encryptedData);
+    }
 }
 
 export namespace Crypter {
@@ -111,5 +135,16 @@ export namespace Crypter {
          * Key for vernam
          */
         vernamKey: UTF8WithLength32
+    }
+
+    /**
+     * Hashes value with sha512.
+     * @param { string } value Value to hash.
+     * @return { string } Sha512 hashed value.
+     */
+    export function sha512(value: string): string {
+        const hasher = createHash('sha512');
+        hasher.update(value);
+        return hasher.digest('base64');
     }
 }

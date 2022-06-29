@@ -1,4 +1,4 @@
-import { privateKey } from '../src/privateKeys';
+import { functionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import {
     auth,
@@ -11,20 +11,20 @@ import {
 import { signOut } from 'firebase/auth';
 import { assert, expect } from 'chai';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
-import { ParameterContainer } from '../src/ParameterContainer';
 import { Logger } from '../src/Logger';
+import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
 
 describe('ChangeReasonTemplate', () => {
 
-    const logger = Logger.start(new ParameterContainer({ verbose: true }), 'changeReasonTemplateTest', {}, 'notice');
+    const logger = Logger.start(true, 'changeReasonTemplateTest', {}, 'notice');
 
     const clubId = guid.fromString('9e00bbc6-c1b4-4e6f-8919-77f01aa10749', logger.nextIndent);
 
     beforeEach(async () => {
         await signInTestUser();
         await callFunction('newTestClub', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             testClubType: 'default',
@@ -33,7 +33,7 @@ describe('ChangeReasonTemplate', () => {
 
     afterEach(async () => {
         await callFunction('deleteTestClubs', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
         });
         await signOut(auth);
@@ -42,7 +42,7 @@ describe('ChangeReasonTemplate', () => {
     it('No club id', async () => {
         try {
             await callFunction('changeReasonTemplate', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 changeType: 'upate',
                 reasonTemplate: 'some Fine',
@@ -59,7 +59,7 @@ describe('ChangeReasonTemplate', () => {
     it('No change type', async () => {
         try {
             await callFunction('changeReasonTemplate', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 reasonTemplate: 'some Reason',
@@ -76,7 +76,7 @@ describe('ChangeReasonTemplate', () => {
     it('Invalid change type', async () => {
         try {
             await callFunction('changeReasonTemplate', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'invalid',
@@ -94,7 +94,7 @@ describe('ChangeReasonTemplate', () => {
     it('No reason template', async () => {
         try {
             await callFunction('changeReasonTemplate', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
@@ -112,7 +112,7 @@ describe('ChangeReasonTemplate', () => {
     it('Invalid reason template', async () => {
         try {
             await callFunction('changeReasonTemplate', {
-                privateKey: privateKey,
+                privateKey: functionCallKey(new DatabaseType('testing')),
                 databaseType: 'testing',
                 clubId: clubId.guidString,
                 changeType: 'update',
@@ -152,7 +152,7 @@ describe('ChangeReasonTemplate', () => {
             )
         );
         await callFunction('changeReasonTemplate', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'update',
@@ -201,7 +201,7 @@ describe('ChangeReasonTemplate', () => {
         const reasonTemplate = await setReasonTemplate(true, new Date('2011-10-15T10:42:38+0000'));
 
         await callFunction('changeReasonTemplate', {
-            privateKey: privateKey,
+            privateKey: functionCallKey(new DatabaseType('testing')),
             databaseType: 'testing',
             clubId: clubId.guidString,
             changeType: 'delete',

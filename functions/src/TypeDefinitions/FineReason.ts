@@ -1,10 +1,10 @@
-import { ParameterContainer } from '../ParameterContainer';
 import { Amount } from './Amount';
 import { Importance } from './Importance';
 import { guid } from './guid';
 import { ReasonTemplate } from './ReasonTemplate';
 import { httpsError, reference } from '../utils';
 import { Logger } from '../Logger';
+import { DatabaseType } from './DatabaseType';
 
 /**
  * Contains a reason of a fine, either with a template id or custom with reason message, amount and importance
@@ -39,16 +39,16 @@ export class FineReason {
     /**
      * Gets this fine reason for statistic.
      * @param { guid } clubId Id of the club the fine reason is in.
-     * @param { ParameterContainer } parameterContainer Parameter container to get club reference.
+     * @param { DatabaseType } databaseType Database type to get club reference.
      * @param { Logger } logger Logger to log this method.
      * @return { Promise<FineReason.Statistic> } This fine reason for statistics.
      */
     async statistic(
         clubId: guid,
-        parameterContainer: ParameterContainer,
+        databaseType: DatabaseType,
         logger: Logger
     ): Promise<FineReason.Statistic> {
-        return await FineReason.Statistic.fromFineReason(this, clubId, parameterContainer, logger);
+        return await FineReason.Statistic.fromFineReason(this, clubId, databaseType, logger);
     }
 }
 
@@ -181,17 +181,17 @@ export namespace FineReason {
          * Gets statistic of specified fine reason.
          * @param { FineReason } fineReason Fine reason to get statistic from.
          * @param { guid } clubId Id of the club the fine reason is in.
-         * @param { ParameterContainer } parameterContainer Parameter container to get club reference.
+         * @param { DatabaseType } databaseType Database type to get club reference.
          * @param { Logger } logger Logger to log this method.
          * @return { Promise<FineReason.Statistic> } This fine reason for statistics.
          */
         public static async fromFineReason(
             fineReason: FineReason,
             clubId: guid,
-            parameterContainer: ParameterContainer,
+            databaseType: DatabaseType,
             logger: Logger
         ): Promise<FineReason.Statistic> {
-            logger.append('FineReason.Statistic.fromFineReason', { fineReason, clubId, parameterContainer });
+            logger.append('FineReason.Statistic.fromFineReason', { fineReason, clubId, databaseType });
 
             // Return statistic if fine reason is custom.
             if (fineReason.value instanceof FineReason.Custom)
@@ -200,7 +200,7 @@ export namespace FineReason {
             // Get fine reason properties from database.
             const reasonTemplateReference = reference(
                 `${clubId.guidString}/reasonTemplates/${fineReason.value.reasonTemplateId.guidString}`,
-                parameterContainer,
+                databaseType,
                 logger.nextIndent,
             );
             const reasonTemplateSnapshot = await reasonTemplateReference.once('value');

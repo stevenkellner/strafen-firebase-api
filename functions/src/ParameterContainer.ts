@@ -1,5 +1,8 @@
 import { httpsError } from './utils';
 import { Logger } from './Logger';
+import { Crypter } from './crypter/Crypter';
+import { cryptionKeys } from './privateKeys';
+import { DatabaseType } from './TypeDefinitions/DatabaseType';
 
 /**
  * All valid parameter types: string, number, bigint, boolean, symbol, undefined or object.
@@ -11,11 +14,40 @@ type ValidParameterTypes = 'string' | 'number' | 'bigint' | 'boolean' | 'symbol'
  */
 export class ParameterContainer {
 
+    private readonly data: any;
+
     /**
      * Initializes parameter container with the data from a firebase function.
      * @param { any } data Data from firebase funtion to get parameters from.
+     * @param { Logger } logger Logger to log this method.
      */
-    public constructor(private data: any) {}
+    public constructor(data: any, logger: Logger) {
+        logger.append('ParameterContainer.constructor', { data });
+
+        if (data === undefined || data === null)
+            throw httpsError(
+                'invalid-argument',
+                'Couldn\'t parse parameter container data. No parameters hand over by the firebase function.',
+                logger
+            );
+
+        if (typeof data.parameters !== 'string')
+            throw httpsError(
+                'invalid-argument',
+                // eslint-disable-next-line max-len
+                `Couldn't parse parameter container data, expected type 'string', but bot ${data.parameters} from type '${typeof data.parameters}'`,
+                logger
+            );
+
+        const databaseType = DatabaseType.fromValue(data.databaseType, logger.nextIndent);
+        const crypter = new Crypter(cryptionKeys(databaseType));
+
+        this.data = {
+            verbose: data.verbose,
+            databaseType: data.databaseType,
+            ...crypter.decryptDecode(data.parameters),
+        };
+    }
 
     public optionalParameter(
         parameterName: PropertyKey,
@@ -128,14 +160,6 @@ export class ParameterContainer {
         builder?: (rawParameter: any, logger: Logger) => any,
     ): any | undefined {
         logger.append('ParameterContainer.optionalParameter', { parameterName, expectedType });
-
-        // Check if data is hand over by the firebase function.
-        if (this.data === undefined || this.data === null)
-            throw httpsError(
-                'invalid-argument',
-                `Couldn't parse '${parameterName.toString()}'. No parameters hand over by the firebase function.`,
-                logger
-            );
 
         // Return undefined if the parameter doesn't exist.
         if (!this.data.hasOwnProperty(parameterName))

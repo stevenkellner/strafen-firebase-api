@@ -1,7 +1,7 @@
 import { guid } from './TypeDefinitions/guid';
 import { Logger } from './Logger';
 import { reference } from './utils';
-import { ParameterContainer } from './ParameterContainer';
+import { DatabaseType } from './TypeDefinitions/DatabaseType';
 
 /**
  * Declares an interface for a statistic property that will be stored in the database.
@@ -45,7 +45,7 @@ export interface IStatistic<Property extends IStatisticProperty<StatisticDatabas
  * Saves specifed statistic properties to specified club path.
  * @param { IStatistic } statistic Properties of statistic to save.
  * @param { guid } clubId Id of the club to save statistic to.
- * @param { ParameterContainer } parameterContainer Parameter container of the firebase function to get the reference
+ * @param { DatabaseType } databaseType Database type to get the reference
  * to the statistic in the database.
  * @param { Logger } logger Logger to log this method.
  */
@@ -54,14 +54,14 @@ export async function saveStatistic<
 >(
     statistic: IStatistic<Properties>,
     clubId: guid,
-    parameterContainer: ParameterContainer,
+    databaseType: DatabaseType,
     logger: Logger
 ) {
     logger.append('saveStatistic', { statistic });
 
     // Get reference to statistic.
     const path = `${clubId.guidString}/statistics/${guid.newGuid().guidString}`;
-    const statisticReference = reference(path, parameterContainer, logger.nextIndent);
+    const statisticReference = reference(path, databaseType, logger.nextIndent);
 
     // Set statistic identifier, property and timestamp.
     await statisticReference.set({

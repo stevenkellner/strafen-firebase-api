@@ -1,4 +1,3 @@
-import { ParameterContainer } from './ParameterContainer';
 import { StringBuilder } from './StringBuilder';
 
 /**
@@ -71,20 +70,18 @@ export class Logger {
 
     /**
      * Begins the logger with a log message.
-     * @param { ParameterContainer } parameterContainer Parameter container to get verbose.
+     * @param { boolean } verbose Indicates whether logger is verbose.
      * @param { string } functionName Name of the function the log happend.
      * @param { { string: any }  } details Details of the log message.
      * @param { 'debug' | 'info' | 'notice' } level Level of the log message.
      * @return { Logger } New logger with log message.
      */
     public static start(
-        parameterContainer: ParameterContainer,
+        verbose: boolean,
         functionName: string,
         details: { [key: string]: any } = {},
         level: 'debug' | 'info' | 'notice' = 'debug'
     ): Logger {
-        const verbose = parameterContainer.optionalParameter('verbose', 'boolean', new EmptyLogger() as Logger) ??
-            false;
         const property: LoggingProperty = {
             functionName: functionName,
             level: new LogLevel(level),
@@ -165,38 +162,4 @@ export class Logger {
         }
         return builder.toString();
     }
-}
-
-// eslint-disable-next-line require-jsdoc
-class EmptyLogger {
-
-    // eslint-disable-next-line require-jsdoc
-    public static start(
-        _parameterContainer: ParameterContainer,
-        _functionName: string,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _details: { [key: string]: any } = {},
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _level: 'debug' | 'info' | 'notice' = 'debug'
-    ): EmptyLogger {
-        return new EmptyLogger();
-    }
-
-    // eslint-disable-next-line require-jsdoc
-    public get nextIndent(): EmptyLogger {
-        return new EmptyLogger();
-    }
-
-    // eslint-disable-next-line require-jsdoc
-    public append(
-        _functionName: string,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _details: { [key: string]: any } = {},
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _level: 'debug' | 'info' | 'notice' = 'debug'
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-    ) { }
-
-    // eslint-disable-next-line require-jsdoc
-    public joinedMessages: string = '';
 }

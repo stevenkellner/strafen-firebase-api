@@ -1,4 +1,3 @@
-import { ParameterContainer } from '../ParameterContainer';
 import { guid } from './guid';
 import { FineReason } from './FineReason';
 import { Deleted, httpsError, DataSnapshot, reference } from '../utils';
@@ -6,6 +5,7 @@ import { Person } from './Person';
 import { PayedState } from './PayedState';
 import { Logger } from '../Logger';
 import { Updatable } from './Updatable';
+import { DatabaseType } from './DatabaseType';
 
 /**
  * Contains all properties of a fine.
@@ -56,16 +56,16 @@ export class Fine {
     /**
      * Gets this fine for statistics.
      * @param { guid } clubId Id of the club the fine is in.
-     * @param { ParameterContainer } parameterContainer Parameter container to get club reference.
+     * @param { DatabaseType } databaseType Database type to get club reference.
      * @param { Logger } logger Logger to log this method.
      * @return { Promise<Fine.Statistic> } This fine for statistics.
      */
     public async statistic(
         clubId: guid,
-        parameterContainer: ParameterContainer,
+        databaseType: DatabaseType,
         logger: Logger
     ): Promise<Fine.Statistic> {
-        return await Fine.Statistic.fromFine(this, clubId, parameterContainer, logger);
+        return await Fine.Statistic.fromFine(this, clubId, databaseType, logger);
     }
 }
 
@@ -274,22 +274,22 @@ export namespace Fine {
          * Gets statistics for specified fine.
          * @param { Fine } fine Fine to get statisic from.
          * @param { guid } clubId Id of the club the fine is in.
-         * @param { ParameterContainer } parameterContainer Parameter container to get club reference.
+         * @param { DatabaseType } databaseType Database type to get club reference.
          * @param { Logger } logger Logger to log this method.
          * @return { Promise<Fine.Statistic> } Statistic of specified fine.
          */
         public static async fromFine(
             fine: Fine,
             clubId: guid,
-            parameterContainer: ParameterContainer,
+            databaseType: DatabaseType,
             logger: Logger
         ): Promise<Statistic> {
-            logger.append('Fine.Statistic.fromFine', { fine, clubId, parameterContainer });
+            logger.append('Fine.Statistic.fromFine', { fine, clubId, databaseType });
 
             // Get statistic person.
             const personReference = reference(
                 `${clubId.guidString}/persons/${fine.personId.guidString}`,
-                parameterContainer,
+                databaseType,
                 logger.nextIndent,
             );
             const personSnapshot = await personReference.once('value');
@@ -298,7 +298,7 @@ export namespace Fine {
                 throw httpsError('internal', 'Couldn\'t get person for fine statistic.', logger);
 
             // Get statistic fine reason.
-            const fineReason = await fine.fineReason.statistic(clubId, parameterContainer, logger.nextIndent);
+            const fineReason = await fine.fineReason.statistic(clubId, databaseType, logger.nextIndent);
 
             // Return statistic.
             return new Statistic(
