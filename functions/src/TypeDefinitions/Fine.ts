@@ -1,11 +1,12 @@
 import { guid } from './guid';
 import { FineReason } from './FineReason';
-import { Deleted, httpsError, DataSnapshot, reference } from '../utils';
+import { Deleted, httpsError, reference } from '../utils';
 import { Person } from './Person';
 import { PayedState } from './PayedState';
 import { Logger } from '../Logger';
-import { Updatable } from './Updatable';
 import { DatabaseType } from './DatabaseType';
+import { cryptionKeys } from '../privateKeys';
+import { Crypter } from '../crypter/Crypter';
 
 /**
  * Contains all properties of a fine.
@@ -16,7 +17,7 @@ export class Fine {
      * Constructs the fine with id, personId, payed state, number, date and fine reason.
      * @param { guid } id Id of the fine.
      * @param { guid } personId Associated person id of the fine.
-     * @param { Updatable<PayedState> } payedState Payed state of the fine.
+     * @param { PayedState } payedState Payed state of the fine.
      * @param { number } number Number of the fine.
      * @param { Date } date Date of the fine.
      * @param { FineReason } fineReason Fine reason of the fine.
@@ -24,7 +25,7 @@ export class Fine {
     public constructor(
         public readonly id: guid,
         public readonly personId: guid,
-        public readonly payedState: Updatable<PayedState>,
+        public payedState: PayedState,
         public readonly number: number,
         public readonly date: Date,
         public readonly fineReason: FineReason
@@ -84,7 +85,7 @@ export namespace Fine {
         /**
          * Payed state of the fine.
          */
-        payedState: Updatable.DatabaseObject<PayedState.DatabaseObject>,
+        payedState: PayedState.DatabaseObject,
 
         /**
          * Number of the fine.
@@ -155,9 +156,7 @@ export namespace Fine {
                 `Couldn't parse fine parameter 'payedState', expected type object but got '${value.payedState}' from type ${typeof value.payedState}`,
                 logger
             );
-        const payedState = Updatable.fromRawProperty(
-            value.payedState, PayedState.fromObject, logger.nextIndent
-        );
+        const payedState = PayedState.fromObject(value.payedState, logger.nextIndent);
 
         // Check if number is a positive number.
         if (typeof value.number !== 'number' || value.number <= 0 || value.number != Number.parseInt(value.number))
@@ -214,40 +213,6 @@ export namespace Fine {
     }
 
     /**
-     * Builds fine from specified snapshot.
-     * @param { DataSnapshot } snapshot Snapshot to build fine from.
-     * @param { Logger } logger Logger to log this method.
-     * @return { Fine | Deleted<guid> } Builded fine.
-     */
-    export function fromSnapshot(snapshot: DataSnapshot, logger: Logger): Fine | Deleted<guid> {
-        logger.append('Fine.fromSnapshot', { snapshot });
-
-        // Check if data exists in snapshot
-        if (!snapshot.exists())
-            throw httpsError('invalid-argument', 'Couldn\'t parse Fine since no data exists in snapshot.', logger);
-
-        // Get id.
-        const idString = snapshot.key;
-        if (idString == null)
-            throw httpsError('invalid-argument', 'Couldn\'t parse Fine since snapshot has an invalid key.', logger);
-
-        // Get data from snapshot.
-        const data = snapshot.val();
-        if (typeof data !== 'object')
-            throw httpsError(
-                'invalid-argument',
-                `Couldn't parse Fine from snapshot since data isn't an object: ${data}`,
-                logger
-            );
-
-        // Return fine.
-        return Fine.fromValue({
-            id: idString,
-            ...data,
-        }, logger.nextIndent);
-    }
-
-    /**
      * Statistic of a fine.
      */
     export class Statistic {
@@ -287,13 +252,17 @@ export namespace Fine {
             logger.append('Fine.Statistic.fromFine', { fine, clubId, databaseType });
 
             // Get statistic person.
+            const crypter = new Crypter(cryptionKeys(databaseType));
             const personReference = reference(
                 `${clubId.guidString}/persons/${fine.personId.guidString}`,
                 databaseType,
                 logger.nextIndent,
             );
             const personSnapshot = await personReference.once('value');
-            const person = Person.fromSnapshot(personSnapshot, logger.nextIndent);
+            const person = Person.fromObject({
+                id: personSnapshot.key,
+                ...crypter.decryptDecode(personSnapshot.val()),
+            }, logger.nextIndent);
             if (!(person instanceof Person))
                 throw httpsError('internal', 'Couldn\'t get person for fine statistic.', logger);
 
@@ -304,7 +273,7 @@ export namespace Fine {
             return new Statistic(
                 fine.id,
                 person.statistic,
-                fine.payedState.property,
+                fine.payedState,
                 fine.number,
                 fine.date,
                 fineReason

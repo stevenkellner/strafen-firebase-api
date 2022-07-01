@@ -1,4 +1,4 @@
-import { Deleted, httpsError, DataSnapshot } from '../utils';
+import { Deleted, httpsError } from '../utils';
 import { Logger } from '../Logger';
 
 /**
@@ -143,30 +143,6 @@ export namespace LatePaymentInterest {
 
         // Return late payment interest
         return LatePaymentInterest.fromObject(value, logger.nextIndent);
-    }
-
-    /**
-     * Builds late payment interest from specified snapshot.
-     * @param { DataSnapshot } snapshot Snapshot to build late payment interest from.
-     * @param { Logger } logger Logger to log this method.
-     * @return { LatePaymentInterest | Deleted<null> } Builded late payment interest.
-     */
-    export function fromSnapshot(snapshot: DataSnapshot, logger: Logger): LatePaymentInterest | Deleted<null> {
-        logger.append('LatePaymentInterest.fromSnapshot', { snapshot });
-
-        // Check if data exists in snapshot
-        if (!snapshot.exists())
-            throw httpsError('invalid-argument', 'Couldn\'t parse Person since no data exists in snapshot.', logger);
-
-        const data = snapshot.val();
-        if (typeof data !== 'object')
-            throw httpsError(
-                'invalid-argument',
-                `Couldn't parse Person from snapshot since data isn't an object: ${data}`,
-                logger
-            );
-
-        return LatePaymentInterest.fromObject(data, logger.nextIndent);
     }
 
     /**

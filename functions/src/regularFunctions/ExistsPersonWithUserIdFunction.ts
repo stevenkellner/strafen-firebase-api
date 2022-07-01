@@ -1,7 +1,6 @@
 import * as admin from 'firebase-admin';
 import {
     checkPrerequirements,
-    httpsError,
     IFirebaseFunction,
     reference,
 } from '../utils';
@@ -9,6 +8,7 @@ import { ParameterContainer } from '../ParameterContainer';
 import { DatabaseType } from '../TypeDefinitions/DatabaseType';
 import { Logger } from '../Logger';
 import { AuthData } from 'firebase-functions/lib/common/providers/https';
+import { ParameterParser } from '../ParameterParser';
 
 // eslint-disable-next-line valid-jsdoc
 /**
@@ -28,18 +28,14 @@ import { AuthData } from 'firebase-functions/lib/common/providers/https';
  *    - invalid-argument: if a required parameter isn't give over or if a parameter hasn't the right type
  */
 export class ExistsPersonWithUserIdFunction implements IFirebaseFunction<
-    Parameters, ReturnType, ParameterParser
+    ExistsPersonWithUserIdFunction.Parameters,
+    ExistsPersonWithUserIdFunction.ReturnType
 > {
 
     /**
-     * All parameters passed by firebase function.
+     * Firebase function parameters passed to the firebase function.
      */
-    private parameterContainer: ParameterContainer;
-
-    /**
-     * Parser to parse firebase function parameters from parameter container.
-     */
-    public parameterParser: ParameterParser;
+    public parameters: ExistsPersonWithUserIdFunction.Parameters;
 
     /**
      * Logger to log this class.
@@ -52,22 +48,23 @@ export class ExistsPersonWithUserIdFunction implements IFirebaseFunction<
      * @param { AuthData | undefined } auth Authentication of person called this function.
      */
     public constructor(data: any, private readonly auth: AuthData | undefined) {
-        this.parameterContainer = new ParameterContainer(data);
         this.logger = Logger.start(
-            this.parameterContainer,
+            !!data.verbose,
             'ExistsPersonWithUserIdFunction.constructor',
             { data, auth },
             'notice'
         );
-        this.parameterParser = new ParameterParser(this.logger.nextIndent);
-        this.parameterParser.parseParameters(this.parameterContainer);
-    }
-
-    /**
-     * Firebase function parameters passed to the firebase function.
-     */
-    public get parameters(): Parameters {
-        return this.parameterParser.parameters;
+        const parameterContainer = new ParameterContainer(data, this.logger.nextIndent);
+        const parameterParser = new ParameterParser<ExistsPersonWithUserIdFunction.Parameters>(
+            {
+                privateKey: 'string',
+                databaseType: ['string', DatabaseType.fromString],
+                userId: 'string',
+            },
+            this.logger.nextIndent
+        );
+        parameterParser.parseParameters(parameterContainer);
+        this.parameters = parameterParser.parameters;
     }
 
     /**
@@ -78,7 +75,7 @@ export class ExistsPersonWithUserIdFunction implements IFirebaseFunction<
 
         // Check prerequirements
         await checkPrerequirements(
-            this.parameterContainer,
+            this.parameters,
             this.logger.nextIndent,
             this.auth,
         );
@@ -98,85 +95,37 @@ export class ExistsPersonWithUserIdFunction implements IFirebaseFunction<
     private get allClubsReference(): admin.database.Reference {
         return reference(
             '',
-            this.parameterContainer,
+            this.parameters.databaseType,
             this.logger.nextIndent
         );
     }
 }
 
-/**
- * Parameters of firebase function.
- */
-interface Parameters {
+export namespace ExistsPersonWithUserIdFunction {
 
     /**
-     * Private key to check whether the caller is authenticated to use this function
+     * Parameters of firebase function.
      */
-    privateKey: string,
+    export interface Parameters {
 
-    /**
-     * Database type of the change
-     */
-    databaseType: DatabaseType,
+        /**
+         * Private key to check whether the caller is authenticated to use this function
+         */
+        privateKey: string,
 
-    /**
-     * User id of person to check if exitsts
-     */
-    userId: string
-}
+        /**
+         * Database type of the change
+         */
+        databaseType: DatabaseType,
 
-/**
- * Return type of firebase function.
- */
-type ReturnType = boolean;
-
-/**
- * Parser to parse firebase function parameters from parameter container.
- * @template Parameters Type of the fireabse function parameters.
- */
-class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> {
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    private initialParameters?: Parameters;
-
-    /**
-     * Constructs parser with a logger.
-     * @param { Logger } logger Logger to log this class.
-     */
-    public constructor(private logger: Logger) {}
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    public get parameters(): Parameters {
-        if (this.initialParameters === undefined)
-            throw httpsError(
-                'internal',
-                'Tried to access parameters before those parameters were parsed.',
-                this.logger
-            );
-        return this.initialParameters;
+        /**
+         * User id of person to check if exitsts
+         */
+        userId: string
     }
 
     /**
-     * Parse firebase function parameters from parameter container.
-     * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
+     * Return type of firebase function.
      */
-    public parseParameters(container: ParameterContainer): void {
-        this.logger.append('ParameterParser.parseParameters', { container });
-
-        // Parse parametes
-        this.initialParameters = {
-            privateKey: container.parameter('privateKey', 'string', this.logger.nextIndent),
-            databaseType: container.parameter(
-                'databaseType',
-                'string',
-                this.logger.nextIndent,
-                DatabaseType.fromString
-            ),
-            userId: container.parameter('userId', 'string', this.logger.nextIndent),
-        };
-    }
+    export type ReturnType = boolean;
 }

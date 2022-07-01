@@ -15,7 +15,7 @@ import { PersonName } from '../src/TypeDefinitions/PersonName';
 import { PersonPropertiesWithIsAdmin } from '../src/TypeDefinitions/PersonPropertiesWithIsAdmin';
 import { PersonPropertiesWithUserId } from '../src/TypeDefinitions/PersonPropertiesWithUserId';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
-import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
+import { Updatable } from '../src/TypeDefinitions/Updatable';
 import { Deleted } from '../src/utils';
 import { errorCodeAndMessage } from './utils';
 
@@ -538,25 +538,6 @@ describe('TypeDefinitionsBuilder', () => {
             }
         });
 
-        it('Value payed state with out update properties', () => {
-            try {
-                Fine.fromObject({
-                    id: '4ED90BA2-D536-4B2B-A93E-403987A056CC',
-                    personId: 'd3373dc9-099d-413b-bc4d-d921b2b27d29',
-                    payedState: {
-                        state: 'unpayed',
-                    },
-                }, logger.nextIndent);
-                assert.fail('A statement above should throw an exception.');
-            } catch (error) {
-                expect(errorCodeAndMessage(error)).to.be.deep.equal({
-                    code: 'invalid-argument',
-                    // eslint-disable-next-line max-len
-                    message: 'Couldn\'t parse update properties, expected type \'object\', but bot undefined from type \'undefined\'',
-                });
-            }
-        });
-
         it('Value has no number', () => {
             try {
                 Fine.fromObject({
@@ -833,10 +814,6 @@ describe('TypeDefinitionsBuilder', () => {
                 personId: 'd3373dc9-099d-413b-bc4d-d921b2b27d29',
                 payedState: {
                     state: 'settled',
-                    updateProperties: {
-                        timestamp: '2011-10-16T10:42:38+0000',
-                        personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                    },
                 },
                 number: 1,
                 date: '2011-10-16T10:42:38+0000',
@@ -847,13 +824,9 @@ describe('TypeDefinitionsBuilder', () => {
             expect(fine).to.be.deep.equal(new Fine(
                 guid.fromString('4ED90BA2-D536-4B2B-A93E-403987A056CC', logger.nextIndent),
                 guid.fromString('d3373dc9-099d-413b-bc4d-d921b2b27d29', logger.nextIndent),
-                new Updatable(new PayedState({
+                new PayedState({
                     state: 'settled',
                 }),
-                new UpdateProperties(
-                    new Date('2011-10-16T10:42:38+0000'),
-                    guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
-                )),
                 1, new Date('2011-10-16T10:42:38+0000'),
                 new FineReason({
                     reasonTemplateId: guid.fromString('9bfe9e0a-2e3f-48c3-b2a9-5c637497fd81', logger.nextIndent),

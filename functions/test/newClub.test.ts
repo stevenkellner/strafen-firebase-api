@@ -1,13 +1,17 @@
-import { functionCallKey } from '../src/privateKeys';
+import { unhashedFunctionCallKey, cryptionKeys } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
-import { auth, callFunction, firebaseError, getDatabaseOptionalValue, getDatabaseValue, signInTestUser } from './utils';
+import {
+    auth, callFunction, expectFunctionFailed, getDatabaseOptionalValue,
+    getDatabaseValue, signInTestUser, expectFunctionSuccess,
+} from './utils';
 import { signOut } from 'firebase/auth';
-import { assert, expect } from 'chai';
 import { Logger } from '../src/Logger';
 import { PersonPropertiesWithUserId } from '../src/TypeDefinitions/PersonPropertiesWithUserId';
 import { PersonName } from '../src/TypeDefinitions/PersonName';
 import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 import { ClubProperties } from '../src/TypeDefinitions/ClubProperties';
+import { Crypter } from '../src/crypter/Crypter';
+import { expect } from 'chai';
 
 describe('NewClub', () => {
 
@@ -20,57 +24,47 @@ describe('NewClub', () => {
     });
 
     afterEach(async () => {
-        await callFunction('deleteTestClubs', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('deleteTestClubs', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
         await signOut(auth);
     });
 
     it('No club properties', async () => {
-        try {
-            const personId = guid.newGuid();
-            await callFunction('newClub', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                changeType: 'upate',
-                personProperties: new PersonPropertiesWithUserId(
-                    personId,
-                    new Date(),
-                    'userId',
-                    new PersonName('first name', 'last name')
-                ).databaseObject,
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'clubProperties\'. Expected type \'object\', but got undefined or null.',
-            });
-        }
+        const personId = guid.newGuid();
+        const callResult = await callFunction('newClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            changeType: 'upate',
+            personProperties: new PersonPropertiesWithUserId(
+                personId,
+                new Date(),
+                'userId',
+                new PersonName('first name', 'last name')
+            ).databaseObject,
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'clubProperties\'. Expected type \'object\', but got undefined or null.',
+        });
     });
 
     it('No person properties', async () => {
-        try {
-            await callFunction('newClub', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                changeType: 'upate',
-                clubProperties: new ClubProperties(
-                    clubId,
-                    'test club of new club test',
-                    'identifier1',
-                    'DE',
-                    false,
-                ).databaseObject,
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'personProperties\'. Expected type \'object\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('newClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            changeType: 'upate',
+            clubProperties: new ClubProperties(
+                clubId,
+                'test club of new club test',
+                'identifier1',
+                'DE',
+                false,
+            ).databaseObject,
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'personProperties\'. Expected type \'object\', but got undefined or null.',
+        });
     });
 
     it('Create new club', async () => {
@@ -78,9 +72,8 @@ describe('NewClub', () => {
         // Create new club
         const personId = guid.newGuid();
         const signInDate = new Date();
-        await callFunction('newClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('newClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
@@ -96,9 +89,13 @@ describe('NewClub', () => {
                 false,
             ).databaseObject,
         });
+        expectFunctionSuccess(callResult).to.be.deep.equal(undefined);
 
         // Check club properties
+        const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
         const clubProperties = await getDatabaseValue(`${clubId.guidString}`);
+        clubProperties['persons'][personId.guidString] =
+            crypter.decryptDecode(clubProperties['persons'][personId.guidString]);
         expect(clubProperties).to.be.deep.equal({
             identifier: 'identifier1',
             inAppPaymentActive: false,
@@ -128,9 +125,8 @@ describe('NewClub', () => {
         // Create first club
         const personId = guid.newGuid();
         const signInDate = new Date();
-        await callFunction('newClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult1 = await callFunction('newClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
@@ -146,38 +142,34 @@ describe('NewClub', () => {
                 false,
             ).databaseObject,
         });
+        expectFunctionSuccess(callResult1).to.be.deep.equal(undefined);
 
         // Check club properties
         const clubProperties = await getDatabaseOptionalValue(`${clubId.guidString}`);
         expect(clubProperties).to.be.not.null;
 
         // Try create club with same identifier
-        try {
-            await callFunction('newClub', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                changeType: 'upate',
-                personProperties: new PersonPropertiesWithUserId(
-                    personId,
-                    signInDate,
-                    'userId asdf',
-                    new PersonName('first asdfname', 'last nbsgfsame')
-                ).databaseObject,
-                clubProperties: new ClubProperties(
-                    guid.newGuid(),
-                    'test clubasdf of new club test',
-                    'identifier1',
-                    'DE',
-                    true,
-                ).databaseObject,
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/already-exists',
-                message: 'Club identifier already exists',
-            });
-        }
+        const callResult2 = await callFunction('newClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            changeType: 'upate',
+            personProperties: new PersonPropertiesWithUserId(
+                personId,
+                signInDate,
+                'userId asdf',
+                new PersonName('first asdfname', 'last nbsgfsame')
+            ).databaseObject,
+            clubProperties: new ClubProperties(
+                guid.newGuid(),
+                'test clubasdf of new club test',
+                'identifier1',
+                'DE',
+                true,
+            ).databaseObject,
+        });
+        expectFunctionFailed(callResult2).to.be.deep.equal({
+            code: 'already-exists',
+            message: 'Club identifier already exists',
+        });
     });
 
     it('Same id', async () => {
@@ -185,9 +177,8 @@ describe('NewClub', () => {
         // Create first club
         const personId = guid.newGuid();
         const signInDate = new Date();
-        await callFunction('newClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult1 = await callFunction('newClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
@@ -203,15 +194,15 @@ describe('NewClub', () => {
                 false,
             ).databaseObject,
         });
+        expectFunctionSuccess(callResult1).to.be.equal(undefined);
 
         // Check club properties
         const clubProperties1 = await getDatabaseOptionalValue(`${clubId.guidString}`);
         expect(clubProperties1).to.be.not.null;
 
         // Create club with same id
-        await callFunction('newClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult2 = await callFunction('newClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             changeType: 'upate',
             personProperties: new PersonPropertiesWithUserId(
                 personId,
@@ -227,9 +218,13 @@ describe('NewClub', () => {
                 true,
             ).databaseObject,
         });
+        expectFunctionSuccess(callResult2).to.be.equal(undefined);
 
         // Check club properties
+        const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
         const clubProperties2 = await getDatabaseValue(`${clubId.guidString}`);
+        clubProperties2['persons'][personId.guidString] =
+            crypter.decryptDecode(clubProperties2['persons'][personId.guidString]);
         expect(clubProperties2).to.be.deep.equal({
             identifier: 'identifier1',
             inAppPaymentActive: false,

@@ -1,7 +1,7 @@
 import { Importance } from './Importance';
 import { Amount } from './Amount';
 import { guid } from './guid';
-import { Deleted, httpsError, DataSnapshot } from '../utils';
+import { Deleted, httpsError } from '../utils';
 import { Logger } from '../Logger';
 
 /**
@@ -162,47 +162,6 @@ export namespace ReasonTemplate {
 
         // Return reason template
         return ReasonTemplate.fromObject(value, logger.nextIndent);
-    }
-
-    /**
-     * Builds reason template from specified snapshot.
-     * @param { DataSnapshot } snapshot Snapshot to build reason template from.
-     * @param { Logger } logger Logger to log this method.
-     * @return { ReasonTemplate | Deleted<guid> } Builded reason template.
-     */
-    export function fromSnapshot(snapshot: DataSnapshot, logger: Logger): ReasonTemplate | Deleted<guid> {
-        logger.append('ReasonTemplate.fromSnapshot', { snapshot });
-
-        // Check if data exists in snapshot
-        if (!snapshot.exists())
-            throw httpsError(
-                'invalid-argument',
-                'Couldn\'t parse ReasonTemplate since no data exists in snapshot.',
-                logger
-            );
-
-        // Get id
-        const idString = snapshot.key;
-        if (idString == null)
-            throw httpsError(
-                'invalid-argument',
-                'Couldn\'t parse ReasonTemplate since snapshot has an invalid key.',
-                logger
-            );
-
-        // Get data from snapshot
-        const data = snapshot.val();
-        if (typeof data !== 'object')
-            throw httpsError(
-                'invalid-argument',
-                `Couldn't parse ReasonTemplate from snapshot since data isn't an object: ${data}`,
-                logger
-            );
-
-        return ReasonTemplate.fromObject({
-            id: idString,
-            ...data,
-        }, logger.nextIndent);
     }
 
     /**

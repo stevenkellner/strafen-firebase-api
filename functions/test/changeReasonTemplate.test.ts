@@ -1,15 +1,15 @@
-import { functionCallKey } from '../src/privateKeys';
+import { unhashedFunctionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import {
     auth,
     callFunction,
-    firebaseError,
+    expectFunctionFailed, expectFunctionSuccess,
     getDatabaseReasonTemplates,
     getDatabaseStatisticsPropertyWithIdentifier,
     signInTestUser,
 } from './utils';
 import { signOut } from 'firebase/auth';
-import { assert, expect } from 'chai';
+import { expect } from 'chai';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
 import { Logger } from '../src/Logger';
 import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
@@ -23,109 +23,84 @@ describe('ChangeReasonTemplate', () => {
 
     beforeEach(async () => {
         await signInTestUser();
-        await callFunction('newTestClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('newTestClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             testClubType: 'default',
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
     });
 
     afterEach(async () => {
-        await callFunction('deleteTestClubs', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('deleteTestClubs', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
         await signOut(auth);
     });
 
     it('No club id', async () => {
-        try {
-            await callFunction('changeReasonTemplate', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                changeType: 'upate',
-                reasonTemplate: 'some Fine',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeReasonTemplate', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            changeType: 'upate',
+            reasonTemplate: 'some Fine',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('No change type', async () => {
-        try {
-            await callFunction('changeReasonTemplate', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                reasonTemplate: 'some Reason',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'changeType\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeReasonTemplate', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            reasonTemplate: 'some Reason',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'changeType\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('Invalid change type', async () => {
-        try {
-            await callFunction('changeReasonTemplate', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'invalid',
-                reasonTemplate: 'some Reason',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse ChangeType, expected \'delete\' or \'update\', but got invalid instead.',
-            });
-        }
+        const callResult = await callFunction('changeReasonTemplate', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'invalid',
+            reasonTemplate: 'some Reason',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse ChangeType, expected \'delete\' or \'update\', but got invalid instead.',
+        });
     });
 
     it('No reason template', async () => {
-        try {
-            await callFunction('changeReasonTemplate', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'update',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse \'reasonTemplate\'. Expected type \'object\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeReasonTemplate', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'update',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse \'updatableReasonTemplate\'. Expected type \'object\', but got undefined or null.',
+        });
     });
 
     it('Invalid reason template', async () => {
-        try {
-            await callFunction('changeReasonTemplate', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'update',
-                reasonTemplate: 'invalid',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse \'reasonTemplate\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
-            });
-        }
+        const callResult = await callFunction('changeReasonTemplate', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'update',
+            updatableReasonTemplate: 'invalid',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse \'updatableReasonTemplate\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
+        });
     });
 
     // eslint-disable-next-line require-jsdoc
@@ -151,13 +126,13 @@ describe('ChangeReasonTemplate', () => {
                 guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
             )
         );
-        await callFunction('changeReasonTemplate', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeReasonTemplate', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'update',
-            reasonTemplate: updatableReasonTemplate.databaseObject,
+            updatableReasonTemplate: updatableReasonTemplate.databaseObject,
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check reason template
         const reasonTemplateList = await getDatabaseReasonTemplates(clubId, logger.nextIndent);
@@ -176,6 +151,7 @@ describe('ChangeReasonTemplate', () => {
             await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeReasonTemplate', logger.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
+            previousReasonTemplate: null,
             changedReasonTemplate: reasonTemplate.databaseObject,
         });
     });
@@ -200,12 +176,11 @@ describe('ChangeReasonTemplate', () => {
     it('Reason template delete', async () => {
         const reasonTemplate = await setReasonTemplate(true, new Date('2011-10-15T10:42:38+0000'));
 
-        await callFunction('changeReasonTemplate', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeReasonTemplate', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'delete',
-            reasonTemplate: {
+            updatableReasonTemplate: {
                 id: reasonTemplate.id.guidString,
                 deleted: true,
                 updateProperties: {
@@ -214,6 +189,7 @@ describe('ChangeReasonTemplate', () => {
                 },
             },
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check reasonTemplate
         const reasonTemplateList = await getDatabaseReasonTemplates(clubId, logger.nextIndent);
@@ -232,6 +208,7 @@ describe('ChangeReasonTemplate', () => {
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
             previousReasonTemplate: reasonTemplate.databaseObject,
+            changedReasonTemplate: null,
         });
     });
 });

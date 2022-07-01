@@ -1,20 +1,20 @@
-import { functionCallKey } from '../src/privateKeys';
+import { unhashedFunctionCallKey, cryptionKeys } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import {
     auth,
     callFunction,
-    firebaseError,
     getDatabaseOptionalValue,
     getDatabaseStatisticsPropertyWithIdentifier,
     getDatabaseValue,
-    signInTestUser,
+    signInTestUser, expectFunctionSuccess, expectFunctionFailed,
 } from './utils';
 import { signOut } from 'firebase/auth';
-import { assert, expect } from 'chai';
+import { expect } from 'chai';
 import { Logger } from '../src/Logger';
 import { LatePaymentInterest } from '../src/TypeDefinitions/LatePaymentInterest';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
 import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
+import { Crypter } from '../src/crypter/Crypter';
 
 describe('ChangeLatePaymentInterest', () => {
 
@@ -25,109 +25,84 @@ describe('ChangeLatePaymentInterest', () => {
 
     beforeEach(async () => {
         await signInTestUser();
-        await callFunction('newTestClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('newTestClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             testClubType: 'default',
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
     });
 
     afterEach(async () => {
-        await callFunction('deleteTestClubs', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('deleteTestClubs', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
         await signOut(auth);
     });
 
     it('No club id', async () => {
-        try {
-            await callFunction('changeLatePaymentInterest', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                changeType: 'upate',
-                interest: 'some Interest',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeLatePaymentInterest', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            changeType: 'upate',
+            interest: 'some Interest',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('No change type', async () => {
-        try {
-            await callFunction('changeLatePaymentInterest', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                interest: 'some Interest',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'changeType\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeLatePaymentInterest', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            interest: 'some Interest',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'changeType\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('Invalid change type', async () => {
-        try {
-            await callFunction('changeLatePaymentInterest', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'invalid',
-                interest: 'some Interest',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse ChangeType, expected \'delete\' or \'update\', but got invalid instead.',
-            });
-        }
+        const callResult = await callFunction('changeLatePaymentInterest', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'invalid',
+            interest: 'some Interest',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse ChangeType, expected \'delete\' or \'update\', but got invalid instead.',
+        });
     });
 
     it('No interest', async () => {
-        try {
-            await callFunction('changeLatePaymentInterest', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'update',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse \'updatableInterest\'. Expected type \'object\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeLatePaymentInterest', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'update',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse \'updatableInterest\'. Expected type \'object\', but got undefined or null.',
+        });
     });
 
     it('Invalid interest', async () => {
-        try {
-            await callFunction('changeLatePaymentInterest', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'update',
-                updatableInterest: 'invalid',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse \'updatableInterest\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
-            });
-        }
+        const callResult = await callFunction('changeLatePaymentInterest', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'update',
+            updatableInterest: 'invalid',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse \'updatableInterest\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
+        });
     });
 
     // eslint-disable-next-line require-jsdoc
@@ -163,21 +138,22 @@ describe('ChangeLatePaymentInterest', () => {
             interest,
             new UpdateProperties(timestamp, guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent))
         );
-        await callFunction('changeLatePaymentInterest', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeLatePaymentInterest', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'update',
             updatableInterest: updatableInterest.databaseObject,
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
-        // TOOD: Check interest
+        // Check interest
+        const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
         const fetchedInterest = Updatable.fromRawProperty(
-            await getDatabaseValue(`${clubId.guidString}/latePaymentInterest`),
+            crypter.decryptDecode(await getDatabaseValue(`${clubId.guidString}/latePaymentInterest`)),
             LatePaymentInterest.fromValue,
             logger.nextIndent,
         );
-        expect(fetchedInterest?.property).to.deep.equal(interest);
+        expect(fetchedInterest.property).to.deep.equal(interest);
 
         return interest;
     }
@@ -191,6 +167,7 @@ describe('ChangeLatePaymentInterest', () => {
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
             changedInterest: interest.databaseObject,
+            previousInterest: null,
         });
     });
 
@@ -214,9 +191,8 @@ describe('ChangeLatePaymentInterest', () => {
     it('Interest delete', async () => {
         const interest = await setInterest(false, new Date('2011-10-14T10:42:38+0000'));
 
-        await callFunction('changeLatePaymentInterest', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeLatePaymentInterest', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'delete',
             updatableInterest: {
@@ -227,10 +203,12 @@ describe('ChangeLatePaymentInterest', () => {
                 },
             },
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check interest
+        const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
         const fetchedInterest = Updatable.fromRawProperty(
-            await getDatabaseValue(`${clubId.guidString}/latePaymentInterest`),
+            crypter.decryptDecode(await getDatabaseValue(`${clubId.guidString}/latePaymentInterest`)),
             LatePaymentInterest.fromValue,
             logger.nextIndent,
         );
@@ -246,14 +224,14 @@ describe('ChangeLatePaymentInterest', () => {
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
+            changedInterest: null,
             previousInterest: interest.databaseObject,
         });
     });
 
     it('delete before adding interest', async () => {
-        await callFunction('changeLatePaymentInterest', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeLatePaymentInterest', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'delete',
             updatableInterest: {
@@ -264,9 +242,11 @@ describe('ChangeLatePaymentInterest', () => {
                 },
             },
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check interest
+        const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
         const interest = await getDatabaseOptionalValue(`${clubId.guidString}/latePaymentInterest`);
-        expect(interest).to.be.null;
+        expect(crypter.decryptDecode(interest)).to.be.deep.equal({});
     });
 });

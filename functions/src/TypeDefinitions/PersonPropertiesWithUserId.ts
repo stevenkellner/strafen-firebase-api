@@ -2,7 +2,6 @@ import { httpsError } from '../utils';
 import { guid } from './guid';
 import { Logger } from '../Logger';
 import { PersonName } from './PersonName';
-import { ValidBuilder } from '../ParameterParser';
 
 /**
  * Person properties with id, name, sign in date and user id.
@@ -37,12 +36,6 @@ export class PersonPropertiesWithUserId {
 }
 
 export namespace PersonPropertiesWithUserId {
-
-    /**
-     * Properties used to build this type.
-     */
-    export const buildProperties: ValidBuilder<PersonPropertiesWithUserId> =
-        ['object', PersonPropertiesWithUserId.fromObject];
 
     /**
      * Person properties object that will be stored in the database.

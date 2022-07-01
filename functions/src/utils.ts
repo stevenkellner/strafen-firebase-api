@@ -7,31 +7,33 @@ import { Logger } from './Logger';
 import { UpdateProperties } from './TypeDefinitions/Updatable';
 import { AuthData } from 'firebase-functions/lib/common/providers/tasks';
 import { Crypter } from './crypter/Crypter';
-import { CanonicalErrorCodeName } from 'firebase-functions/lib/common/providers/https';
+import { FunctionsErrorCode } from 'firebase-functions/lib/common/providers/https';
+import { Result } from './Result';
 
 /**
  * Checks prerequirements for firebase function:
  *  - Checks if private key is valid.
  *  - Checks if authentication isn't undefined.
  *  - If specified club id isn't undefined, checks if person is in that club.
- * @param { DatabaseType } databaseType Database type.
- * @param { string } privateKey Private key.
+ * @param { { databaseType: DatabaseType, privateKey: string } } parameters Database type and private key.
  * @param { Logger } logger Logger to log this method.
  * @param { { uid: string } | undefined } auth Authentication state of person called the firebase function.
  * @param { guid | undefined } clubId Id of the club to check if person that challed the firebase function
  * is in that club.
  */
 export async function checkPrerequirements(
-    databaseType: DatabaseType,
-    privateKey: string,
+    parameters: {
+        databaseType: DatabaseType,
+        privateKey: string,
+    },
     logger: Logger,
     auth?: AuthData,
     clubId?: guid
 ) {
-    logger.append('checkPrerequirements', { databaseType, auth, clubId });
+    logger.append('checkPrerequirements', { parameters, auth, clubId });
 
     // Check if private key is valid.
-    if (Crypter.sha512(privateKey) !== functionCallKey(databaseType))
+    if (Crypter.sha512(parameters.privateKey) !== functionCallKey(parameters.databaseType))
         throw httpsError('permission-denied', 'Private key is invalid.', logger);
 
     // Check if user is authorized to call a function.
@@ -46,7 +48,7 @@ export async function checkPrerequirements(
     if (clubId !== undefined) {
         const personUserIdReference = reference(
             `${clubId.guidString}/personUserIds/${auth.uid}`,
-            databaseType,
+            parameters.databaseType,
             logger.nextIndent,
         );
         if (!await existsData(personUserIdReference))
@@ -60,31 +62,24 @@ export async function checkPrerequirements(
 
 /**
  * Check the update properties of updated database.
- * @param { string } updatePropertiesPath Path to update properties in the database.
- * @param { UpdateProperties } functionUpdateProperties Update properties of called firebase function.
+ * @param { UpdateProperties | undefined } currentUpdateProperties Current update properties.
+ * @param { UpdateProperties } newUpdateProperties Update properties of called firebase function.
  * @param { DatabaseType } databaseType Database type to get database reference.
  * @param { Logger } logger Logger to log this method.
  */
-export async function checkUpdateProperties(
-    updatePropertiesPath: string,
-    functionUpdateProperties: UpdateProperties,
+export function checkUpdateProperties(
+    currentUpdateProperties: UpdateProperties | undefined,
+    newUpdateProperties: UpdateProperties,
     databaseType: DatabaseType,
     logger: Logger
 ) {
-    logger.append('checkUpdateProperties', { updatePropertiesPath, functionUpdateProperties, databaseType });
+    logger.append('checkUpdateProperties', { currentUpdateProperties, newUpdateProperties, databaseType });
 
     // Get server update properties.
-    const updatePropertiesReference = reference(
-        updatePropertiesPath,
-        databaseType,
-        logger.nextIndent
-    );
-    const updatePropertiesSnapshot = await updatePropertiesReference.once('value');
-    if (!updatePropertiesSnapshot.exists()) return;
-    const serverUpdateProperties = UpdateProperties.fromValue(updatePropertiesSnapshot.val(), logger.nextIndent);
+    if (currentUpdateProperties === undefined) return;
 
     // Check update properties timestamp.
-    if (functionUpdateProperties.timestamp <= serverUpdateProperties.timestamp)
+    if (newUpdateProperties.timestamp <= currentUpdateProperties.timestamp)
         throw httpsError(
             'cancelled',
             'Server value is newer or same old than updated value.',
@@ -174,36 +169,44 @@ export interface IFirebaseFunction<Parameters, ReturnType> {
 type FirebaseFunctionReturnType<T> = T extends IFirebaseFunction<any, infer ReturnType> ? ReturnType : never;
 
 /**
- * Throws a error if promise is rejected.
+ * Get the result of a promise:
+ *     - Result.success if promise resolves.
+ *     - Result.failure if promise rejects.
  * @template T Type of the promise.
- * @param { Promise<T> } promise Promise to get error from.
- * @return { Promise<T> } Return promise.
+ * @param { Promise<T> } promise Promise to get result from.
+ * @return { Promise<Result<T, Error>> } Return promise.
  */
-function throwRejection<T>(promise: Promise<T>): Promise<T> {
-    let error: Error | undefined = undefined;
-    const p = promise.catch<Error>(reason => error = reason);
-    if (error !== undefined) throw error;
-    return p as Promise<T>;
+async function toResult<T>(promise: Promise<T>):
+    Promise<Result<FirebaseFunctionResultSuccess, FirebaseFunctionResultFailure>> {
+    return promise
+        .then(value => Result.success<FirebaseFunctionResultSuccess, FirebaseFunctionResultFailure>({
+            state: 'success',
+            returnValue: value,
+        }))
+        .catch(reason => Result.failure<FirebaseFunctionResultSuccess, FirebaseFunctionResultFailure>({
+            state: 'failure',
+            error: convertToFunctionResultError(reason),
+        }));
 }
 
 interface FirebaseFunctionResultError {
-    status: CanonicalErrorCodeName,
+    code: FunctionsErrorCode,
     message: string,
     details?: unknown,
     stack?: string,
 }
 
 /**
- * Check if specified status is a canonical error code name.
+ * Check if specified status is a functions error code.
  * @param { string | undefined } status Status to check.
- * @return { boolean } true if status is a canonical error code name, false otherwise.
+ * @return { boolean } true if status is a functions error code, false otherwise.
  */
-function isCanonicalErrorCodeName(status: string | undefined): status is CanonicalErrorCodeName {
+function isFunctionsErrorCode(status: string | undefined): status is FunctionsErrorCode {
     if (status === undefined) return false;
     return [
-        'OK', 'CANCELLED', 'UNKNOWN', 'INVALID_ARGUMENT', 'DEADLINE_EXCEEDED', 'NOT_FOUND', 'ALREADY_EXISTS',
-        'PERMISSION_DENIED', 'UNAUTHENTICATED', 'RESOURCE_EXHAUSTED', 'FAILED_PRECONDITION', 'ABORTED', 'OUT_OF_RANGE',
-        'UNIMPLEMENTED', 'INTERNAL', 'UNAVAILABLE', 'DATA_LOSS',
+        'ok', 'cancelled', 'unknown', 'invalid-argument', 'deadline-exceeded', 'not-found', 'already-exists',
+        'permission-denied', 'resource-exhausted', 'failed-precondition', 'aborted', 'out-of-range', 'unimplemented',
+        'internal', 'unavailable', 'data-loss', 'unauthenticated',
     ].includes(status);
 }
 
@@ -216,21 +219,24 @@ function convertToFunctionResultError(error: any): FirebaseFunctionResultError {
     const hasMessage = error.message !== undefined && error.message !== null && error.message !== '';
     const hasStack = error.stack !== undefined && error.stack !== null && error.stack !== '';
     return {
-        status: isCanonicalErrorCodeName(error.status) ? error.status : 'UNKNOWN',
+        code: isFunctionsErrorCode(error.code) ? error.code : 'unknown',
         message: hasMessage ? `${error.message}` : 'Unknown error occured, see details for more infos.',
         details: hasMessage ? error.details : error,
         stack: hasStack !== undefined ? `${error.stack}` : undefined,
     };
 }
 
+export type FirebaseFunctionResult = FirebaseFunctionResultSuccess | FirebaseFunctionResultFailure;
 
-type FirebaseFunctionResult = {
+interface FirebaseFunctionResultSuccess {
     state: 'success',
     returnValue: any,
-} | {
+}
+
+interface FirebaseFunctionResultFailure {
     state: 'failure',
     error: FirebaseFunctionResultError,
-};
+}
 
 // eslint-disable-next-line valid-jsdoc
 /**
@@ -252,28 +258,20 @@ export function createFunction<
         const databaseType = DatabaseType.fromValue(data.databaseType, logger.nextIndent);
 
         // Get result of function call
-        let result: FirebaseFunctionResult;
+        let result: Result<FirebaseFunctionResultSuccess, FirebaseFunctionResultFailure>;
         try {
-
-            // Call firebase function and set result if succeded
             const firebaseFunction = createFirebaseFunction(data, context.auth);
-            const returnValue = await throwRejection(firebaseFunction.executeFunction());
-            result = {
-                state: 'success',
-                returnValue: returnValue,
-            };
+            result = await toResult(firebaseFunction.executeFunction());
         } catch (error: any) {
-
-            // Set result error.
-            result = {
+            result = Result.failure({
                 state: 'failure',
                 error: convertToFunctionResultError(error),
-            };
+            });
         }
 
         // Encrypt result
         const crypter = new Crypter(cryptionKeys(databaseType));
-        return crypter.encodeEncrypt(result);
+        return crypter.encodeEncrypt(result.valueOrError);
     });
 }
 

@@ -1,5 +1,5 @@
 import { guid } from './guid';
-import { Deleted, httpsError, DataSnapshot } from '../utils';
+import { Deleted, httpsError } from '../utils';
 import { PersonName } from './PersonName';
 import { Logger } from '../Logger';
 
@@ -127,40 +127,6 @@ export namespace Person {
 
         // Return person.
         return Person.fromObject(value, logger.nextIndent);
-    }
-
-    /**
-     * Builds person from specified snapshot.
-     * @param { DataSnapshot } snapshot Snapshot to build person from.
-     * @param { Logger } logger Logger to log this method.
-     * @return { Person | Deleted<guid> } Builded person.
-     */
-    export function fromSnapshot(snapshot: DataSnapshot, logger: Logger): Person | Deleted<guid> {
-        logger.append('Person.fromSnapshot', { snapshot });
-
-        // Check if data exists in snapshot
-        if (!snapshot.exists())
-            throw httpsError('invalid-argument', 'Couldn\'t parse Person since no data exists in snapshot.', logger);
-
-        // Get id
-        const idString = snapshot.key;
-        if (idString == null)
-            throw httpsError('invalid-argument', 'Couldn\'t parse Person since snapshot has an invalid key.', logger);
-
-        // Get data from snapshot
-        const data = snapshot.val();
-        if (typeof data !== 'object')
-            throw httpsError(
-                'invalid-argument',
-                `Couldn't parse Person from snapshot since data isn't an object: ${data}`,
-                logger
-            );
-
-        // Return person.
-        return Person.fromObject({
-            id: idString,
-            ...data,
-        }, logger.nextIndent);
     }
 
     /**

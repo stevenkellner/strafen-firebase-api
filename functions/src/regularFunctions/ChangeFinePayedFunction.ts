@@ -5,12 +5,12 @@ import {
     httpsError,
     checkUpdateProperties,
     reference,
+    Deleted,
 } from '../utils';
 import { ParameterContainer } from '../ParameterContainer';
 import { guid } from '../TypeDefinitions/guid';
 import { DatabaseType } from '../TypeDefinitions/DatabaseType';
 import { Logger } from '../Logger';
-import { Updatable } from '../TypeDefinitions/Updatable';
 import { AuthData } from 'firebase-functions/lib/common/providers/https';
 import {
     IStatisticProperty,
@@ -19,6 +19,10 @@ import {
 } from '../Statistic';
 import { Fine } from '../TypeDefinitions/Fine';
 import { PayedState } from '../TypeDefinitions/PayedState';
+import { ParameterParser } from '../ParameterParser';
+import { Updatable, UpdateProperties } from '../TypeDefinitions/Updatable';
+import { Crypter } from '../crypter/Crypter';
+import { cryptionKeys } from '../privateKeys';
 
 /**
  * @summary
@@ -45,18 +49,14 @@ import { PayedState } from '../TypeDefinitions/PayedState';
  *    - failed-precondition: if old payed state, reason with reason template id or person for statistik doesn't exist
  */
 export class ChangeFinePayedFunction implements IFirebaseFunction<
-    Parameters, ReturnType, ParameterParser
+    ChangeFinePayedFunction.Parameters,
+    ChangeFinePayedFunction.ReturnType
 > {
 
     /**
-     * All parameters passed by firebase function.
+     * Firebase function parameters passed to the firebase function.
      */
-    private parameterContainer: ParameterContainer;
-
-    /**
-     * Parser to parse firebase function parameters from parameter container.
-     */
-    public parameterParser: ParameterParser;
+    public parameters: ChangeFinePayedFunction.Parameters;
 
     /**
      * Logger to log this class.
@@ -69,22 +69,25 @@ export class ChangeFinePayedFunction implements IFirebaseFunction<
      * @param { AuthData | undefined } auth Authentication of person called this function.
      */
     public constructor(data: any, private readonly auth: AuthData | undefined) {
-        this.parameterContainer = new ParameterContainer(data);
         this.logger = Logger.start(
-            this.parameterContainer,
+            !!data.verbose,
             'ChangeFinePayedFunction.constructor',
             { data, auth },
             'notice'
         );
-        this.parameterParser = new ParameterParser(this.logger.nextIndent);
-        this.parameterParser.parseParameters(this.parameterContainer);
-    }
-
-    /**
-     * Firebase function parameters passed to the firebase function.
-     */
-    public get parameters(): Parameters {
-        return this.parameterParser.parameters;
+        const parameterContainer = new ParameterContainer(data, this.logger.nextIndent);
+        const parameterParser = new ParameterParser<ChangeFinePayedFunction.Parameters>(
+            {
+                privateKey: 'string',
+                databaseType: ['string', DatabaseType.fromString],
+                clubId: ['string', guid.fromString],
+                fineId: ['string', guid.fromString],
+                payedState: ['object', PayedState.fromObject],
+                fineUpdateProperties: ['object', UpdateProperties.fromObject],
+            },
+            this.logger.nextIndent);
+        parameterParser.parseParameters(parameterContainer);
+        this.parameters = parameterParser.parameters;
     }
 
     /**
@@ -95,26 +98,51 @@ export class ChangeFinePayedFunction implements IFirebaseFunction<
 
         // Check prerequirements
         await checkPrerequirements(
-            this.parameterContainer,
+            this.parameters,
             this.logger.nextIndent,
             this.auth,
             this.parameters.clubId
         );
 
+        // Get crypter
+        const crypter = new Crypter(cryptionKeys(this.parameters.databaseType));
+
+        // Get previous fine
+        const fineSnapshot = await this.fineReference.once('value');
+        let previousFine: Updatable<Fine | Deleted<guid>> | undefined;
+        if (fineSnapshot.exists()) {
+            previousFine = Updatable.fromRawProperty(
+                {
+                    id: fineSnapshot.key,
+                    ...crypter.decryptDecode(fineSnapshot.val()),
+                },
+                Fine.fromObject,
+                this.logger.nextIndent,
+            );
+        }
+
         // Check update timestamp
-        await checkUpdateProperties(
-            // eslint-disable-next-line max-len
-            `${this.parameters.clubId.guidString}/fines/${this.parameters.fineId.guidString}/payedState/updateProperties`,
-            this.parameters.updatablePayedState.updateProperties,
-            this.parameterContainer,
+        checkUpdateProperties(
+            previousFine?.updateProperties,
+            this.parameters.fineUpdateProperties,
+            this.parameters.databaseType,
             this.logger.nextIndent,
         );
 
+
+        if (!(previousFine?.property instanceof Fine))
+            throw httpsError('unavailable', 'Couldn\'t get fine from \'Deleted\'.', this.logger);
+
         // Get statistics fine
-        const statisticsFine = await this.getStatisticsFine();
+        const statisticsFine = await previousFine.property.statistic(
+            this.parameters.clubId,
+            this.parameters.databaseType,
+            this.logger.nextIndent
+        );
 
         // Set payed state
-        await this.payedStateReference.set(this.parameters.updatablePayedState.databaseObject, error => {
+        previousFine.property.payedState = this.parameters.payedState;
+        await this.fineReference.set(crypter.encodeEncrypt(previousFine.databaseObject), error => {
             if (error != null)
                 throw httpsError(
                     'internal',
@@ -125,9 +153,13 @@ export class ChangeFinePayedFunction implements IFirebaseFunction<
 
         // Save statistic
         await saveStatistic(
-            new Statistic(new StatisticProperty(statisticsFine, this.parameters.updatablePayedState.property)),
-            this.parameters.clubId,
-            this.parameterContainer,
+            new ChangeFinePayedFunction.Statistic(
+                new ChangeFinePayedFunction.StatisticProperty(
+                    statisticsFine,
+                    this.parameters.payedState
+                )
+            ),
+            this.parameters,
             this.logger.nextIndent,
         );
     }
@@ -138,188 +170,114 @@ export class ChangeFinePayedFunction implements IFirebaseFunction<
     private get fineReference(): admin.database.Reference {
         return reference(
             `${this.parameters.clubId.guidString}/fines/${this.parameters.fineId.guidString}`,
-            this.parameterContainer,
+            this.parameters.databaseType,
             this.logger.nextIndent
         );
     }
-
-    /**
-     * Reference to the payed state to change.
-     */
-    private get payedStateReference(): admin.database.Reference {
-        return reference(
-            `${this.parameters.clubId.guidString}/fines/${this.parameters.fineId.guidString}/payedState`,
-            this.parameterContainer,
-            this.logger.nextIndent
-        );
-    }
-
-    /**
-     * Gets previous fine for statistics.
-     * @return { Promise<StatisticsFine> } Fine for statistics.
-     */
-    private async getStatisticsFine(): Promise<Fine.Statistic> {
-        this.logger.append('ChangeFinePayedFunction.statisticsFine');
-
-        const payedSnapshot = await this.fineReference.once('value');
-        const fine = Fine.fromSnapshot(payedSnapshot, this.logger.nextIndent);
-        if (!(fine instanceof Fine))
-            throw httpsError('internal', 'Couldn\'t get statistic fine from \'Deleted\'.', this.logger);
-        return await fine.statistic(this.parameters.clubId, this.parameterContainer, this.logger.nextIndent);
-    }
 }
 
-/**
- * Parameters of firebase function.
- */
-interface Parameters {
+export namespace ChangeFinePayedFunction {
 
     /**
-     * Private key to check whether the caller is authenticated to use this function
+     * Parameters of firebase function.
      */
-    privateKey: string,
-
-    /**
-     * Database type of the change
-     */
-    databaseType: DatabaseType,
-
-    /**
-     * Id of the club to change the payed state
-     */
-    clubId: guid,
-
-    /**
-     * Id of fine of the payed state.
-     */
-    fineId: guid,
-
-    /**
-     * Payed state to change
-     */
-    updatablePayedState: Updatable<PayedState>
-}
-
-/**
- * Return type of firebase function.
- */
-type ReturnType = void;
-
-/**
- * Parser to parse firebase function parameters from parameter container.
- * @template Parameters Type of the fireabse function parameters.
- */
-class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> {
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    private initialParameters?: Parameters;
-
-    /**
-     * Constructs parser with a logger.
-     * @param { Logger } logger Logger to log this class.
-     */
-    public constructor(private logger: Logger) {}
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    public get parameters(): Parameters {
-        if (this.initialParameters === undefined)
-            throw httpsError(
-                'internal',
-                'Tried to access parameters before those parameters were parsed.',
-                this.logger
-            );
-        return this.initialParameters;
-    }
-
-    /**
-     * Parse firebase function parameters from parameter container.
-     * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
-     */
-    public parseParameters(container: ParameterContainer): void {
-        this.logger.append('ParameterParser.parseParameters', { container });
-
-        // Parse parametes
-        this.initialParameters = {
-            privateKey: container.parameter('privateKey', 'string', this.logger.nextIndent),
-            databaseType: container.parameter(
-                'databaseType',
-                'string',
-                this.logger.nextIndent,
-                DatabaseType.fromString
-            ),
-            clubId: container.parameter('clubId', 'string', this.logger.nextIndent, guid.fromString),
-            fineId: container.parameter('fineId', 'string', this.logger.nextIndent, guid.fromString),
-            updatablePayedState: Updatable.fromRawProperty(
-                container.parameter('updatablePayedState', 'object', this.logger.nextIndent),
-                PayedState.fromObject,
-                this.logger.nextIndent,
-            ),
-        };
-    }
-}
-
-/**
- * Statistic of this firebase function that will be stored in the database.
- */
-class Statistic implements IStatistic<StatisticProperty> {
-
-    /**
-     * Identifier of the statistic of a database update.
-     */
-    readonly identifier: string = 'changeFinePayed';
-
-    /**
-     * Constructs Statistic with statistic property.
-     * @param { StatisticProperty } property Property of the statistic of a database update.
-     */
-    constructor(readonly property: StatisticProperty) {}
-}
-
-/**
- * Statistic property of this firebase function that will be stored in the database.
- */
-class StatisticProperty implements IStatisticProperty<StatisticProperty.DatabaseObject> {
-
-    /**
-     * Constructs statistic with previous fine and changed payed state
-     * @param { Fine.Statistic } previousFine Previous fine before change.
-     * @param { PayedState } changedState Changed payed state after change.
-     */
-    public constructor(
-        public readonly previousFine: Fine.Statistic,
-        public readonly changedState: PayedState
-    ) {}
-
-    /**
-     * Statistic property object that will be stored in the database.
-     */
-    public get databaseObject(): StatisticProperty.DatabaseObject {
-        return {
-            previousFine: this.previousFine?.databaseObject ?? null,
-            changedState: this.changedState?.databaseObject ?? null,
-        };
-    }
-}
-
-namespace StatisticProperty {
-
-    /**
-     * Statistic property object that will be stored in the database.
-     */
-    export interface DatabaseObject {
+    export interface Parameters {
 
         /**
-         * Previous fine before change.
+         * Private key to check whether the caller is authenticated to use this function
          */
-        previousFine: Fine.Statistic.DatabaseObject | null;
+        privateKey: string,
 
         /**
-         * Changed payed state after change.
+         * Database type of the change
          */
-        changedState: PayedState.DatabaseObject | null;
+        databaseType: DatabaseType,
+
+        /**
+         * Id of the club to change the payed state
+         */
+        clubId: guid,
+
+        /**
+         * Id of fine of the payed state.
+         */
+        fineId: guid,
+
+        /**
+         * Payed state to change
+         */
+        payedState: PayedState,
+
+        /**
+         * Update properties of fine of the payed state.
+         */
+        fineUpdateProperties: UpdateProperties,
+    }
+
+    /**
+     * Return type of firebase function.
+     */
+    export type ReturnType = void;
+
+    /**
+     * Statistic of this firebase function that will be stored in the database.
+     */
+    export class Statistic implements IStatistic<StatisticProperty> {
+
+        /**
+         * Identifier of the statistic of a database update.
+         */
+        readonly identifier: string = 'changeFinePayed';
+
+        /**
+         * Constructs Statistic with statistic property.
+         * @param { StatisticProperty } property Property of the statistic of a database update.
+         */
+        constructor(readonly property: StatisticProperty) { }
+    }
+
+    /**
+     * Statistic property of this firebase function that will be stored in the database.
+     */
+    export class StatisticProperty implements IStatisticProperty<StatisticProperty.DatabaseObject> {
+
+        /**
+         * Constructs statistic with previous fine and changed payed state
+         * @param { Fine.Statistic } previousFine Previous fine before change.
+         * @param { PayedState } changedState Changed payed state after change.
+         */
+        public constructor(
+            public readonly previousFine: Fine.Statistic,
+            public readonly changedState: PayedState
+        ) { }
+
+        /**
+         * Statistic property object that will be stored in the database.
+         */
+        public get databaseObject(): StatisticProperty.DatabaseObject {
+            return {
+                previousFine: this.previousFine?.databaseObject ?? null,
+                changedState: this.changedState?.databaseObject ?? null,
+            };
+        }
+    }
+
+    export namespace StatisticProperty {
+
+        /**
+         * Statistic property object that will be stored in the database.
+         */
+        export interface DatabaseObject {
+
+            /**
+             * Previous fine before change.
+             */
+            previousFine: Fine.Statistic.DatabaseObject | null;
+
+            /**
+             * Changed payed state after change.
+             */
+            changedState: PayedState.DatabaseObject | null;
+        }
     }
 }

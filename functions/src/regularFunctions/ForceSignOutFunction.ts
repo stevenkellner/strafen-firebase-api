@@ -11,6 +11,9 @@ import { guid } from '../TypeDefinitions/guid';
 import { DatabaseType } from '../TypeDefinitions/DatabaseType';
 import { Logger } from '../Logger';
 import { AuthData } from 'firebase-functions/lib/common/providers/https';
+import { ParameterParser } from '../ParameterParser';
+import { Crypter } from '../crypter/Crypter';
+import { cryptionKeys } from '../privateKeys';
 
 /**
  * @summary
@@ -29,18 +32,14 @@ import { AuthData } from 'firebase-functions/lib/common/providers/https';
  *    - internal: if an error occurs while force sign out the person in database
  */
 export class ForceSignOutFunction implements IFirebaseFunction<
-    Parameters, ReturnType, ParameterParser
+    ForceSignOutFunction.Parameters,
+    ForceSignOutFunction.ReturnType
 > {
 
     /**
-     * All parameters passed by firebase function.
+     * Firebase function parameters passed to the firebase function.
      */
-    private parameterContainer: ParameterContainer;
-
-    /**
-     * Parser to parse firebase function parameters from parameter container.
-     */
-    public parameterParser: ParameterParser;
+    public parameters: ForceSignOutFunction.Parameters;
 
     /**
      * Logger to log this class.
@@ -53,22 +52,24 @@ export class ForceSignOutFunction implements IFirebaseFunction<
      * @param { AuthData | undefined } auth Authentication of person called this function.
      */
     public constructor(data: any, private readonly auth: AuthData | undefined) {
-        this.parameterContainer = new ParameterContainer(data);
         this.logger = Logger.start(
-            this.parameterContainer,
+            !!data.verbose,
             'ForceSignOutFunction.constructor',
             { data, auth },
             'notice'
         );
-        this.parameterParser = new ParameterParser(this.logger.nextIndent);
-        this.parameterParser.parseParameters(this.parameterContainer);
-    }
-
-    /**
-     * Firebase function parameters passed to the firebase function.
-     */
-    public get parameters(): Parameters {
-        return this.parameterParser.parameters;
+        const parameterContainer = new ParameterContainer(data, this.logger.nextIndent);
+        const parameterParser = new ParameterParser<ForceSignOutFunction.Parameters>(
+            {
+                privateKey: 'string',
+                databaseType: ['string', DatabaseType.fromString],
+                clubId: ['string', guid.fromString],
+                personId: ['string', guid.fromString],
+            },
+            this.logger.nextIndent
+        );
+        parameterParser.parseParameters(parameterContainer);
+        this.parameters = parameterParser.parameters;
     }
 
     /**
@@ -79,27 +80,31 @@ export class ForceSignOutFunction implements IFirebaseFunction<
 
         // Check prerequirements
         await checkPrerequirements(
-            this.parameterContainer,
+            this.parameters,
             this.logger.nextIndent,
             this.auth,
-            this.parameters.clubId
         );
 
+        // Get person
+        const crypter = new Crypter(cryptionKeys(this.parameters.databaseType));
+        const personSnapshot = await this.personReference.once('value');
+        const person = crypter.decryptDecode(personSnapshot.val());
+
         // Check if person is signed in
-        if (!(await existsData(this.signInDataReference))) return;
+        if (person.signInData === undefined) return;
 
         // Get user id
-        const userIdSnapshot = await this.signInDataReference.child('userId').once('value');
-        if (!userIdSnapshot.exists() || typeof userIdSnapshot.val() !== 'string')
+        const userId = person.signInData.userId;
+        if (typeof userId !== 'string')
             throw httpsError('internal', 'No valid user id in sign in data.', this.logger);
-        const userId: string = userIdSnapshot.val();
 
         // Delete sign in data
-        await this.signInDataReference.remove(error => {
+        person.signInData = undefined;
+        await this.personReference.set(crypter.encodeEncrypt(person), error => {
             if (error != null)
                 throw httpsError(
                     'internal',
-                    `Couldn't delete sign in data, underlying error: ${error.name}, ${error.message}`,
+                    `Couldn't set person, underlying error: ${error.name}, ${error.message}`,
                     this.logger
                 );
         });
@@ -120,10 +125,10 @@ export class ForceSignOutFunction implements IFirebaseFunction<
     /**
      * Reference to the sign in data of the person to force sign out.
      */
-    private get signInDataReference(): admin.database.Reference {
+    private get personReference(): admin.database.Reference {
         return reference(
-            `${this.parameters.clubId.guidString}/persons/${this.parameters.personId.guidString}/signInData`,
-            this.parameterContainer,
+            `${this.parameters.clubId.guidString}/persons/${this.parameters.personId.guidString}`,
+            this.parameters.databaseType,
             this.logger.nextIndent
         );
     }
@@ -136,91 +141,42 @@ export class ForceSignOutFunction implements IFirebaseFunction<
     private personUserIdReference(userId: string): admin.database.Reference {
         return reference(
             `${this.parameters.clubId.guidString}/personUserIds/${userId}`,
-            this.parameterContainer,
+            this.parameters.databaseType,
             this.logger.nextIndent
         );
     }
 }
 
-/**
- * Parameters of firebase function.
- */
-interface Parameters {
+export namespace ForceSignOutFunction {
 
     /**
-     * Private key to check whether the caller is authenticated to use this function
+     * Parameters of firebase function.
      */
-    privateKey: string,
+    export interface Parameters {
 
-    /**
-     * Database type of the change
-     */
-    databaseType: DatabaseType,
+        /**
+         * Private key to check whether the caller is authenticated to use this function
+         */
+        privateKey: string,
 
-    /**
-     * Id of the club to force sign out the person.
-     */
-    clubId: guid,
+        /**
+         * Database type of the change
+         */
+        databaseType: DatabaseType,
 
-    /**
-     * Id of the person to force sign out
-     */
-    personId: guid,
-}
+        /**
+         * Id of the club to force sign out the person.
+         */
+        clubId: guid,
 
-/**
- * Return type of firebase function.
- */
-type ReturnType = void;
-
-/**
- * Parser to parse firebase function parameters from parameter container.
- * @template Parameters Type of the fireabse function parameters.
- */
-class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> {
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    private initialParameters?: Parameters;
-
-    /**
-     * Constructs parser with a logger.
-     * @param { Logger } logger Logger to log this class.
-     */
-    public constructor(private logger: Logger) {}
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    public get parameters(): Parameters {
-        if (this.initialParameters === undefined)
-            throw httpsError(
-                'internal',
-                'Tried to access parameters before those parameters were parsed.',
-                this.logger
-            );
-        return this.initialParameters;
+        /**
+         * Id of the person to force sign out
+         */
+        personId: guid,
     }
 
     /**
-     * Parse firebase function parameters from parameter container.
-     * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
+     * Return type of firebase function.
      */
-    public parseParameters(container: ParameterContainer): void {
-        this.logger.append('ParameterParser.parseParameters', { container });
-
-        // Parse parametes
-        this.initialParameters = {
-            privateKey: container.parameter('privateKey', 'string', this.logger.nextIndent),
-            databaseType: container.parameter(
-                'databaseType',
-                'string',
-                this.logger.nextIndent,
-                DatabaseType.fromString
-            ),
-            clubId: container.parameter('clubId', 'string', this.logger.nextIndent, guid.fromString),
-            personId: container.parameter('personId', 'string', this.logger.nextIndent, guid.fromString),
-        };
-    }
+    export type ReturnType = void;
 }

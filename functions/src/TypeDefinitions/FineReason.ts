@@ -5,6 +5,8 @@ import { ReasonTemplate } from './ReasonTemplate';
 import { httpsError, reference } from '../utils';
 import { Logger } from '../Logger';
 import { DatabaseType } from './DatabaseType';
+import { Crypter } from '../crypter/Crypter';
+import { cryptionKeys } from '../privateKeys';
 
 /**
  * Contains a reason of a fine, either with a template id or custom with reason message, amount and importance
@@ -198,13 +200,20 @@ export namespace FineReason {
                 return fineReason.value.statistic;
 
             // Get fine reason properties from database.
+            const crypter = new Crypter(cryptionKeys(databaseType));
             const reasonTemplateReference = reference(
                 `${clubId.guidString}/reasonTemplates/${fineReason.value.reasonTemplateId.guidString}`,
                 databaseType,
                 logger.nextIndent,
             );
             const reasonTemplateSnapshot = await reasonTemplateReference.once('value');
-            const reasonTemplate = ReasonTemplate.fromSnapshot(reasonTemplateSnapshot, logger.nextIndent);
+            const reasonTemplate = ReasonTemplate.fromObject(
+                {
+                    id: reasonTemplateSnapshot.key,
+                    ...crypter.decryptDecode(reasonTemplateSnapshot.val()),
+                },
+                logger.nextIndent
+            );
 
             // Check if reason template is vaild.
             if (!(reasonTemplate instanceof ReasonTemplate))

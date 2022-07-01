@@ -21,6 +21,9 @@ import {
     saveStatistic,
     IStatistic,
 } from '../Statistic';
+import { ParameterParser } from '../ParameterParser';
+import { Crypter } from '../crypter/Crypter';
+import { cryptionKeys } from '../privateKeys';
 
 /**
  * @summary
@@ -47,18 +50,14 @@ import {
  *    - internal: if couldn't change person in database
  */
 export class ChangePersonFunction implements IFirebaseFunction<
-    Parameters, ReturnType, ParameterParser
+    ChangePersonFunction.Parameters,
+    ChangePersonFunction.ReturnType
 > {
 
     /**
-     * All parameters passed by firebase function.
+     * Firebase function parameters passed to the firebase function.
      */
-    private parameterContainer: ParameterContainer;
-
-    /**
-     * Parser to parse firebase function parameters from parameter container.
-     */
-    public parameterParser: ParameterParser;
+    public parameters: ChangePersonFunction.Parameters;
 
     /**
      * Logger to log this class.
@@ -71,59 +70,71 @@ export class ChangePersonFunction implements IFirebaseFunction<
      * @param { AuthData | undefined } auth Authentication of person called this function.
      */
     public constructor(data: any, private readonly auth: AuthData | undefined) {
-        this.parameterContainer = new ParameterContainer(data);
         this.logger = Logger.start(
-            this.parameterContainer,
+            !!data.verbose,
             'ChangePersonFunction.constructor',
             { data, auth },
             'notice'
         );
-        this.parameterParser = new ParameterParser(this.logger.nextIndent);
-        this.parameterParser.parseParameters(this.parameterContainer);
-    }
-
-    /**
-     * Firebase function parameters passed to the firebase function.
-     */
-    public get parameters(): Parameters {
-        return this.parameterParser.parameters;
+        const parameterContainer = new ParameterContainer(data, this.logger.nextIndent);
+        const parameterParser = new ParameterParser<ChangePersonFunction.Parameters>(
+            {
+                privateKey: 'string',
+                databaseType: ['string', DatabaseType.fromString],
+                clubId: ['string', guid.fromString],
+                changeType: ['string', ChangeType.fromString],
+                updatablePerson: ['object', (value: object, logger: Logger) =>
+                    Updatable.fromRawProperty(value, Person.fromObject, logger),
+                ],
+            },
+            this.logger.nextIndent
+        );
+        parameterParser.parseParameters(parameterContainer);
+        this.parameters = parameterParser.parameters;
     }
 
     /**
      * Execute this firebase function.
      * @return { Promise<ReturnType> } Return value of this firebase function.
      */
-    public async executeFunction(): Promise<ReturnType> {
+    public async executeFunction(): Promise<ChangePersonFunction.ReturnType> {
         this.logger.append('ChangePersonFunction.executeFunction', {}, 'info');
 
         // Check prerequirements
         await checkPrerequirements(
-            this.parameterContainer,
+            this.parameters,
             this.logger.nextIndent,
             this.auth,
-            this.parameters.clubId
+            this.parameters.clubId,
         );
 
-        // Check update timestamp
-        await checkUpdateProperties(
-            // eslint-disable-next-line max-len
-            `${this.parameters.clubId.guidString}/persons/${this.parameters.updatablePerson.property.id.guidString}/updateProperties`,
-            this.parameters.updatablePerson.updateProperties,
-            this.parameterContainer,
-            this.logger.nextIndent,
-        );
+        // Get crypter
+        const crypter = new Crypter(cryptionKeys(this.parameters.databaseType));
 
         // Get previous person
         const personSnapshot = await this.personReference.once('value');
-        let previousPerson: Person.Statistic | null = null;
+        let previousPerson: Updatable<Person | Deleted<guid>> | undefined;
         if (personSnapshot.exists()) {
-            const previousRawPerson = Person.fromSnapshot(personSnapshot, this.logger.nextIndent);
-            if (previousRawPerson instanceof Person)
-                previousPerson = previousRawPerson.statistic;
+            previousPerson = Updatable.fromRawProperty(
+                {
+                    id: personSnapshot.key,
+                    ...crypter.decryptDecode(personSnapshot.val()),
+                },
+                Person.fromObject,
+                this.logger.nextIndent
+            );
         }
 
+        // Check update timestamp
+        checkUpdateProperties(
+            previousPerson?.updateProperties,
+            this.parameters.updatablePerson.updateProperties,
+            this.parameters.databaseType,
+            this.logger.nextIndent,
+        );
+
         // Change person
-        let changedPerson: Person.Statistic | null = null;
+        let changedPerson: Person.Statistic | undefined;
         switch (this.parameters.changeType.value) {
         case 'delete':
             await this.deleteItem();
@@ -137,9 +148,10 @@ export class ChangePersonFunction implements IFirebaseFunction<
 
         // Save statistic
         await saveStatistic(
-            new Statistic(new StatisticProperty(previousPerson, changedPerson)),
-            this.parameters.clubId,
-            this.parameterContainer,
+            new ChangePersonFunction.Statistic(
+                new ChangePersonFunction.StatisticProperty(previousPerson?.property, changedPerson)
+            ),
+            this.parameters,
             this.logger.nextIndent,
         );
     }
@@ -150,7 +162,7 @@ export class ChangePersonFunction implements IFirebaseFunction<
     private get personReference(): admin.database.Reference {
         return reference(
             `${this.parameters.clubId.guidString}/persons/${this.parameters.updatablePerson.property.id.guidString}`,
-            this.parameterContainer,
+            this.parameters.databaseType,
             this.logger.nextIndent
         );
     }
@@ -160,6 +172,7 @@ export class ChangePersonFunction implements IFirebaseFunction<
      */
     private async deleteItem(): Promise<void> {
         this.logger.append('ChangePersonFunction.deleteItem');
+        const crypter = new Crypter(cryptionKeys(this.parameters.databaseType));
 
         // Check if parameters is valid for deleting.
         if (!(this.parameters.updatablePerson.property instanceof Deleted))
@@ -170,24 +183,30 @@ export class ChangePersonFunction implements IFirebaseFunction<
             );
 
         // Check if person to delete is already signed in.
-        if (await existsData(this.personReference.child('signInData')))
-            throw httpsError(
-                'unavailable',
-                'Person is already signed in!',
-                this.logger
-            );
+        const personSnapshot = await this.personReference.once('value');
+        if (personSnapshot.exists()) {
+            const previousPerson = crypter.decryptDecode(personSnapshot.val());
+            if (previousPerson.signInData !== undefined)
+                throw httpsError(
+                    'unavailable',
+                    'Person is already signed in!',
+                    this.logger
+                );
+        }
 
         // TODO: delete all associated fines
 
         // Delete item.
         if (await existsData(this.personReference)) {
-            await this.personReference.set(this.parameters.updatablePerson.databaseObject, error => {
-                if (error != null)
-                    throw httpsError('internal',
-                        `Couldn't delete person, underlying error: ${error.name}, ${error.message}`,
-                        this.logger
-                    );
-            });
+            await this.personReference.set(crypter.encodeEncrypt(this.parameters.updatablePerson.databaseObject),
+                error => {
+                    if (error != null)
+                        throw httpsError('internal',
+                            `Couldn't delete person, underlying error: ${error.name}, ${error.message}`,
+                            this.logger
+                        );
+                }
+            );
         }
     }
 
@@ -196,6 +215,7 @@ export class ChangePersonFunction implements IFirebaseFunction<
      */
     private async updateItem(): Promise<void> {
         this.logger.append('ChangePersonFunction.updateItem');
+        const crypter = new Crypter(cryptionKeys(this.parameters.databaseType));
 
         // Check if parameters is valid for updating.
         if (!(this.parameters.updatablePerson.property instanceof Person))
@@ -206,168 +226,118 @@ export class ChangePersonFunction implements IFirebaseFunction<
             );
 
         // Set updated item.
-        await this.personReference.set(this.parameters.updatablePerson.databaseObject, error => {
-            if (error !== null)
-                throw httpsError(
-                    'internal',
-                    `Couldn't update person, underlying error: ${error.name}, ${error.message}`,
-                    this.logger
-                );
-        });
+        await this.personReference.set(crypter.encodeEncrypt(this.parameters.updatablePerson.databaseObject),
+            error => {
+                if (error !== null)
+                    throw httpsError(
+                        'internal',
+                        `Couldn't update person, underlying error: ${error.name}, ${error.message}`,
+                        this.logger
+                    );
+            }
+        );
     }
 }
 
-/**
- * Parameters of firebase function.
- */
-interface Parameters {
+export namespace ChangePersonFunction {
 
     /**
-     * Private key to check whether the caller is authenticated to use this function
+     * Parameters of firebase function.
      */
-    privateKey: string,
-
-    /**
-     * Database type of the change
-     */
-    databaseType: DatabaseType,
-
-    /**
-     * Id of the club to change the person
-     */
-    clubId: guid,
-
-    /**
-     * Type of the change
-     */
-    changeType: ChangeType,
-
-    /**
-     * Person to change
-     */
-    updatablePerson: Updatable<Person | Deleted<guid>>
-}
-
-/**
- * Return type of firebase function.
- */
-type ReturnType = void;
-
-/**
- * Parser to parse firebase function parameters from parameter container.
- * @template Parameters Type of the fireabse function parameters.
- */
-class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> {
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    private initialParameters?: Parameters;
-
-    /**
-     * Constructs parser with a logger.
-     * @param { Logger } logger Logger to log this class.
-     */
-    public constructor(private logger: Logger) {}
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    public get parameters(): Parameters {
-        if (this.initialParameters === undefined)
-            throw httpsError(
-                'internal',
-                'Tried to access parameters before those parameters were parsed.',
-                this.logger
-            );
-        return this.initialParameters;
-    }
-
-    /**
-     * Parse firebase function parameters from parameter container.
-     * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
-     */
-    public parseParameters(container: ParameterContainer): void {
-        this.logger.append('ParameterParser.parseParameters', { container });
-
-        // Parse parametes
-        this.initialParameters = {
-            privateKey: container.parameter('privateKey', 'string', this.logger.nextIndent),
-            databaseType: container.parameter(
-                'databaseType',
-                'string',
-                this.logger.nextIndent,
-                DatabaseType.fromString
-            ),
-            clubId: container.parameter('clubId', 'string', this.logger.nextIndent, guid.fromString),
-            changeType: container.parameter('changeType', 'string', this.logger.nextIndent, ChangeType.fromString),
-            updatablePerson: Updatable.fromRawProperty(
-                container.parameter('updatablePerson', 'object', this.logger.nextIndent),
-                Person.fromObject,
-                this.logger.nextIndent,
-            ),
-        };
-    }
-}
-
-/**
- * Statistic of this firebase function that will be stored in the database.
- */
-class Statistic implements IStatistic<StatisticProperty> {
-
-    /**
-     * Identifier of the statistic of a database update.
-     */
-    readonly identifier: string = 'changePerson';
-
-    /**
-     * Constructs Statistic with statistic property.
-     * @param { StatisticProperty } property Property of the statistic of a database update.
-     */
-    constructor(readonly property: StatisticProperty) {}
-}
-
-/**
- * Statistic property of this firebase function that will be stored in the database.
- */
-class StatisticProperty implements IStatisticProperty<StatisticProperty.DatabaseObject> {
-
-    /**
-     * Constructs statistic with previous and changed person
-     * @param { Person.Statistic | null } previousPerson Previous person before change.
-     * @param { Person.Statistic | null } changedPerson Changed person after change.
-     */
-    public constructor(
-        public readonly previousPerson: Person.Statistic | null,
-        public readonly changedPerson: Person.Statistic | null
-    ) {}
-
-    /**
-     * Statistic property object that will be stored in the database.
-     */
-    public get databaseObject(): StatisticProperty.DatabaseObject {
-        return {
-            previousPerson: this.previousPerson?.databaseObject ?? null,
-            changedPerson: this.changedPerson?.databaseObject ?? null,
-        };
-    }
-}
-
-namespace StatisticProperty {
-
-    /**
-     * Statistic property object that will be stored in the database.
-     */
-    export interface DatabaseObject {
+    export interface Parameters {
 
         /**
-         * Previous person before change.
+         * Private key to check whether the caller is authenticated to use this function
          */
-        previousPerson: Person.Statistic.DatabaseObject | null;
+        privateKey: string,
 
         /**
-         * Changed person after change.
+         * Database type of the change
          */
-        changedPerson: Person.Statistic.DatabaseObject | null;
+        databaseType: DatabaseType,
+
+        /**
+         * Id of the club to change the person
+         */
+        clubId: guid,
+
+        /**
+         * Type of the change
+         */
+        changeType: ChangeType,
+
+        /**
+         * Person to change
+         */
+        updatablePerson: Updatable<Person | Deleted<guid>>
+    }
+
+    /**
+     * Return type of firebase function.
+     */
+    export type ReturnType = void;
+
+    /**
+     * Statistic of this firebase function that will be stored in the database.
+     */
+    export class Statistic implements IStatistic<StatisticProperty> {
+
+        /**
+         * Identifier of the statistic of a database update.
+         */
+        readonly identifier: string = 'changePerson';
+
+        /**
+         * Constructs Statistic with statistic property.
+         * @param { StatisticProperty } property Property of the statistic of a database update.
+         */
+        constructor(readonly property: StatisticProperty) { }
+    }
+
+    /**
+     * Statistic property of this firebase function that will be stored in the database.
+     */
+    export class StatisticProperty implements IStatisticProperty<StatisticProperty.DatabaseObject> {
+
+        /**
+         * Constructs statistic with previous and changed person
+         * @param { Person.Statistic | null } previousPerson Previous person before change.
+         * @param { Person.Statistic | null } changedPerson Changed person after change.
+         */
+        public constructor(
+            public readonly previousPerson: Person | Deleted<guid> | undefined,
+            public readonly changedPerson: Person.Statistic | undefined
+        ) { }
+
+        /**
+         * Statistic property object that will be stored in the database.
+         */
+        public get databaseObject(): StatisticProperty.DatabaseObject {
+            const previousPerson = this.previousPerson instanceof Person ?
+                this.previousPerson.statistic.databaseObject ?? null : null;
+            return {
+                previousPerson: previousPerson,
+                changedPerson: this.changedPerson?.databaseObject ?? null,
+            };
+        }
+    }
+
+    export namespace StatisticProperty {
+
+        /**
+         * Statistic property object that will be stored in the database.
+         */
+        export interface DatabaseObject {
+
+            /**
+             * Previous person before change.
+             */
+            previousPerson: Person.Statistic.DatabaseObject | null;
+
+            /**
+             * Changed person after change.
+             */
+            changedPerson: Person.Statistic.DatabaseObject | null;
+        }
     }
 }

@@ -1,16 +1,16 @@
-import { functionCallKey } from '../src/privateKeys';
+import { unhashedFunctionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import {
     auth,
     callFunction,
-    firebaseError,
+    expectFunctionSuccess, expectFunctionFailed,
     getDatabaseFines,
     getDatabaseReasonTemplates,
     getDatabaseStatisticsPropertyWithIdentifier,
     signInTestUser,
 } from './utils';
 import { signOut } from 'firebase/auth';
-import { assert, expect } from 'chai';
+import { expect } from 'chai';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
 import { Fine } from '../src/TypeDefinitions/Fine';
 import { Logger } from '../src/Logger';
@@ -25,108 +25,83 @@ describe('ChangeFine', () => {
 
     beforeEach(async () => {
         await signInTestUser();
-        await callFunction('newTestClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('newTestClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             testClubType: 'default',
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
     });
 
     afterEach(async () => {
-        await callFunction('deleteTestClubs', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('deleteTestClubs', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
         await signOut(auth);
     });
 
     it('No club id', async () => {
-        try {
-            await callFunction('changeFine', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                changeType: 'upate',
-                fine: 'some Fine',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            changeType: 'upate',
+            fine: 'some Fine',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('No change type', async () => {
-        try {
-            await callFunction('changeFine', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                fine: 'some Fine',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'changeType\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            fine: 'some Fine',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'changeType\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('Invalid change type', async () => {
-        try {
-            await callFunction('changeFine', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'invalid',
-                fine: 'some Fine',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse ChangeType, expected \'delete\' or \'update\', but got invalid instead.',
-            });
-        }
+        const callResult = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'invalid',
+            fine: 'some Fine',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse ChangeType, expected \'delete\' or \'update\', but got invalid instead.',
+        });
     });
 
     it('No fine', async () => {
-        try {
-            await callFunction('changeFine', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'update',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'fine\'. Expected type \'object\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'update',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'updatableFine\'. Expected type \'object\', but got undefined or null.',
+        });
     });
 
     it('Invalid fine', async () => {
-        try {
-            await callFunction('changeFine', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'update',
-                fine: 'invalid',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse \'fine\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
-            });
-        }
+        const callResult = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'update',
+            updatableFine: 'invalid',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse \'updatableFine\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
+        });
     });
 
     // eslint-disable-next-line require-jsdoc
@@ -147,13 +122,13 @@ describe('ChangeFine', () => {
                 guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
             )
         );
-        await callFunction('changeReasonTemplate', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeReasonTemplate', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'update',
-            reasonTemplate: updatableReasonTemplate.databaseObject,
+            updatableReasonTemplate: updatableReasonTemplate.databaseObject,
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check reason
         const reasonList = await getDatabaseReasonTemplates(clubId, logger.nextIndent);
@@ -191,13 +166,13 @@ describe('ChangeFine', () => {
             fine,
             new UpdateProperties(timestamp, guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent))
         );
-        await callFunction('changeFine', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'update',
-            fine: updatableFine.databaseObject,
+            updatableFine: updatableFine.databaseObject,
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check fine
         const fineList = await getDatabaseFines(clubId, logger.nextIndent);
@@ -214,6 +189,7 @@ describe('ChangeFine', () => {
             await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFine', logger.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
+            previousFine: null,
             changedFine: {
                 date: '2011-10-14T10:42:38.000Z',
                 fineReason: {
@@ -225,6 +201,8 @@ describe('ChangeFine', () => {
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
                 number: 2,
                 payedState: {
+                    inApp: null,
+                    payDate: null,
                     state: 'unpayed',
                 },
                 person: {
@@ -261,6 +239,8 @@ describe('ChangeFine', () => {
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
                 number: 2,
                 payedState: {
+                    inApp: null,
+                    payDate: null,
                     state: 'unpayed',
                 },
                 person: {
@@ -274,6 +254,7 @@ describe('ChangeFine', () => {
             changedFine: {
                 date: '2011-10-14T10:42:38.000Z',
                 fineReason: {
+                    id: null,
                     reasonMessage: 'Reason',
                     amount: 1.50,
                     importance: 'high',
@@ -281,6 +262,8 @@ describe('ChangeFine', () => {
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
                 number: 2,
                 payedState: {
+                    inApp: null,
+                    payDate: null,
                     state: 'unpayed',
                 },
                 person: {
@@ -309,6 +292,7 @@ describe('ChangeFine', () => {
             previousFine: {
                 date: '2011-10-14T10:42:38.000Z',
                 fineReason: {
+                    id: null,
                     reasonMessage: 'Reason',
                     amount: 1.50,
                     importance: 'high',
@@ -316,6 +300,8 @@ describe('ChangeFine', () => {
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
                 number: 2,
                 payedState: {
+                    inApp: null,
+                    payDate: null,
                     state: 'unpayed',
                 },
                 person: {
@@ -337,6 +323,8 @@ describe('ChangeFine', () => {
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
                 number: 2,
                 payedState: {
+                    inApp: null,
+                    payDate: null,
                     state: 'unpayed',
                 },
                 person: {
@@ -355,12 +343,11 @@ describe('ChangeFine', () => {
         await setFine(true, new Date('2011-10-15T10:42:38+0000'));
 
         const fineId = guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', logger);
-        await callFunction('changeFine', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'delete',
-            fine: {
+            updatableFine: {
                 id: fineId.guidString,
                 deleted: true,
                 updateProperties: {
@@ -369,6 +356,7 @@ describe('ChangeFine', () => {
                 },
             },
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check fine
         const fineList = await getDatabaseFines(clubId, logger.nextIndent);
@@ -395,6 +383,8 @@ describe('ChangeFine', () => {
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
                 number: 2,
                 payedState: {
+                    inApp: null,
+                    payDate: null,
                     state: 'unpayed',
                 },
                 person: {
@@ -405,6 +395,7 @@ describe('ChangeFine', () => {
                     },
                 },
             },
+            changedFine: null,
         });
     });
 
@@ -414,12 +405,11 @@ describe('ChangeFine', () => {
 
         // Delete fine
         const fineId = guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', logger);
-        await callFunction('changeFine', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult1 = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'delete',
-            fine: {
+            updatableFine: {
                 id: fineId.guidString,
                 deleted: true,
                 updateProperties: {
@@ -428,6 +418,7 @@ describe('ChangeFine', () => {
                 },
             },
         });
+        expectFunctionSuccess(callResult1).to.be.equal(undefined);
 
         // Check deleted fine
         const fineList = await getDatabaseFines(clubId, logger.nextIndent);
@@ -463,21 +454,16 @@ describe('ChangeFine', () => {
                 guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
             )
         );
-        try {
-            await callFunction('changeFine', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'update',
-                fine: updatableFine.databaseObject,
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/cancelled',
-                message: 'Server value is newer or same old than updated value.',
-            });
-        }
+        const callResult2 = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'update',
+            updatableFine: updatableFine.databaseObject,
+        });
+        expectFunctionFailed(callResult2).to.be.deep.equal({
+            code: 'cancelled',
+            message: 'Server value is newer or same old than updated value.',
+        });
     });
 
     it('Update deleted fine', async () => {
@@ -486,12 +472,11 @@ describe('ChangeFine', () => {
 
         // Delete fine
         const fineId = guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', logger);
-        await callFunction('changeFine', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult1 = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'delete',
-            fine: {
+            updatableFine: {
                 id: fineId.guidString,
                 deleted: true,
                 updateProperties: {
@@ -500,6 +485,7 @@ describe('ChangeFine', () => {
                 },
             },
         });
+        expectFunctionSuccess(callResult1).to.be.equal(undefined);
 
         // Check deleted fine
         const fineList = await getDatabaseFines(clubId, logger.nextIndent);
@@ -535,13 +521,13 @@ describe('ChangeFine', () => {
                 guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
             )
         );
-        await callFunction('changeFine', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult2 = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'update',
-            fine: updatableFine.databaseObject,
+            updatableFine: updatableFine.databaseObject,
         });
+        expectFunctionSuccess(callResult2).to.be.equal(undefined);
 
         // Check statistics
         let statisticsList = await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFine', logger.nextIndent);
@@ -550,9 +536,11 @@ describe('ChangeFine', () => {
         });
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
+            previousFine: null,
             changedFine: {
                 date: '2011-10-14T10:42:38.000Z',
                 fineReason: {
+                    id: null,
                     amount: 1.5,
                     importance: 'medium',
                     reasonMessage: 'asdf',
@@ -560,6 +548,8 @@ describe('ChangeFine', () => {
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
                 number: 2,
                 payedState: {
+                    inApp: null,
+                    payDate: null,
                     state: 'settled',
                 },
                 person: {

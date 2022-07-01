@@ -13,7 +13,7 @@ class ResultValueProperty<T> {
 /**
  * Property of result for failure with error.
  */
-class ResultErrorProperty<E extends Error> {
+class ResultErrorProperty<E> {
 
     /**
      * Initializes property with error.
@@ -25,7 +25,7 @@ class ResultErrorProperty<E extends Error> {
 /**
  * Result can be success with a value of failure with an error.
  */
-export class Result<T, E extends Error> {
+export class Result<T, E> {
 
     /**
      * Initializes result with success or failure property.
@@ -38,7 +38,7 @@ export class Result<T, E extends Error> {
      * @param { T } value Value of success result.
      * @return { Result<T, E> } Success result.
      */
-    static success<T, E extends Error>(value: T): Result<T, E> {
+    static success<T, E>(value: T): Result<T, E> {
         return new Result(new ResultValueProperty(value));
     }
 
@@ -46,7 +46,7 @@ export class Result<T, E extends Error> {
      * constructs success result with void value.
      * @return { Result<void, E> } Success result.
      */
-    static voidSuccess<E extends Error>(): Result<void, E> {
+    static voidSuccess<E>(): Result<void, E> {
         return Result.success((() => {})()); // eslint-disable-line @typescript-eslint/no-empty-function
     }
 
@@ -55,7 +55,7 @@ export class Result<T, E extends Error> {
      * @param { E } error Error of failure result.
      * @return { Result<T, E> } Failure result.
      */
-    static failure<T, E extends Error>(error: E): Result<T, E> {
+    static failure<T, E>(error: E): Result<T, E> {
         return new Result(new ResultErrorProperty(error));
     }
 
@@ -70,13 +70,21 @@ export class Result<T, E extends Error> {
     }
 
     /**
-     * Returns value if success result of null otherwise.
-     * @return { T | null } Value if success result of null otherwise.
+     * Returns value if success result or null otherwise.
      */
-    getValue(): T | null {
+    get value(): T | null {
         if (this.property instanceof ResultValueProperty)
             return this.property.value;
         return null;
+    }
+
+    /**
+     * Returns value if sucess result or error otherwise.
+     */
+    get valueOrError(): T | E {
+        if (this.property instanceof ResultValueProperty)
+            return this.property.value;
+        return this.property.error;
     }
 
     /**
@@ -95,7 +103,7 @@ export class Result<T, E extends Error> {
      * @param { function(err: E): E2 } mapper Mapper to map error of failure result.
      * @return { Result<T, E2> } Mapped result.
      */
-    mapError<E2 extends Error>(mapper: (error: E) => E2): Result<T, E2> {
+    mapError<E2>(mapper: (error: E) => E2): Result<T, E2> {
         if (this.property instanceof ResultValueProperty)
             return Result.success(this.property.value);
         return Result.failure(mapper(this.property.error));

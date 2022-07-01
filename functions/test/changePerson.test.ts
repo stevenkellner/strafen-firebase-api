@@ -1,15 +1,15 @@
-import { functionCallKey } from '../src/privateKeys';
+import { unhashedFunctionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import {
     auth,
     callFunction,
-    firebaseError,
+    expectFunctionFailed, expectFunctionSuccess,
     getDatabasePersons,
     getDatabaseStatisticsPropertyWithIdentifier,
     signInTestUser,
 } from './utils';
 import { signOut } from 'firebase/auth';
-import { assert, expect } from 'chai';
+import { expect } from 'chai';
 import { Person } from '../src/TypeDefinitions/Person';
 import { Logger } from '../src/Logger';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
@@ -23,133 +23,103 @@ describe('ChangePerson', () => {
 
     beforeEach(async () => {
         await signInTestUser();
-        await callFunction('newTestClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('newTestClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             testClubType: 'default',
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
     });
 
     afterEach(async () => {
-        await callFunction('deleteTestClubs', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('deleteTestClubs', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
         await signOut(auth);
     });
 
     it('No club id', async () => {
-        try {
-            await callFunction('changePerson', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                changeType: 'upate',
-                person: 'some Person',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changePerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            changeType: 'upate',
+            person: 'some Person',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('No change type', async () => {
-        try {
-            await callFunction('changePerson', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                person: 'some Person',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'changeType\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changePerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            person: 'some Person',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'changeType\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('Invalid change type', async () => {
-        try {
-            await callFunction('changePerson', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'invalid',
-                person: 'some Person',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse ChangeType, expected \'delete\' or \'update\', but got invalid instead.',
-            });
-        }
+        const callResult = await callFunction('changePerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'invalid',
+            person: 'some Person',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse ChangeType, expected \'delete\' or \'update\', but got invalid instead.',
+        });
     });
 
     it('No person', async () => {
-        try {
-            await callFunction('changePerson', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'update',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'person\'. Expected type \'object\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changePerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'update',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'updatablePerson\'. Expected type \'object\', but got undefined or null.',
+        });
     });
 
     it('Invalid person', async () => {
-        try {
-            await callFunction('changePerson', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'update',
-                person: 'invalid',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse \'person\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
-            });
-        }
+        const callResult = await callFunction('changePerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'update',
+            updatablePerson: 'invalid',
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse \'updatablePerson\'. Expected type \'object\', but got \'invalid\' from type \'string\' instead.',
+        });
     });
 
     it('Already signed in', async () => {
-        try {
-            await callFunction('changePerson', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                changeType: 'delete',
-                person: {
-                    id: '76025DDE-6893-46D2-BC34-9864BB5B8DAD',
-                    deleted: true,
-                    updateProperties: {
-                        timestamp: '2011-10-15T10:42:38+0000',
-                        personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                    },
+        const callResult = await callFunction('changePerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            changeType: 'delete',
+            updatablePerson: {
+                id: '76025DDE-6893-46D2-BC34-9864BB5B8DAD',
+                deleted: true,
+                updateProperties: {
+                    timestamp: '2011-10-15T10:42:38+0000',
+                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
                 },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/unavailable',
-                message: 'Person is already signed in!',
-            });
-        }
+            },
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'unavailable',
+            message: 'Person is already signed in!',
+        });
     });
 
     // eslint-disable-next-line require-jsdoc
@@ -174,13 +144,13 @@ describe('ChangePerson', () => {
             person,
             new UpdateProperties(timestamp, guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent))
         );
-        await callFunction('changePerson', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changePerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'update',
-            person: updatablePerson.databaseObject,
+            updatablePerson: updatablePerson.databaseObject,
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check person
         const personList = await getDatabasePersons(clubId, logger.nextIndent);
@@ -198,6 +168,7 @@ describe('ChangePerson', () => {
             await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changePerson', logger.nextIndent);
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
+            previousPerson: null,
             changedPerson: person.databaseObject,
         });
     });
@@ -222,12 +193,11 @@ describe('ChangePerson', () => {
     it('Person delete', async () => {
         const person = await setPerson(true, new Date('2011-10-14T10:42:38+0000'));
 
-        await callFunction('changePerson', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changePerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'delete',
-            person: {
+            updatablePerson: {
                 id: person.id.guidString,
                 deleted: true,
                 updateProperties: {
@@ -236,6 +206,7 @@ describe('ChangePerson', () => {
                 },
             },
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check person
         const personList = await getDatabasePersons(clubId, logger.nextIndent);
@@ -253,6 +224,7 @@ describe('ChangePerson', () => {
         expect(statisticsList.length).to.be.equal(1);
         expect(statisticsList[0]).to.be.deep.equal({
             previousPerson: person.databaseObject,
+            changedPerson: null,
         });
     });
 });

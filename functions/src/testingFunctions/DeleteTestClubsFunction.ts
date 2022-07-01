@@ -44,7 +44,7 @@ export class DeleteTestClubsFunction implements IFirebaseFunction<
         const parameterParser = new ParameterParser<DeleteTestClubsFunction.Parameters>(
             {
                 privateKey: 'string',
-                databaseType: DatabaseType.buildProperties,
+                databaseType: ['string', DatabaseType.fromString],
             },
             this.logger.nextIndent
         );
@@ -58,8 +58,7 @@ export class DeleteTestClubsFunction implements IFirebaseFunction<
     async executeFunction(): Promise<DeleteTestClubsFunction.ReturnType> {
         this.logger.append('DeleteTestClubsFunction.executeFunction', {}, 'info');
         await checkPrerequirements(
-            this.parameters.databaseType,
-            this.parameters.privateKey,
+            this.parameters,
             this.logger.nextIndent,
             this.auth
         );

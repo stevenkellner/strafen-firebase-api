@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFunctions, httpsCallable, HttpsCallableResult } from 'firebase/functions';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getDatabase, ref, onValue } from 'firebase/database';
 import { getAuth, signInWithEmailAndPassword, UserCredential } from 'firebase/auth';
 import { firebaseConfig } from './firebaseConfig';
@@ -8,8 +8,13 @@ import { guid } from '../src/TypeDefinitions/guid';
 import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
 import { Person } from '../src/TypeDefinitions/Person';
 import { Logger } from '../src/Logger';
-import { Deleted } from '../src/utils';
+import { Deleted, FirebaseFunctionResult } from '../src/utils';
 import { Updatable } from '../src/TypeDefinitions/Updatable';
+import { Crypter } from '../src/crypter/Crypter';
+import { cryptionKeys } from '../src/privateKeys';
+import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
+import { FunctionsErrorCode } from 'firebase-functions/lib/common/providers/https';
+import { expect, assert } from 'chai';
 
 const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app, 'europe-west1');
@@ -20,13 +25,19 @@ export const auth = getAuth();
  * Call a firebase function.
  * @param { string } functionName Name of the function.
  * @param { any | null } parameters Parameters of the function.
- * @return { Promise<HttpsCallableResult<unknown>> } Returned result of the function.
+ * @return { Promise<FirebaseFunctionResult> } Returned result of the function.
  */
 export async function callFunction(
     functionName: string,
     parameters: any | null
-): Promise<HttpsCallableResult<unknown>> {
-    return await httpsCallable(functions, functionName)(parameters);
+): Promise<FirebaseFunctionResult> {
+    const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
+    const httpsCallableResult = await httpsCallable(functions, functionName)({
+        verbose: true,
+        databaseType: 'testing',
+        parameters: crypter.encodeEncrypt(parameters),
+    });
+    return crypter.decryptDecode(httpsCallableResult.data as string);
 }
 
 /**
@@ -87,10 +98,11 @@ export async function getDatabaseValue(referencePath: string): Promise<any> {
  */
 export async function getDatabaseFines(clubId: guid, logger: Logger): Promise<Updatable<Fine | Deleted<guid>>[]> {
     logger.append('getDatabaseFines', { clubId });
+    const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
     return Object.entries(await getDatabaseValue(`${clubId.guidString}/fines`)).map(value => {
         return Updatable.fromRawProperty({
             id: value[0],
-            ...(value[1] as any),
+            ...crypter.decryptDecode(value[1] as string),
         }, Fine.fromObject, logger.nextIndent);
     });
 }
@@ -104,10 +116,11 @@ export async function getDatabaseFines(clubId: guid, logger: Logger): Promise<Up
 export async function getDatabaseReasonTemplates(clubId: guid, logger: Logger):
     Promise<Updatable<ReasonTemplate | Deleted<guid>>[]> {
     logger.append('getDatabaseReasonTemplates', { clubId });
+    const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
     return Object.entries(await getDatabaseValue(`${clubId.guidString}/reasonTemplates`)).map(value => {
         return Updatable.fromRawProperty({
             id: value[0],
-            ...(value[1] as any),
+            ...crypter.decryptDecode(value[1] as string),
         }, ReasonTemplate.fromObject, logger.nextIndent);
     });
 }
@@ -120,10 +133,11 @@ export async function getDatabaseReasonTemplates(clubId: guid, logger: Logger):
  */
 export async function getDatabasePersons(clubId: guid, logger: Logger): Promise<Updatable<Person | Deleted<guid>>[]> {
     logger.append('getDatabasePersons', { clubId });
+    const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
     return Object.entries(await getDatabaseValue(`${clubId.guidString}/persons`)).map(value => {
         return Updatable.fromRawProperty({
             id: value[0],
-            ...(value[1] as any),
+            ...crypter.decryptDecode(value[1] as string),
         }, Person.fromObject, logger.nextIndent);
     });
 }
@@ -138,12 +152,11 @@ export async function getDatabasePersons(clubId: guid, logger: Logger): Promise<
 export async function getDatabaseStatistics(clubId: guid, logger: Logger):
     Promise<{ id: guid, identifier: string, timestamp: number, property: any }[]> {
     logger.append('getDatabaseStatistics', { clubId });
+    const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
     return Object.entries(await getDatabaseValue(`${clubId.guidString}/statistics`)).map(value => {
         return {
             id: guid.fromString(value[0], logger.nextIndent),
-            identifier: (value[1] as any).identifier,
-            timestamp: (value[1] as any).timestamp,
-            property: (value[1] as any).property,
+            ...crypter.decryptDecode(value[1] as string),
         };
     });
 }
@@ -202,4 +215,82 @@ export function errorCodeAndMessage(error: unknown): ErrorCodeAndMessage {
             message: (error as any).message,
         };
     throw error;
+}
+
+// eslint-disable-next-line require-jsdoc
+export function expectFunctionFailed(result: FirebaseFunctionResult): Expect<{
+    code: FunctionsErrorCode,
+    message: string,
+}> {
+    expect(result.state).to.be.equal('failure');
+    assert(result.state === 'failure');
+    return new Expect({
+        code: result.error.code,
+        message: result.error.message,
+    });
+}
+
+// eslint-disable-next-line require-jsdoc
+export function expectFunctionSuccess(result: FirebaseFunctionResult): Expect<any> {
+    if (result.state === 'failure') {
+        console.log(`Failed with error: ${result.error.code}, ${result.error.message}`);
+        console.log(result.error.details);
+        console.log(result.error.stack);
+    }
+    expect(result.state).to.be.equal('success');
+    assert(result.state === 'success');
+    return new Expect(result.returnValue);
+}
+
+// eslint-disable-next-line require-jsdoc
+class Expect<T> {
+
+    // eslint-disable-next-line require-jsdoc
+    public constructor(private readonly value: T) { }
+
+    // eslint-disable-next-line require-jsdoc
+    public get to(): Expect1<T> {
+        return new Expect1<T>(this.value);
+    }
+}
+
+// eslint-disable-next-line require-jsdoc
+class Expect1<T> {
+
+    // eslint-disable-next-line require-jsdoc
+    public constructor(private readonly value: T) { }
+
+    // eslint-disable-next-line require-jsdoc
+    public get be(): Expect2<T> {
+        return new Expect2<T>(this.value);
+    }
+}
+
+// eslint-disable-next-line require-jsdoc
+class Expect2<T> {
+
+    // eslint-disable-next-line require-jsdoc
+    public constructor(private readonly value: T) { }
+
+    // eslint-disable-next-line require-jsdoc
+    public get deep(): Expect3<T> {
+        return new Expect3<T>(this.value);
+    }
+
+    // eslint-disable-next-line require-jsdoc
+    public equal(value: any, message?: string): Chai.Assertion {
+        return expect(this.value).to.be.equal(value, message);
+    }
+}
+
+// eslint-disable-next-line require-jsdoc
+class Expect3<T> {
+
+    // eslint-disable-next-line require-jsdoc
+    public constructor(private readonly value: T) { }
+
+    // eslint-disable-next-line require-jsdoc
+    public equal(value: T, message?: string): Chai.Assertion {
+        return expect(this.value).to.be.deep.equal(value, message);
+    }
 }

@@ -67,9 +67,9 @@ export class RegisterPersonFunction implements IFirebaseFunction<
         const parameterParser = new ParameterParser<RegisterPersonFunction.Parameters>(
             {
                 privateKey: 'string',
-                databaseType: DatabaseType.buildProperties,
-                clubId: guid.buildProperties,
-                personProperties: PersonPropertiesWithUserId.buildProperties,
+                databaseType: ['string', DatabaseType.fromString],
+                clubId: ['string', guid.fromString],
+                personProperties: ['object', PersonPropertiesWithUserId.fromObject],
             },
             this.logger.nextIndent
         );
@@ -85,8 +85,7 @@ export class RegisterPersonFunction implements IFirebaseFunction<
 
         // Check prerequirements
         await checkPrerequirements(
-            this.parameters.databaseType,
-            this.parameters.privateKey,
+            this.parameters,
             this.logger.nextIndent,
             this.auth,
         );

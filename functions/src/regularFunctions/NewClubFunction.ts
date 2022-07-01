@@ -66,9 +66,9 @@ export class NewClubFunction implements IFirebaseFunction<
         const parameterParser = new ParameterParser<NewClubFunction.Parameters>(
             {
                 privateKey: 'string',
-                databaseType: DatabaseType.buildProperties,
-                clubProperties: ClubProperties.buildProperties,
-                personProperties: PersonPropertiesWithUserId.buildProperties,
+                databaseType: ['string', DatabaseType.fromString],
+                clubProperties: ['object', ClubProperties.fromObject],
+                personProperties: ['object', PersonPropertiesWithUserId.fromObject],
             },
             this.logger.nextIndent
         );
@@ -84,8 +84,7 @@ export class NewClubFunction implements IFirebaseFunction<
 
         // Check prerequirements
         await checkPrerequirements(
-            this.parameters.databaseType,
-            this.parameters.privateKey,
+            this.parameters,
             this.logger.nextIndent,
             this.auth,
         );

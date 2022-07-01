@@ -21,6 +21,9 @@ import {
     saveStatistic,
     IStatistic,
 } from '../Statistic';
+import { ParameterParser } from '../ParameterParser';
+import { cryptionKeys } from '../privateKeys';
+import { Crypter } from '../crypter/Crypter';
 
 /**
  * @summary
@@ -47,18 +50,14 @@ import {
  *    - internal: if couldn't change reason template in database
  */
 export class ChangeReasonTemplateFunction implements IFirebaseFunction<
-    Parameters, ReturnType, ParameterParser
+    ChangeReasonTemplateFunction.Parameters,
+    ChangeReasonTemplateFunction.ReturnType
 > {
 
     /**
-     * All parameters passed by firebase function.
+     * Firebase function parameters passed to the firebase function.
      */
-    private parameterContainer: ParameterContainer;
-
-    /**
-     * Parser to parse firebase function parameters from parameter container.
-     */
-    public parameterParser: ParameterParser;
+    public parameters: ChangeReasonTemplateFunction.Parameters;
 
     /**
      * Logger to log this class.
@@ -71,22 +70,27 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
      * @param { AuthData | undefined } auth Authentication of person called this function.
      */
     public constructor(data: any, private readonly auth: AuthData | undefined) {
-        this.parameterContainer = new ParameterContainer(data);
         this.logger = Logger.start(
-            this.parameterContainer,
+            !!data.verbose,
             'ChangeReasonTemplateFunction.constructor',
             { data, auth },
             'notice'
         );
-        this.parameterParser = new ParameterParser(this.logger.nextIndent);
-        this.parameterParser.parseParameters(this.parameterContainer);
-    }
-
-    /**
-     * Firebase function parameters passed to the firebase function.
-     */
-    public get parameters(): Parameters {
-        return this.parameterParser.parameters;
+        const parameterContainer = new ParameterContainer(data, this.logger.nextIndent);
+        const parameterParser = new ParameterParser<ChangeReasonTemplateFunction.Parameters>(
+            {
+                privateKey: 'string',
+                databaseType: ['string', DatabaseType.fromString],
+                clubId: ['string', guid.fromString],
+                changeType: ['string', ChangeType.fromString],
+                updatableReasonTemplate: ['object', (value: object, logger: Logger) =>
+                    Updatable.fromRawProperty(value, ReasonTemplate.fromObject, logger),
+                ],
+            },
+            this.logger.nextIndent
+        );
+        parameterParser.parseParameters(parameterContainer);
+        this.parameters = parameterParser.parameters;
     }
 
     /**
@@ -97,35 +101,39 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
 
         // Check prerequirements
         await checkPrerequirements(
-            this.parameterContainer,
+            this.parameters,
             this.logger.nextIndent,
             this.auth,
             this.parameters.clubId
         );
 
-        // Check update timestamp
-        await checkUpdateProperties(
-            // eslint-disable-next-line max-len
-            `${this.parameters.clubId.guidString}/templateReasons/${this.parameters.updatableReasonTemplate.property.id.guidString}/updateProperties`,
-            this.parameters.updatableReasonTemplate.updateProperties,
-            this.parameterContainer,
-            this.logger.nextIndent,
-        );
+        // Get crypter
+        const crypter = new Crypter(cryptionKeys(this.parameters.databaseType));
 
         // Get previous reason template
         const reasonTemplateSnapshot = await this.reasonTemplateReference.once('value');
-        let previousReasonTemplate: ReasonTemplate.Statistic | null = null;
+        let previousReasonTemplate: Updatable<ReasonTemplate | Deleted<guid>> | undefined;
         if (reasonTemplateSnapshot.exists()) {
-            const previousRawReasonTemplate = ReasonTemplate.fromSnapshot(
-                reasonTemplateSnapshot,
-                this.logger.nextIndent
+            previousReasonTemplate = Updatable.fromRawProperty(
+                {
+                    id: reasonTemplateSnapshot.key,
+                    ...crypter.decryptDecode(reasonTemplateSnapshot.val()),
+                },
+                ReasonTemplate.fromObject,
+                this.logger.nextIndent,
             );
-            if (previousRawReasonTemplate instanceof ReasonTemplate)
-                previousReasonTemplate = previousRawReasonTemplate.statistic;
         }
 
+        // Check update timestamp
+        checkUpdateProperties(
+            previousReasonTemplate?.updateProperties,
+            this.parameters.updatableReasonTemplate.updateProperties,
+            this.parameters.databaseType,
+            this.logger.nextIndent,
+        );
+
         // Change reason template
-        let changedReasonTemplate: ReasonTemplate.Statistic | null = null;
+        let changedReasonTemplate: ReasonTemplate.Statistic | undefined;
         switch (this.parameters.changeType.value) {
         case 'delete':
             await this.deleteItem();
@@ -139,9 +147,13 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
 
         // Save statistic
         await saveStatistic(
-            new Statistic(new StatisticProperty(previousReasonTemplate, changedReasonTemplate)),
-            this.parameters.clubId,
-            this.parameterContainer,
+            new ChangeReasonTemplateFunction.Statistic(
+                new ChangeReasonTemplateFunction.StatisticProperty(
+                    previousReasonTemplate?.property,
+                    changedReasonTemplate
+                )
+            ),
+            this.parameters,
             this.logger.nextIndent,
         );
     }
@@ -153,7 +165,7 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
         return reference(
             // eslint-disable-next-line max-len
             `${this.parameters.clubId.guidString}/reasonTemplates/${this.parameters.updatableReasonTemplate.property.id.guidString}`,
-            this.parameterContainer,
+            this.parameters.databaseType,
             this.logger.nextIndent
         );
     }
@@ -163,6 +175,7 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
      */
     private async deleteItem(): Promise<void> {
         this.logger.append('ChangeReasonTemplateFunction.deleteItem');
+        const crypter = new Crypter(cryptionKeys(this.parameters.databaseType));
 
         // Check if parameters is valid for deleting.
         if (!(this.parameters.updatableReasonTemplate.property instanceof Deleted))
@@ -176,13 +189,16 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
 
         // Delete item.
         if (await existsData(this.reasonTemplateReference)) {
-            await this.reasonTemplateReference.set(this.parameters.updatableReasonTemplate.databaseObject, error => {
-                if (error != null)
-                    throw httpsError('internal',
-                        `Couldn't delete reason template, underlying error: ${error.name}, ${error.message}`,
-                        this.logger
-                    );
-            });
+            await this.reasonTemplateReference.set(
+                crypter.encodeEncrypt(this.parameters.updatableReasonTemplate.databaseObject),
+                error => {
+                    if (error != null)
+                        throw httpsError('internal',
+                            `Couldn't delete reason template, underlying error: ${error.name}, ${error.message}`,
+                            this.logger
+                        );
+                }
+            );
         }
     }
 
@@ -191,6 +207,7 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
      */
     private async updateItem(): Promise<void> {
         this.logger.append('ChangeReasonTemplateFunction.updateItem');
+        const crypter = new Crypter(cryptionKeys(this.parameters.databaseType));
 
         // Check if parameters is valid for updating.
         if (!(this.parameters.updatableReasonTemplate.property instanceof ReasonTemplate))
@@ -201,168 +218,119 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
             );
 
         // Set updated item.
-        await this.reasonTemplateReference.set(this.parameters.updatableReasonTemplate.databaseObject, error => {
-            if (error !== null)
-                throw httpsError(
-                    'internal',
-                    `Couldn't update reason template, underlying error: ${error.name}, ${error.message}`,
-                    this.logger
-                );
-        });
+        await this.reasonTemplateReference.set(
+            crypter.encodeEncrypt(this.parameters.updatableReasonTemplate.databaseObject),
+            error => {
+                if (error !== null)
+                    throw httpsError(
+                        'internal',
+                        `Couldn't update reason template, underlying error: ${error.name}, ${error.message}`,
+                        this.logger
+                    );
+            }
+        );
     }
 }
 
-/**
- * Parameters of firebase function.
- */
-interface Parameters {
+export namespace ChangeReasonTemplateFunction {
 
     /**
-     * Private key to check whether the caller is authenticated to use this function
+     * Parameters of firebase function.
      */
-    privateKey: string,
-
-    /**
-     * Database type of the change
-     */
-    databaseType: DatabaseType,
-
-    /**
-     * Id of the club to change the reason
-     */
-    clubId: guid,
-
-    /**
-     * Type of the change
-     */
-    changeType: ChangeType,
-
-    /**
-     * Reason to change
-     */
-    updatableReasonTemplate: Updatable<ReasonTemplate | Deleted<guid>>
-}
-
-/**
- * Return type of firebase function.
- */
-type ReturnType = void;
-
-/**
- * Parser to parse firebase function parameters from parameter container.
- * @template Parameters Type of the fireabse function parameters.
- */
-class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> {
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    private initialParameters?: Parameters;
-
-    /**
-     * Constructs parser with a logger.
-     * @param { Logger } logger Logger to log this class.
-     */
-    public constructor(private logger: Logger) {}
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    public get parameters(): Parameters {
-        if (this.initialParameters === undefined)
-            throw httpsError(
-                'internal',
-                'Tried to access parameters before those parameters were parsed.',
-                this.logger
-            );
-        return this.initialParameters;
-    }
-
-    /**
-     * Parse firebase function parameters from parameter container.
-     * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
-     */
-    public parseParameters(container: ParameterContainer): void {
-        this.logger.append('ParameterParser.parseParameters', { container });
-
-        // Parse parametes
-        this.initialParameters = {
-            privateKey: container.parameter('privateKey', 'string', this.logger.nextIndent),
-            databaseType: container.parameter(
-                'databaseType',
-                'string',
-                this.logger.nextIndent,
-                DatabaseType.fromString
-            ),
-            clubId: container.parameter('clubId', 'string', this.logger.nextIndent, guid.fromString),
-            changeType: container.parameter('changeType', 'string', this.logger.nextIndent, ChangeType.fromString),
-            updatableReasonTemplate: Updatable.fromRawProperty(
-                container.parameter('updatableReasonTemplate', 'object', this.logger.nextIndent),
-                ReasonTemplate.fromObject,
-                this.logger.nextIndent,
-            ),
-        };
-    }
-}
-
-/**
- * Statistic of this firebase function that will be stored in the database.
- */
-class Statistic implements IStatistic<StatisticProperty> {
-
-    /**
-     * Identifier of the statistic of a database update.
-     */
-    readonly identifier: string = 'changeReasonTemplate';
-
-    /**
-     * Constructs Statistic with statistic property.
-     * @param { StatisticProperty } property Property of the statistic of a database update.
-     */
-    constructor(readonly property: StatisticProperty) {}
-}
-
-/**
- * Statistic property of this firebase function that will be stored in the database.
- */
-class StatisticProperty implements IStatisticProperty<StatisticProperty.DatabaseObject> {
-
-    /**
-     * Constructs statistic with previous and changed reason
-     * @param { ReasonTemplate.Statistic | null } previousReasonTemplate Previous reason before change.
-     * @param { ReasonTemplate.Statistic | null } changedReasonTemplate Changed reason after change.
-     */
-    public constructor(
-        public readonly previousReasonTemplate: ReasonTemplate.Statistic | null,
-        public readonly changedReasonTemplate: ReasonTemplate.Statistic | null
-    ) {}
-
-    /**
-     * Statistic property object that will be stored in the database.
-     */
-    public get databaseObject(): StatisticProperty.DatabaseObject {
-        return {
-            previousReasonTemplate: this.previousReasonTemplate?.databaseObject ?? null,
-            changedReasonTemplate: this.changedReasonTemplate?.databaseObject ?? null,
-        };
-    }
-}
-
-namespace StatisticProperty {
-
-    /**
-     * Statistic property object that will be stored in the database.
-     */
-    export interface DatabaseObject {
+    export interface Parameters {
 
         /**
-         * Previous reason before change.
+         * Private key to check whether the caller is authenticated to use this function
          */
-        previousReasonTemplate: ReasonTemplate.Statistic.DatabaseObject | null;
+        privateKey: string,
 
         /**
-         * Changed reason after change.
+         * Database type of the change
          */
-        changedReasonTemplate: ReasonTemplate.Statistic.DatabaseObject | null;
+        databaseType: DatabaseType,
+
+        /**
+         * Id of the club to change the reason
+         */
+        clubId: guid,
+
+        /**
+         * Type of the change
+         */
+        changeType: ChangeType,
+
+        /**
+         * Reason to change
+         */
+        updatableReasonTemplate: Updatable<ReasonTemplate | Deleted<guid>>
+    }
+
+    /**
+     * Return type of firebase function.
+     */
+    export type ReturnType = void;
+
+    /**
+     * Statistic of this firebase function that will be stored in the database.
+     */
+    export class Statistic implements IStatistic<StatisticProperty> {
+
+        /**
+         * Identifier of the statistic of a database update.
+         */
+        readonly identifier: string = 'changeReasonTemplate';
+
+        /**
+         * Constructs Statistic with statistic property.
+         * @param { StatisticProperty } property Property of the statistic of a database update.
+         */
+        constructor(readonly property: StatisticProperty) { }
+    }
+
+    /**
+     * Statistic property of this firebase function that will be stored in the database.
+     */
+    export class StatisticProperty implements IStatisticProperty<StatisticProperty.DatabaseObject> {
+
+        /**
+         * Constructs statistic with previous and changed reason
+         * @param { ReasonTemplate.Statistic | null } previousReasonTemplate Previous reason before change.
+         * @param { ReasonTemplate.Statistic | null } changedReasonTemplate Changed reason after change.
+         */
+        public constructor(
+            public readonly previousReasonTemplate: ReasonTemplate | Deleted<guid> | undefined,
+            public readonly changedReasonTemplate: ReasonTemplate.Statistic | undefined
+        ) { }
+
+        /**
+         * Statistic property object that will be stored in the database.
+         */
+        public get databaseObject(): StatisticProperty.DatabaseObject {
+            const previousReasonTemplate = this.previousReasonTemplate instanceof ReasonTemplate ?
+                this.previousReasonTemplate.statistic.databaseObject ?? null : null;
+            return {
+                previousReasonTemplate: previousReasonTemplate,
+                changedReasonTemplate: this.changedReasonTemplate?.databaseObject ?? null,
+            };
+        }
+    }
+
+    export namespace StatisticProperty {
+
+        /**
+         * Statistic property object that will be stored in the database.
+         */
+        export interface DatabaseObject {
+
+            /**
+             * Previous reason before change.
+             */
+            previousReasonTemplate: ReasonTemplate.Statistic.DatabaseObject | null;
+
+            /**
+             * Changed reason after change.
+             */
+            changedReasonTemplate: ReasonTemplate.Statistic.DatabaseObject | null;
+        }
     }
 }

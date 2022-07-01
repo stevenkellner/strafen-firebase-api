@@ -1,10 +1,9 @@
 import * as admin from 'firebase-admin';
 import { createFunction } from './utils';
 
-/*
-import { ChangeReasonTemplateFunction } from './regularFunctions/ChangeReasonTemplateFunction';
-import { ChangeFineFunction } from './regularFunctions/ChangeFineFunction';
 import { ChangeFinePayedFunction } from './regularFunctions/ChangeFinePayedFunction';
+import { ChangeFineFunction } from './regularFunctions/ChangeFineFunction';
+import { ChangeReasonTemplateFunction } from './regularFunctions/ChangeReasonTemplateFunction';
 import { ChangePersonFunction } from './regularFunctions/ChangePersonFunction';
 import { ChangeLatePaymentInterestFunction } from './regularFunctions/ChangeLatePaymentInterestFunction';
 import { ExistsClubWithIdentifierFunction } from './regularFunctions/ExistsClubWithIdentifierFunction';
@@ -12,7 +11,6 @@ import { ExistsPersonWithUserIdFunction } from './regularFunctions/ExistsPersonW
 import { ForceSignOutFunction } from './regularFunctions/ForceSignOutFunction';
 import { GetClubIdFunction } from './regularFunctions/GetClubIdFunction';
 import { GetPersonPropertiesFunction } from './regularFunctions/GetPersonPropertiesFunction';
-*/
 import { NewClubFunction } from './regularFunctions/NewClubFunction';
 import { RegisterPersonFunction } from './regularFunctions/RegisterPersonFunction';
 import { NewTestClubFunction } from './testingFunctions/NewTestClubFunction';
@@ -23,54 +21,54 @@ admin.initializeApp();
 /**
  * Changes payement state of fine with specified fine id.
  */
-// export const changeFinePayed = createFunction((data, auth) => new ChangeFinePayedFunction(data, auth));
+export const changeFinePayed = createFunction((data, auth) => new ChangeFinePayedFunction(data, auth));
 
 /**
  * Changes a element of reason template list.
  */
-// export const changeReasonTemplate = createFunction((data, auth) => new ChangeReasonTemplateFunction(data, auth));
+export const changeReasonTemplate = createFunction((data, auth) => new ChangeReasonTemplateFunction(data, auth));
 
 /**
  * Changes a element of fine list.
  */
-// export const changeFine = createFunction((data, auth) => new ChangeFineFunction(data, auth));
+export const changeFine = createFunction((data, auth) => new ChangeFineFunction(data, auth));
 
 /**
  * Changes a element of person list.
  */
-// export const changePerson = createFunction((data, auth) => new ChangePersonFunction(data, auth));
+export const changePerson = createFunction((data, auth) => new ChangePersonFunction(data, auth));
 
 /**
  * Changes the late payment interest.
  */
-// export const changeLatePaymentInterest =
-//     createFunction((data, auth) => new ChangeLatePaymentInterestFunction(data, auth));
+export const changeLatePaymentInterest =
+    createFunction((data, auth) => new ChangeLatePaymentInterestFunction(data, auth));
 
 /**
  * Checks if club with given identifier already exists.
  */
-// export const existsClubWithIdentifier =
-//     createFunction((data, auth) => new ExistsClubWithIdentifierFunction(data, auth));
+export const existsClubWithIdentifier =
+    createFunction((data, auth) => new ExistsClubWithIdentifierFunction(data, auth));
 
 /**
  * Checks if a person with given user id exists.
  */
-// export const existsPersonWithUserId = createFunction((data, auth) => new ExistsPersonWithUserIdFunction(data, auth));
+export const existsPersonWithUserId = createFunction((data, auth) => new ExistsPersonWithUserIdFunction(data, auth));
 
 /**
  * Force sign out a person.
  */
-// export const forceSignOut = createFunction((data, auth) => new ForceSignOutFunction(data, auth));
+export const forceSignOut = createFunction((data, auth) => new ForceSignOutFunction(data, auth));
 
 /**
  * Get club id with given club identifier.
  */
-// export const getClubId = createFunction((data, auth) => new GetClubIdFunction(data, auth));
+export const getClubId = createFunction((data, auth) => new GetClubIdFunction(data, auth));
 
 /**
  * Returns club and person properties of user id.
  */
-// export const getPersonProperties = createFunction((data, auth) => new GetPersonPropertiesFunction(data, auth));
+export const getPersonProperties = createFunction((data, auth) => new GetPersonPropertiesFunction(data, auth));
 
 /**
  * Creates a new club with given properties.

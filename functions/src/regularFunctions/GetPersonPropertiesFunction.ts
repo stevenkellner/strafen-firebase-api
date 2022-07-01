@@ -11,6 +11,9 @@ import { Logger } from '../Logger';
 import { AuthData } from 'firebase-functions/lib/common/providers/https';
 import { ClubProperties } from '../TypeDefinitions/ClubProperties';
 import { PersonPropertiesWithIsAdmin } from '../TypeDefinitions/PersonPropertiesWithIsAdmin';
+import { ParameterParser } from '../ParameterParser';
+import { Crypter } from '../crypter/Crypter';
+import { cryptionKeys } from '../privateKeys';
 
 // eslint-disable-next-line valid-jsdoc
 /**
@@ -33,18 +36,14 @@ import { PersonPropertiesWithIsAdmin } from '../TypeDefinitions/PersonProperties
  *    - not-found: if no person with given user id was found
  */
 export class GetPersonPropertiesFunction implements IFirebaseFunction<
-    Parameters, ReturnType, ParameterParser
+    GetPersonPropertiesFunction.Parameters,
+    GetPersonPropertiesFunction.ReturnType
 > {
 
     /**
-     * All parameters passed by firebase function.
+     * Firebase function parameters passed to the firebase function.
      */
-    private parameterContainer: ParameterContainer;
-
-    /**
-     * Parser to parse firebase function parameters from parameter container.
-     */
-    public parameterParser: ParameterParser;
+    public parameters: GetPersonPropertiesFunction.Parameters;
 
     /**
      * Logger to log this class.
@@ -57,51 +56,54 @@ export class GetPersonPropertiesFunction implements IFirebaseFunction<
      * @param { AuthData | undefined } auth Authentication of person called this function.
      */
     public constructor(data: any, private readonly auth: AuthData | undefined) {
-        this.parameterContainer = new ParameterContainer(data);
         this.logger = Logger.start(
-            this.parameterContainer,
+            !!data.verbose,
             'GetPersonPropertiesFunction.constructor',
             { data, auth },
             'notice'
         );
-        this.parameterParser = new ParameterParser(this.logger.nextIndent);
-        this.parameterParser.parseParameters(this.parameterContainer);
-    }
-
-    /**
-     * Firebase function parameters passed to the firebase function.
-     */
-    public get parameters(): Parameters {
-        return this.parameterParser.parameters;
+        const parameterContainer = new ParameterContainer(data, this.logger.nextIndent);
+        const parameterParser = new ParameterParser<GetPersonPropertiesFunction.Parameters>(
+            {
+                privateKey: 'string',
+                databaseType: ['string', DatabaseType.fromString],
+                userId: 'string',
+            },
+            this.logger.nextIndent
+        );
+        parameterParser.parseParameters(parameterContainer);
+        this.parameters = parameterParser.parameters;
     }
 
     /**
      * Executes this firebase function.
      */
-    async executeFunction(): Promise<ReturnType> {
+    async executeFunction(): Promise<GetPersonPropertiesFunction.ReturnType> {
         this.logger.append('GetPersonPropertiesFunction.executeFunction', {}, 'info');
 
         // Check prerequirements
         await checkPrerequirements(
-            this.parameterContainer,
+            this.parameters,
             this.logger.nextIndent,
             this.auth,
         );
 
         // Get person properties
-        let properties: ReturnType | null = null;
+        const crypter = new Crypter(cryptionKeys(this.parameters.databaseType));
+        let properties: GetPersonPropertiesFunction.ReturnType | null = null;
         (await this.allClubsReference.once('value')).forEach(clubSnapshot => {
             clubSnapshot.child('persons').forEach(personSnapshot => {
-                const userId = personSnapshot.child('signInData').child('userId').val();
+                const person = crypter.decryptDecode(personSnapshot.val());
+                const userId = person.signInData?.userId;
                 if (userId == this.parameters.userId)
                     properties = {
                         personProperties: PersonPropertiesWithIsAdmin.fromObject({
                             id: personSnapshot.key,
-                            signInDate: personSnapshot.child('signInData') .child('signInDate').val(),
-                            isAdmin: personSnapshot.child('signInData').child('admin').val(),
+                            signInDate: person.signInData.signInDate,
+                            isAdmin: person.signInData.admin,
                             name: {
-                                first: personSnapshot.child('name').child('first').val(),
-                                last: personSnapshot.child('name').child('last').val(),
+                                first: person.name.first,
+                                last: person.name.last,
                             },
                         }, this.logger.nextIndent).databaseObject,
                         clubProperties: ClubProperties.fromObject({
@@ -129,88 +131,40 @@ export class GetPersonPropertiesFunction implements IFirebaseFunction<
     private get allClubsReference(): admin.database.Reference {
         return reference(
             '',
-            this.parameterContainer,
+            this.parameters.databaseType,
             this.logger.nextIndent
         );
     }
 }
 
-/**
- * Parameters of firebase function.
- */
-interface Parameters {
+export namespace GetPersonPropertiesFunction {
 
     /**
-     * Private key to check whether the caller is authenticated to use this function
+     * Parameters of firebase function.
      */
-    privateKey: string,
+    export interface Parameters {
 
-    /**
-     * Database type of the change
-     */
-    databaseType: DatabaseType,
+        /**
+         * Private key to check whether the caller is authenticated to use this function
+         */
+        privateKey: string,
 
-    /**
-     * User id of person to get properties from
-     */
-    userId: string,
-}
+        /**
+         * Database type of the change
+         */
+        databaseType: DatabaseType,
 
-/**
- * Return type of firebase function.
- */
-type ReturnType = {
-    personProperties: PersonPropertiesWithIsAdmin.DatabaseObject,
-    clubProperties: ClubProperties.DatabaseObject,
-}
-
-/**
- * Parser to parse firebase function parameters from parameter container.
- * @template Parameters Type of the fireabse function parameters.
- */
-class ParameterParser implements IFirebaseFunction.IParameterParser<Parameters> {
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    private initialParameters?: Parameters;
-
-    /**
-     * Constructs parser with a logger.
-     * @param { Logger } logger Logger to log this class.
-     */
-    public constructor(private logger: Logger) {}
-
-    /**
-     * Parsed firebase function parameters from parameter container.
-     */
-    public get parameters(): Parameters {
-        if (this.initialParameters === undefined)
-            throw httpsError(
-                'internal',
-                'Tried to access parameters before those parameters were parsed.',
-                this.logger
-            );
-        return this.initialParameters;
+        /**
+         * User id of person to get properties from
+         */
+        userId: string,
     }
 
     /**
-     * Parse firebase function parameters from parameter container.
-     * @param { ParameterContainer } container Parameter container to parse firebase function parameters from.
+     * Return type of firebase function.
      */
-    public parseParameters(container: ParameterContainer): void {
-        this.logger.append('ParameterParser.parseParameters', { container });
-
-        // Parse parametes
-        this.initialParameters = {
-            privateKey: container.parameter('privateKey', 'string', this.logger.nextIndent),
-            databaseType: container.parameter(
-                'databaseType',
-                'string',
-                this.logger.nextIndent,
-                DatabaseType.fromString
-            ),
-            userId: container.parameter('userId', 'string', this.logger.nextIndent),
-        };
+    export type ReturnType = {
+        personProperties: PersonPropertiesWithIsAdmin.DatabaseObject,
+        clubProperties: ClubProperties.DatabaseObject,
     }
 }

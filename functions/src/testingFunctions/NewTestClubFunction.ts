@@ -11,7 +11,7 @@ import { DatabaseType } from '../TypeDefinitions/DatabaseType';
 import { Logger } from '../Logger';
 import { AuthData } from 'firebase-functions/lib/common/providers/https';
 import * as defaultTestClub from './testClubs/default.json';
-import { ParameterParser, ValidBuilder } from '../ParameterParser';
+import { ParameterParser } from '../ParameterParser';
 
 // eslint-disable-next-line require-jsdoc
 export class NewTestClubFunction implements IFirebaseFunction<
@@ -40,9 +40,9 @@ export class NewTestClubFunction implements IFirebaseFunction<
         const parameterParser = new ParameterParser<NewTestClubFunction.Parameters>(
             {
                 privateKey: 'string',
-                databaseType: DatabaseType.buildProperties,
-                testClubType: TestClubType.buildProperties,
-                clubId: guid.buildProperties,
+                databaseType: ['string', DatabaseType.fromString],
+                testClubType: ['string', TestClubType.fromString],
+                clubId: ['string', guid.fromString],
             },
             this.logger.nextIndent
         );
@@ -56,8 +56,7 @@ export class NewTestClubFunction implements IFirebaseFunction<
     async executeFunction(): Promise<NewTestClubFunction.ReturnType> {
         this.logger.append('NewTestClubFunction.executeFunction', {}, 'info');
         await checkPrerequirements(
-            this.parameters.databaseType,
-            this.parameters.privateKey,
+            this.parameters,
             this.logger.nextIndent,
             this.auth
         );
@@ -90,11 +89,6 @@ class TestClubType {
     private constructor(value: 'default') {
         this.value = value;
     }
-
-    /**
-     * Properties used to build this type.
-     */
-    static buildProperties: ValidBuilder<TestClubType> = ['string', TestClubType.fromString];
 
     // eslint-disable-next-line require-jsdoc
     static fromString(value: string, logger: Logger): TestClubType {

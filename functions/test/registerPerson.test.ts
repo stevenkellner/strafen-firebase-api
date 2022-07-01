@@ -1,12 +1,15 @@
-import { assert, expect } from 'chai';
+import { expect } from 'chai';
 import { signOut } from 'firebase/auth';
-import { functionCallKey } from '../src/privateKeys';
+import { unhashedFunctionCallKey, cryptionKeys } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import { Logger } from '../src/Logger';
 import { PersonName } from '../src/TypeDefinitions/PersonName';
 import { PersonPropertiesWithUserId } from '../src/TypeDefinitions/PersonPropertiesWithUserId';
-import { auth, callFunction, firebaseError, getDatabaseValue, signInTestUser } from './utils';
+import {
+    auth, callFunction, getDatabaseValue, signInTestUser, expectFunctionSuccess, expectFunctionFailed,
+} from './utils';
 import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
+import { Crypter } from '../src/crypter/Crypter';
 
 describe('RegisterPerson', () => {
 
@@ -16,58 +19,48 @@ describe('RegisterPerson', () => {
 
     beforeEach(async () => {
         await signInTestUser();
-        await callFunction('newTestClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('newTestClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             testClubType: 'default',
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
     });
 
     afterEach(async () => {
-        await callFunction('deleteTestClubs', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('deleteTestClubs', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
         await signOut(auth);
     });
 
     it('No club id', async () => {
-        try {
-            const personId = guid.newGuid();
-            await callFunction('registerPerson', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                personProperties: new PersonPropertiesWithUserId(
-                    personId,
-                    new Date(),
-                    'userId-123',
-                    new PersonName('first name', 'last name')
-                ).databaseObject,
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const personId = guid.newGuid();
+        const callResult = await callFunction('registerPerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            personProperties: new PersonPropertiesWithUserId(
+                personId,
+                new Date(),
+                'userId-123',
+                new PersonName('first name', 'last name')
+            ).databaseObject,
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('No person properties', async () => {
-        try {
-            await callFunction('registerPerson', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'personProperties\'. Expected type \'object\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('registerPerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'personProperties\'. Expected type \'object\', but got undefined or null.',
+        });
     });
 
     it('Register new person', async () => {
@@ -75,9 +68,8 @@ describe('RegisterPerson', () => {
         // Register person
         const personId = guid.newGuid();
         const signInDate = new Date();
-        const returnValue = await callFunction('registerPerson', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('registerPerson', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             personProperties: new PersonPropertiesWithUserId(
                 personId,
@@ -88,7 +80,7 @@ describe('RegisterPerson', () => {
         });
 
         // Check return value
-        expect(returnValue.data).to.be.deep.equal({
+        expectFunctionSuccess(callResult).to.be.deep.equal({
             id: clubId.guidString,
             identifier: 'demo-team',
             inAppPaymentActive: true,
@@ -101,9 +93,10 @@ describe('RegisterPerson', () => {
         expect(fetchedPersonId).to.be.equal(personId.guidString);
 
         // Check database person
+        const crypter = new Crypter(cryptionKeys(new DatabaseType('testing')));
         const fetchedPerson =
             await getDatabaseValue(`${clubId.guidString}/persons/${personId.guidString}`);
-        expect(fetchedPerson).to.be.deep.equal({
+        expect(crypter.decryptDecode(fetchedPerson)).to.be.deep.equal({
             name: {
                 first: 'first name',
                 last: 'last name',

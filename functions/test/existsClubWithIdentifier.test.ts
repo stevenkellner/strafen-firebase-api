@@ -1,9 +1,8 @@
-import { assert, expect } from 'chai';
 import { signOut } from 'firebase/auth';
-import { functionCallKey } from '../src/privateKeys';
+import { unhashedFunctionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import { Logger } from '../src/Logger';
-import { auth, callFunction, firebaseError, signInTestUser } from './utils';
+import { auth, callFunction, signInTestUser, expectFunctionSuccess, expectFunctionFailed } from './utils';
 import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
 
 describe('ExistsClubWithIdentifier', () => {
@@ -15,52 +14,45 @@ describe('ExistsClubWithIdentifier', () => {
 
     beforeEach(async () => {
         await signInTestUser();
-        await callFunction('newTestClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('newTestClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             testClubType: 'default',
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
     });
 
     afterEach(async () => {
-        await callFunction('deleteTestClubs', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('deleteTestClubs', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
         await signOut(auth);
     });
 
     it('No identifier', async () => {
-        try {
-            await callFunction('existsClubWithIdentifier', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'identifier\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('existsClubWithIdentifier', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'identifier\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('With existsting identifier', async () => {
-        const httpResult = await callFunction('existsClubWithIdentifier', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('existsClubWithIdentifier', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             identifier: 'demo-team',
         });
-        expect(httpResult.data).to.be.true;
+        expectFunctionSuccess(callResult).to.be.equal(true);
     });
 
     it('With not existsting identifier', async () => {
-        const httpResult = await callFunction('existsClubWithIdentifier', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('existsClubWithIdentifier', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             identifier: 'invalid',
         });
-        expect(httpResult.data).to.be.false;
+        expectFunctionSuccess(callResult).to.be.equal(false);
     });
 });

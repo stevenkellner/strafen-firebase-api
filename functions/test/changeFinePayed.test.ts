@@ -1,15 +1,15 @@
-import { functionCallKey } from '../src/privateKeys';
+import { unhashedFunctionCallKey } from '../src/privateKeys';
 import { guid } from '../src/TypeDefinitions/guid';
 import {
     auth,
     callFunction,
-    firebaseError,
+    expectFunctionFailed, expectFunctionSuccess,
     getDatabaseFines,
     getDatabaseReasonTemplates,
     getDatabaseStatisticsPropertyWithIdentifier,
     signInTestUser,
 } from './utils';
-import { assert, expect } from 'chai';
+import { expect } from 'chai';
 import { signOut } from 'firebase/auth';
 import { Fine } from '../src/TypeDefinitions/Fine';
 import { FineReason } from '../src/TypeDefinitions/FineReason';
@@ -26,237 +26,192 @@ describe('ChangeFinePayed', () => {
 
     beforeEach(async () => {
         await signInTestUser();
-        await callFunction('newTestClub', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('newTestClub', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             testClubType: 'default',
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
     });
 
     afterEach(async () => {
-        await callFunction('deleteTestClubs', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('deleteTestClubs', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
         await signOut(auth);
     });
 
     it('No club id', async () => {
-        try {
-            await callFunction('changeFinePayed', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                fineId: guid.newGuid().guidString,
-                state: {
-                    state: 'unpayed',
-                },
-                updateProperties: {
-                    timestamp: 123456,
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            fineId: guid.newGuid().guidString,
+            state: {
+                state: 'unpayed',
+            },
+            fineUpdateProperties: {
+                timestamp: 123456,
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
+            },
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'clubId\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('No fine id', async () => {
-        try {
-            await callFunction('changeFinePayed', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: guid.newGuid().guidString,
-                state: {
-                    state: 'unpayed',
-                },
-                updateProperties: {
-                    timestamp: '2011-10-14T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse \'fineId\'. Expected type \'string\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: guid.newGuid().guidString,
+            state: {
+                state: 'unpayed',
+            },
+            fineUpdateProperties: {
+                timestamp: '2011-10-14T10:42:38+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
+            },
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            message: 'Couldn\'t parse \'fineId\'. Expected type \'string\', but got undefined or null.',
+        });
     });
 
     it('No state', async () => {
-        try {
-            await callFunction('changeFinePayed', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: guid.newGuid().guidString,
-                fineId: guid.newGuid().guidString,
-                updateProperties: {
-                    timestamp: '2011-10-14T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse \'updatablePayedState\'. Expected type \'object\', but got undefined or null.',
-            });
-        }
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: guid.newGuid().guidString,
+            fineId: guid.newGuid().guidString,
+            fineUpdateProperties: {
+                timestamp: '2011-10-14T10:42:38+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
+            },
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse \'payedState\'. Expected type \'object\', but got undefined or null.',
+        });
     });
 
     it('Invalid state.state', async () => {
-        try {
-            await callFunction('changeFinePayed', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: guid.newGuid().guidString,
-                fineId: guid.newGuid().guidString,
-                updatablePayedState: {
-                    state: 'invalid state',
-                },
-                updateProperties: {
-                    timestamp: '2011-10-14T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse PayedState parameter \'state\'. Expected values \'payed\', \'settled\' or \'unpayed\', but got \'invalid state\' from type \'string\'.',
-            });
-        }
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: guid.newGuid().guidString,
+            fineId: guid.newGuid().guidString,
+            payedState: {
+                state: 'invalid state',
+            },
+            fineUpdateProperties: {
+                timestamp: '2011-10-14T10:42:38+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
+            },
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse PayedState parameter \'state\'. Expected values \'payed\', \'settled\' or \'unpayed\', but got \'invalid state\' from type \'string\'.',
+        });
     });
 
     it('Invalid state payed no payDate', async () => {
-        try {
-            await callFunction('changeFinePayed', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: guid.newGuid().guidString,
-                fineId: guid.newGuid().guidString,
-                updatablePayedState: {
-                    state: 'payed',
-                },
-                updateProperties: {
-                    timestamp: '2011-10-14T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse PayedState parameter \'payDate\', expected iso string, but got \'undefined\' from type undefined',
-            });
-        }
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: guid.newGuid().guidString,
+            fineId: guid.newGuid().guidString,
+            payedState: {
+                state: 'payed',
+            },
+            fineUpdateProperties: {
+                timestamp: '2011-10-14T10:42:38+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
+            },
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse PayedState parameter \'payDate\', expected iso string, but got \'undefined\' from type undefined',
+        });
     });
 
     it('Invalid state payed no inApp', async () => {
-        try {
-            await callFunction('changeFinePayed', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: guid.newGuid().guidString,
-                fineId: guid.newGuid().guidString,
-                updatablePayedState: {
-                    state: 'payed',
-                    payDate: '2011-10-14T10:42:38+0000',
-                },
-                updateProperties: {
-                    timestamp: '2011-10-14T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse PayedState parameter \'inApp\'. Expected type \'boolean\', but got \'undefined\' from type \'undefined\'.',
-            });
-        }
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: guid.newGuid().guidString,
+            fineId: guid.newGuid().guidString,
+            payedState: {
+                state: 'payed',
+                payDate: '2011-10-14T10:42:38+0000',
+            },
+            fineUpdateProperties: {
+                timestamp: '2011-10-14T10:42:38+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
+            },
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse PayedState parameter \'inApp\'. Expected type \'boolean\', but got \'undefined\' from type \'undefined\'.',
+        });
     });
 
     it('No update properties', async () => {
-        try {
-            await callFunction('changeFinePayed', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: guid.newGuid().guidString,
-                fineId: guid.newGuid().guidString,
-                updatablePayedState: {
-                    state: 'payed',
-                    payDate: '2011-10-14T10:42:38+0000',
-                    inApp: false,
-                },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse update properties, expected type \'object\', but bot undefined from type \'undefined\'',
-            });
-        }
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: guid.newGuid().guidString,
+            fineId: guid.newGuid().guidString,
+            payedState: {
+                state: 'payed',
+                payDate: '2011-10-14T10:42:38+0000',
+                inApp: false,
+            },
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse \'fineUpdateProperties\'. Expected type \'object\', but got undefined or null.',
+        });
     });
 
     it('Invalid update properties', async () => {
-        try {
-            await callFunction('changeFinePayed', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: guid.newGuid().guidString,
-                fineId: guid.newGuid().guidString,
-                updatablePayedState: {
-                    state: 'payed',
-                    payDate: '2011-10-14T10:42:38+0000',
-                    inApp: false,
-                    updateProperties: {
-                        asdf: 'invalid',
-                    },
-                },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                // eslint-disable-next-line max-len
-                message: 'Couldn\'t parse UpdateProperties parameter \'personId\', expected type string but got \'undefined\' from type undefined',
-            });
-        }
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: guid.newGuid().guidString,
+            fineId: guid.newGuid().guidString,
+            payedState: {
+                state: 'payed',
+                payDate: '2011-10-14T10:42:38+0000',
+                inApp: false,
+            },
+            fineUpdateProperties: {
+                asdf: 'invalid',
+            },
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'invalid-argument',
+            // eslint-disable-next-line max-len
+            message: 'Couldn\'t parse UpdateProperties parameter \'personId\', expected type string but got \'undefined\' from type undefined',
+        });
     });
 
     it('Not existing fine', async () => {
-        try {
-            await callFunction('changeFinePayed', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                fineId: guid.newGuid().guidString,
-                updatablePayedState: {
-                    state: 'unpayed',
-                    updateProperties: {
-                        timestamp: '2011-10-14T10:42:38+0000',
-                        personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                    },
-                },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/invalid-argument',
-                message: 'Couldn\'t parse Fine since no data exists in snapshot.',
-            });
-        }
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            fineId: guid.newGuid().guidString,
+            payedState: {
+                state: 'unpayed',
+            },
+            fineUpdateProperties: {
+                timestamp: '2011-10-14T10:42:38+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
+            },
+        });
+        expectFunctionFailed(callResult).to.be.deep.equal({
+            code: 'unavailable',
+            message: 'Couldn\'t get fine from \'Deleted\'.',
+        });
     });
 
     // eslint-disable-next-line require-jsdoc
@@ -272,10 +227,6 @@ describe('ChangeFinePayed', () => {
             date: '2011-10-14T10:42:38+0000',
             payedState: {
                 state: 'unpayed',
-                updateProperties: {
-                    timestamp: '2011-10-14T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
             },
             number: 2,
             fineReason: {
@@ -305,23 +256,23 @@ describe('ChangeFinePayed', () => {
             )
         );
         if (addReason) {
-            await callFunction('changeReasonTemplate', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
+            const callResult0 = await callFunction('changeReasonTemplate', {
+                privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
                 clubId: clubId.guidString,
                 changeType: 'update',
-                reasonTemplate: updatableReason.databaseObject,
+                updatableReasonTemplate: updatableReason.databaseObject,
             });
+            expectFunctionSuccess(callResult0).to.be.equal(undefined);
         }
 
         // Add fine with reason template
-        await callFunction('changeFine', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult1 = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'update',
-            fine: updatableFine1.databaseObject,
+            updatableFine: updatableFine1.databaseObject,
         });
+        expectFunctionSuccess(callResult1).to.be.equal(undefined);
 
         // Add fine with custom reason
         const fine2 = Fine.fromObject({
@@ -332,10 +283,6 @@ describe('ChangeFinePayed', () => {
                 state: 'payed',
                 inApp: false,
                 payDate: '2011-10-14T10:42:38+0000',
-                updateProperties: {
-                    timestamp: '2011-10-14T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
             },
             number: 10,
             fineReason: {
@@ -356,13 +303,13 @@ describe('ChangeFinePayed', () => {
                 guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
             )
         );
-        await callFunction('changeFine', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult2 = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'update',
-            fine: updatableFine2.databaseObject,
+            updatableFine: updatableFine2.databaseObject,
         });
+        expectFunctionSuccess(callResult2).to.be.equal(undefined);
 
         // Check fines and reason
         const fineList = await getDatabaseFines(clubId, logger.nextIndent);
@@ -385,22 +332,22 @@ describe('ChangeFinePayed', () => {
 
         // Change fine payed
         const fineId = guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
-        await callFunction('changeFinePayed', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             verbose: true,
             fineId: fineId.guidString,
-            updatablePayedState: {
+            payedState: {
                 state: 'payed',
                 payDate: '2011-10-14T10:42:38+0000',
                 inApp: false,
-                updateProperties: {
-                    timestamp: '2011-10-15T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
+            },
+            fineUpdateProperties: {
+                timestamp: '2011-10-15T10:42:38+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             },
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check fine payed
         const fineList = await getDatabaseFines(clubId, logger.nextIndent);
@@ -410,10 +357,6 @@ describe('ChangeFinePayed', () => {
             state: 'payed',
             payDate: '2011-10-14T10:42:38.000Z',
             inApp: false,
-            updateProperties: {
-                timestamp: '2011-10-15T10:42:38.000Z',
-                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-            },
         });
 
         // Check statistic
@@ -431,6 +374,8 @@ describe('ChangeFinePayed', () => {
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
                 number: 2,
                 payedState: {
+                    inApp: null,
+                    payDate: null,
                     state: 'unpayed',
                 },
                 person: {
@@ -457,21 +402,21 @@ describe('ChangeFinePayed', () => {
 
         // Change fine payed
         const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
-        await callFunction('changeFinePayed', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             fineId: fineId.guidString,
-            updatablePayedState: {
+            payedState: {
                 state: 'payed',
                 payDate: '2011-10-14T10:42:38+0000',
                 inApp: true,
-                updateProperties: {
-                    timestamp: '2011-10-15T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
+            },
+            fineUpdateProperties: {
+                timestamp: '2011-10-15T10:42:38+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             },
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check fine payed
         const fineList = await getDatabaseFines(clubId, logger.nextIndent);
@@ -481,10 +426,6 @@ describe('ChangeFinePayed', () => {
             state: 'payed',
             payDate: '2011-10-14T10:42:38.000Z',
             inApp: true,
-            updateProperties: {
-                timestamp: '2011-10-15T10:42:38.000Z',
-                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-            },
         });
 
         // Check statistic
@@ -512,6 +453,7 @@ describe('ChangeFinePayed', () => {
                         },
                     },
                     fineReason: {
+                        id: null,
                         amount: 1.50,
                         importance: 'high',
                         reasonMessage: 'Reason',
@@ -527,19 +469,19 @@ describe('ChangeFinePayed', () => {
 
         // Change fine payed
         const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
-        await callFunction('changeFinePayed', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             fineId: fineId.guidString,
-            updatablePayedState: {
+            payedState: {
                 state: 'unpayed',
-                updateProperties: {
-                    timestamp: '2011-10-15T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
+            },
+            fineUpdateProperties: {
+                timestamp: '2011-10-15T10:42:38+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             },
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check fine payed
         const fineList = await getDatabaseFines(clubId, logger.nextIndent);
@@ -549,16 +491,14 @@ describe('ChangeFinePayed', () => {
             state: 'unpayed',
             inApp: null,
             payDate: null,
-            updateProperties: {
-                timestamp: '2011-10-15T10:42:38.000Z',
-                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-            },
         });
 
         // Check statistic
         expect(await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFinePayed', logger.nextIndent))
             .to.be.deep.equal([{
                 changedState: {
+                    inApp: null,
+                    payDate: null,
                     state: 'unpayed',
                 },
                 previousFine: {
@@ -578,6 +518,7 @@ describe('ChangeFinePayed', () => {
                         },
                     },
                     fineReason: {
+                        id: null,
                         amount: 1.50,
                         importance: 'high',
                         reasonMessage: 'Reason',
@@ -593,19 +534,19 @@ describe('ChangeFinePayed', () => {
 
         // Change fine payed
         const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
-        await callFunction('changeFinePayed', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             fineId: fineId.guidString,
-            updatablePayedState: {
+            payedState: {
                 state: 'settled',
-                updateProperties: {
-                    timestamp: '2011-10-15T10:42:38+0000',
-                    personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                },
+            },
+            fineUpdateProperties: {
+                timestamp: '2011-10-15T10:42:38+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             },
         });
+        expectFunctionSuccess(callResult).to.be.equal(undefined);
 
         // Check fine payed
         const fineList = await getDatabaseFines(clubId, logger.nextIndent);
@@ -615,16 +556,14 @@ describe('ChangeFinePayed', () => {
             state: 'settled',
             inApp: null,
             payDate: null,
-            updateProperties: {
-                timestamp: '2011-10-15T10:42:38.000Z',
-                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-            },
         });
 
         // Check statistic
         expect(await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFinePayed', logger.nextIndent))
             .to.be.deep.equal([{
                 changedState: {
+                    inApp: null,
+                    payDate: null,
                     state: 'settled',
                 },
                 previousFine: {
@@ -644,6 +583,7 @@ describe('ChangeFinePayed', () => {
                         },
                     },
                     fineReason: {
+                        id: null,
                         amount: 1.50,
                         importance: 'high',
                         reasonMessage: 'Reason',
@@ -659,12 +599,11 @@ describe('ChangeFinePayed', () => {
 
         // Delete fine
         const fineId = guid.fromString('137d6187-68d2-4000-9cb8-7dfc3877d5ba', logger.nextIndent);
-        await callFunction('changeFine', {
-            privateKey: functionCallKey(new DatabaseType('testing')),
-            databaseType: 'testing',
+        const callResult1 = await callFunction('changeFine', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
             changeType: 'delete',
-            fine: {
+            updatableFine: {
                 id: fineId.guidString,
                 deleted: true,
                 updateProperties: {
@@ -673,6 +612,7 @@ describe('ChangeFinePayed', () => {
                 },
             },
         });
+        expectFunctionSuccess(callResult1).to.be.equal(undefined);
 
         // Check if fine is deleted
         const fineList = await getDatabaseFines(clubId, logger.nextIndent);
@@ -686,26 +626,21 @@ describe('ChangeFinePayed', () => {
         });
 
         // Change fine payed
-        try {
-            await callFunction('changeFinePayed', {
-                privateKey: functionCallKey(new DatabaseType('testing')),
-                databaseType: 'testing',
-                clubId: clubId.guidString,
-                fineId: fineId.guidString,
-                updatablePayedState: {
-                    state: 'settled',
-                    updateProperties: {
-                        timestamp: '2011-10-15T10:42:38+0000',
-                        personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                    },
-                },
-            });
-            assert.fail('A statement above should throw an exception.');
-        } catch (error) {
-            expect(firebaseError(error)).to.be.deep.equal({
-                code: 'functions/internal',
-                message: 'Couldn\'t get statistic fine from \'Deleted\'.',
-            });
-        }
+        const callResult2 = await callFunction('changeFinePayed', {
+            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
+            clubId: clubId.guidString,
+            fineId: fineId.guidString,
+            payedState: {
+                state: 'settled',
+            },
+            fineUpdateProperties: {
+                timestamp: '2011-10-15T10:42:39+0000',
+                personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
+            },
+        });
+        expectFunctionFailed(callResult2).to.be.deep.equal({
+            code: 'unavailable',
+            message: 'Couldn\'t get fine from \'Deleted\'.',
+        });
     });
 });
