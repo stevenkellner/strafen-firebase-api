@@ -55,7 +55,6 @@ export namespace PersonName {
     export function fromObject(value: object & any, logger: Logger): PersonName {
         logger.append('PersonName.fromObject', { value });
 
-
         // Check if type of first is string
         if (typeof value.first !== 'string')
             throw httpsError(

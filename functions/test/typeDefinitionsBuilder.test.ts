@@ -803,7 +803,7 @@ describe('TypeDefinitionsBuilder', () => {
                 expect(errorCodeAndMessage(error)).to.be.deep.equal({
                     code: 'invalid-argument',
                     // eslint-disable-next-line max-len
-                    message: 'Couldn\'t parse fine reason, no fine reason message with reason template id and no custom fine reason given, got instead: {}',
+                    message: 'Couldn\'t parse FineReason parameter \'reasonMessage\'. Expected type \'string\', but got \'undefined\' from type \'undefined\'.',
                 });
             }
         });
@@ -818,7 +818,9 @@ describe('TypeDefinitionsBuilder', () => {
                 number: 1,
                 date: '2011-10-16T10:42:38+0000',
                 fineReason: {
-                    reasonTemplateId: '9bfe9e0a-2e3f-48c3-b2a9-5c637497fd81',
+                    reasonMessage: 'asdf',
+                    amount: 2.50,
+                    importance: 'low',
                 },
             }, logger.nextIndent);
             expect(fine).to.be.deep.equal(new Fine(
@@ -828,9 +830,7 @@ describe('TypeDefinitionsBuilder', () => {
                     state: 'settled',
                 }),
                 1, new Date('2011-10-16T10:42:38+0000'),
-                new FineReason({
-                    reasonTemplateId: guid.fromString('9bfe9e0a-2e3f-48c3-b2a9-5c637497fd81', logger.nextIndent),
-                })
+                new FineReason('asdf', new Amount(2, 50), new Importance('low')),
             ));
         });
     });
@@ -851,38 +851,6 @@ describe('TypeDefinitionsBuilder', () => {
             }
         });
 
-        it('Both custom and template properties', () => {
-            const fineReason = FineReason.fromObject({
-                reasonTemplateId: '4ED90BA2-D536-4B2B-A93E-403987A056CC',
-                reason: 'asdf',
-                amount: 12.50,
-                importance: 'low',
-            }, logger.nextIndent);
-            expect(fineReason).to.be.deep.equal(new FineReason({
-                reasonTemplateId: guid.fromString('4ED90BA2-D536-4B2B-A93E-403987A056CC', logger.nextIndent),
-            }));
-        });
-
-        it('With template id', () => {
-            const fineReason = FineReason.fromObject({
-                reasonTemplateId: '4ED90BA2-D536-4B2B-A93E-403987A056CC',
-            }, logger.nextIndent);
-            expect(fineReason).to.be.deep.equal(new FineReason({
-                reasonTemplateId: guid.fromString('4ED90BA2-D536-4B2B-A93E-403987A056CC', logger.nextIndent),
-            }));
-        });
-
-        it('With custom', () => {
-            const fineReason = FineReason.fromObject({
-                reasonMessage: 'asdf',
-                amount: 12.50,
-                importance: 'low',
-            }, logger.nextIndent);
-            expect(fineReason).to.be.deep.equal(new FineReason(new FineReason.Custom(
-                'asdf', new Amount(12, 50), new Importance('low'),
-            )));
-        });
-
         it('Value invalid', () => {
             try {
                 FineReason.fromObject({
@@ -893,9 +861,20 @@ describe('TypeDefinitionsBuilder', () => {
                 expect(errorCodeAndMessage(error)).to.be.deep.equal({
                     code: 'invalid-argument',
                     // eslint-disable-next-line max-len
-                    message: 'Couldn\'t parse fine reason, no fine reason message with reason template id and no custom fine reason given, got instead: {"reason":"asdf"}',
+                    message: 'Couldn\'t parse FineReason parameter \'reasonMessage\'. Expected type \'string\', but got \'undefined\' from type \'undefined\'.',
                 });
             }
+        });
+
+        it('Value valid', () => {
+            const fineReason = FineReason.fromObject({
+                reasonMessage: 'asdf',
+                amount: 12.50,
+                importance: 'low',
+            }, logger.nextIndent);
+            expect(fineReason).to.be.deep.equal(new FineReason(
+                'asdf', new Amount(12, 50), new Importance('low'),
+            ));
         });
     });
 

@@ -1,12 +1,7 @@
 import { Amount } from './Amount';
 import { Importance } from './Importance';
-import { guid } from './guid';
-import { ReasonTemplate } from './ReasonTemplate';
-import { httpsError, reference } from '../utils';
+import { httpsError } from '../utils';
 import { Logger } from '../Logger';
-import { DatabaseType } from './DatabaseType';
-import { Crypter } from '../crypter/Crypter';
-import { cryptionKeys } from '../privateKeys';
 
 /**
  * Contains a reason of a fine, either with a template id or custom with reason message, amount and importance
@@ -15,83 +10,37 @@ export class FineReason {
 
     /**
      * Constructs fine reason with a template id or custom.
-     * @param { FineReason.Template | FineReason.Custom } value Template id or custom reason.
+     * @param { string } reasonMessage Message of the fine reason.
+     * @param { Amount } amount Amount of the fine reason.
+     * @param { Importance } importance Importance of the fine reason.
      */
-    public constructor(public readonly value: FineReason.Template | FineReason.Custom) {}
+    public constructor(
+        public readonly reasonMessage: string,
+        public readonly amount: Amount,
+        public readonly importance: Importance
+    ) { }
 
     /**
      * Fine reason object that will be stored in the database.
      */
     get databaseObject(): FineReason.DatabaseObject {
-
-        // If this is a fine reason with template id, return the template id
-        if (this.value instanceof FineReason.Template)
-            return {
-                reasonTemplateId: this.value.reasonTemplateId.guidString,
-            };
-
-        // Return custom fine reason
         return {
-            reasonMessage: this.value.reasonMessage,
-            amount: this.value.amount.numberValue,
-            importance: this.value.importance.value,
+            reasonMessage: this.reasonMessage,
+            amount: this.amount.numberValue,
+            importance: this.importance.value,
         };
     }
 
     /**
      * Gets this fine reason for statistic.
-     * @param { guid } clubId Id of the club the fine reason is in.
-     * @param { DatabaseType } databaseType Database type to get club reference.
-     * @param { Logger } logger Logger to log this method.
-     * @return { Promise<FineReason.Statistic> } This fine reason for statistics.
+     * @return { FineReason.Statistic } This fine reason for statistics.
      */
-    async statistic(
-        clubId: guid,
-        databaseType: DatabaseType,
-        logger: Logger
-    ): Promise<FineReason.Statistic> {
-        return await FineReason.Statistic.fromFineReason(this, clubId, databaseType, logger);
+    get statistic(): FineReason.Statistic {
+        return new FineReason.Statistic(this.reasonMessage, this.amount, this.importance);
     }
 }
 
 export namespace FineReason {
-
-    /**
-     * Fine reason with template id.
-     */
-    export class Template {
-
-        /**
-         * Constructs template fine reason with template id.
-         * @param { guid } reasonTemplateId Id of reason template.
-         */
-        public constructor(public readonly reasonTemplateId: guid) {}
-    }
-
-    /**
-     * Custom fine reason with reason message, amount and importance,
-     */
-    export class Custom {
-
-        /**
-         * Constructs custom fine reason with reason message, amount and importance.
-         * @param { string } reasonMessage Reason message of the fine reason.
-         * @param { Amount } amount Amount of the fine reason.
-         * @param { Importance } importance Importance of the fine reason.
-         */
-        constructor(
-            public readonly reasonMessage: string,
-            public readonly amount: Amount,
-            public readonly importance: Importance
-        ) {}
-
-        /**
-         * Gets this fine reason for statistic.
-         */
-        get statistic(): Statistic {
-            return new Statistic(null, this.reasonMessage, this.amount, this.importance);
-        }
-    }
 
     /**
      * Builds fine reason from specified value.
@@ -102,30 +51,37 @@ export namespace FineReason {
     export function fromObject(value: object & any, logger: Logger): FineReason {
         logger.append('FineReason.fromObject', { value });
 
-        // Check if object has reason template id.
-        if (typeof value.reasonTemplateId === 'string') {
-            const reasonTemplateId = guid.fromString(value.reasonTemplateId, logger.nextIndent);
-            return new FineReason(new FineReason.Template(reasonTemplateId));
-        }
+        // Check if type of reasonMessage is string
+        if (typeof value.reasonMessage !== 'string')
+            throw httpsError(
+                'invalid-argument',
+                // eslint-disable-next-line max-len
+                `Couldn't parse FineReason parameter 'reasonMessage'. Expected type 'string', but got '${value.reasonMessage}' from type '${typeof value.reasonMessage}'.`,
+                logger
+            );
 
-        // Check if object has reason, amount and importance.
-        if (
-            typeof value.reasonMessage == 'string' &&
-            typeof value.amount === 'number' &&
-            typeof value.importance === 'string'
-        ) {
-            const amount = Amount.fromNumber(value.amount, logger.nextIndent);
-            const importance = Importance.fromString(value.importance, logger.nextIndent);
-            return new FineReason(new FineReason.Custom(value.reasonMessage, amount, importance));
-        }
+        // Check if type of amount is number
+        if (typeof value.amount !== 'number')
+            throw httpsError(
+                'invalid-argument',
+                // eslint-disable-next-line max-len
+                `Couldn't parse FineReason parameter 'amount'. Expected type 'number', but got '${value.amount}' from type '${typeof value.amount}'.`,
+                logger
+            );
+        const amount = Amount.fromNumber(value.amount, logger.nextIndent);
 
-        // Throw an error as fine reason couldn't build.
-        throw httpsError(
-            'invalid-argument',
-            // eslint-disable-next-line max-len
-            `Couldn't parse fine reason, no fine reason message with reason template id and no custom fine reason given, got instead: ${JSON.stringify(value)}`,
-            logger
-        );
+        // Check if type of importance is string
+        if (typeof value.importance !== 'string')
+            throw httpsError(
+                'invalid-argument',
+                // eslint-disable-next-line max-len
+                `Couldn't parse FineReason parameter 'importance'. Expected type 'string', but got '${value.importance}' from type '${typeof value.importance}'.`,
+                logger
+            );
+        const importance = Importance.fromString(value.importance, logger.nextIndent);
+
+        // Return fine reason
+        return new FineReason(value.reasonMessage, amount, importance);
     }
 
     /**
@@ -152,13 +108,11 @@ export namespace FineReason {
     /**
      * Fine reason object that will be stored in the database.
      */
-    export type DatabaseObject = {
-        reasonTemplateId: string;
-    } | {
+    export interface DatabaseObject {
         reasonMessage: string;
         amount: number;
         importance: string;
-    };
+    }
 
     /**
      * Statistic of a fine reason.
@@ -167,73 +121,21 @@ export namespace FineReason {
 
         /**
          * Constructs fine reason statistic with id or reason message, amount and importance.
-         * @param { guid | null } reasonTemplateId Id of reason template if fine reason is from template.
          * @param { string } reasonMessage Reason message of the fine reason.
          * @param { Amount } amount Amount of the fine reason.
          * @param { Importance } importance Importance of the fine reason.
          */
         constructor(
-            private readonly reasonTemplateId: guid | null,
             private readonly reasonMessage: string,
             private readonly amount: Amount,
             private readonly importance: Importance
         ) {}
 
         /**
-         * Gets statistic of specified fine reason.
-         * @param { FineReason } fineReason Fine reason to get statistic from.
-         * @param { guid } clubId Id of the club the fine reason is in.
-         * @param { DatabaseType } databaseType Database type to get club reference.
-         * @param { Logger } logger Logger to log this method.
-         * @return { Promise<FineReason.Statistic> } This fine reason for statistics.
-         */
-        public static async fromFineReason(
-            fineReason: FineReason,
-            clubId: guid,
-            databaseType: DatabaseType,
-            logger: Logger
-        ): Promise<FineReason.Statistic> {
-            logger.append('FineReason.Statistic.fromFineReason', { fineReason, clubId, databaseType });
-
-            // Return statistic if fine reason is custom.
-            if (fineReason.value instanceof FineReason.Custom)
-                return fineReason.value.statistic;
-
-            // Get fine reason properties from database.
-            const crypter = new Crypter(cryptionKeys(databaseType));
-            const reasonTemplateReference = reference(
-                `${clubId.guidString}/reasonTemplates/${fineReason.value.reasonTemplateId.guidString}`,
-                databaseType,
-                logger.nextIndent,
-            );
-            const reasonTemplateSnapshot = await reasonTemplateReference.once('value');
-            const reasonTemplate = ReasonTemplate.fromObject(
-                {
-                    id: reasonTemplateSnapshot.key,
-                    ...crypter.decryptDecode(reasonTemplateSnapshot.val()),
-                },
-                logger.nextIndent
-            );
-
-            // Check if reason template is vaild.
-            if (!(reasonTemplate instanceof ReasonTemplate))
-                throw httpsError('internal', 'Couldn\'t get reasonTemplate for fine statistic.', logger);
-
-            // Return fine reason statistic.
-            return new FineReason.Statistic(
-                reasonTemplate.id,
-                reasonTemplate.reasonMessage,
-                reasonTemplate.amount,
-                reasonTemplate.importance
-            );
-        }
-
-        /**
          * Fine reason statistic object that will be stored in the database.
          */
         get databaseObject(): Statistic.DatabaseObject {
             return {
-                id: this.reasonTemplateId?.guidString ?? null,
                 reasonMessage: this.reasonMessage,
                 amount: this.amount.numberValue,
                 importance: this.importance.value,
@@ -247,11 +149,6 @@ export namespace FineReason {
          * Fine reason statistic object that will be stored in the database.
          */
         export interface DatabaseObject {
-
-            /**
-             * Id of reason template if fine reason is from template.
-             */
-            id: string | null;
 
             /**
              * Reason message of the fine reason.

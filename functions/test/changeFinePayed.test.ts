@@ -5,15 +5,12 @@ import {
     callFunction,
     expectFunctionFailed, expectFunctionSuccess,
     getDatabaseFines,
-    getDatabaseReasonTemplates,
     getDatabaseStatisticsPropertyWithIdentifier,
     signInTestUser,
 } from './utils';
 import { expect } from 'chai';
 import { signOut } from 'firebase/auth';
 import { Fine } from '../src/TypeDefinitions/Fine';
-import { FineReason } from '../src/TypeDefinitions/FineReason';
-import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
 import { Logger } from '../src/Logger';
 import { DatabaseType } from '../src/TypeDefinitions/DatabaseType';
@@ -217,7 +214,6 @@ describe('ChangeFinePayed', () => {
     // eslint-disable-next-line require-jsdoc
     async function addFinesAndReason(
         fine2PersonId: guid = guid.fromString('D1852AC0-A0E2-4091-AC7E-CB2C23F708D9', logger.nextIndent),
-        addReason = true
     ) {
 
         // Add reason
@@ -230,7 +226,9 @@ describe('ChangeFinePayed', () => {
             },
             number: 2,
             fineReason: {
-                reasonTemplateId: guid.fromString('9d0681f0-2045-4a1d-abbc-6bb289934ff9', logger.nextIndent).guidString,
+                reasonMessage: 'abcd',
+                amount: 9.25,
+                importance: 'low',
             },
         }, logger.nextIndent) as Fine;
         expect(fine1).to.be.instanceOf(Fine);
@@ -241,31 +239,8 @@ describe('ChangeFinePayed', () => {
                 guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
             )
         );
-        const reason = ReasonTemplate.fromObject({
-            id: (fine1.fineReason.value as FineReason.Template).reasonTemplateId.guidString,
-            reasonMessage: 'asldkfj',
-            importance: 'low',
-            amount: 12.98,
-        }, logger.nextIndent) as ReasonTemplate;
-        expect(reason).to.be.instanceOf(ReasonTemplate);
-        const updatableReason = new Updatable<ReasonTemplate>(
-            reason,
-            new UpdateProperties(
-                new Date('2011-10-15T10:42:38+0000'),
-                guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
-            )
-        );
-        if (addReason) {
-            const callResult0 = await callFunction('changeReasonTemplate', {
-                privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
-                clubId: clubId.guidString,
-                changeType: 'update',
-                updatableReasonTemplate: updatableReason.databaseObject,
-            });
-            expectFunctionSuccess(callResult0).to.be.equal(undefined);
-        }
 
-        // Add fine with reason template
+        // Add fine
         const callResult1 = await callFunction('changeFine', {
             privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
             clubId: clubId.guidString,
@@ -317,12 +292,6 @@ describe('ChangeFinePayed', () => {
         const fetchedFine2 = fineList.find(fine => fine.property.id.equals(fine2.id))?.property;
         expect(fetchedFine1).to.deep.equal(fine1);
         expect(fetchedFine2).to.deep.equal(fine2);
-
-        if (addReason) {
-            const reasonList = await getDatabaseReasonTemplates(clubId, logger.nextIndent);
-            const fetchedReason = reasonList.find(_reason => _reason.property.id.equals(reason.id));
-            expect(fetchedReason?.property).to.deep.equal(reason);
-        }
     }
 
     it('Change fine payed to payed 1', async () => {
@@ -386,10 +355,9 @@ describe('ChangeFinePayed', () => {
                     },
                 },
                 fineReason: {
-                    amount: 12.98,
-                    id: '9D0681F0-2045-4A1D-ABBC-6BB289934FF9',
+                    reasonMessage: 'abcd',
+                    amount: 9.25,
                     importance: 'low',
-                    reasonMessage: 'asldkfj',
                 },
             },
         });
@@ -453,7 +421,6 @@ describe('ChangeFinePayed', () => {
                         },
                     },
                     fineReason: {
-                        id: null,
                         amount: 1.50,
                         importance: 'high',
                         reasonMessage: 'Reason',
@@ -518,7 +485,6 @@ describe('ChangeFinePayed', () => {
                         },
                     },
                     fineReason: {
-                        id: null,
                         amount: 1.50,
                         importance: 'high',
                         reasonMessage: 'Reason',
@@ -583,7 +549,6 @@ describe('ChangeFinePayed', () => {
                         },
                     },
                     fineReason: {
-                        id: null,
                         amount: 1.50,
                         importance: 'high',
                         reasonMessage: 'Reason',

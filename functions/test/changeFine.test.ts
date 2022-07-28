@@ -3,16 +3,15 @@ import { guid } from '../src/TypeDefinitions/guid';
 import {
     auth,
     callFunction,
-    expectFunctionSuccess, expectFunctionFailed,
+    expectFunctionSuccess,
     getDatabaseFines,
-    getDatabaseReasonTemplates,
     getDatabaseStatisticsPropertyWithIdentifier,
     signInTestUser,
     getDatabaseValue,
+    expectFunctionFailed,
 } from './utils';
 import { signOut } from 'firebase/auth';
 import { expect } from 'chai';
-import { ReasonTemplate } from '../src/TypeDefinitions/ReasonTemplate';
 import { Fine } from '../src/TypeDefinitions/Fine';
 import { Logger } from '../src/Logger';
 import { Updatable, UpdateProperties } from '../src/TypeDefinitions/Updatable';
@@ -106,39 +105,7 @@ describe('ChangeFine', () => {
     });
 
     // eslint-disable-next-line require-jsdoc
-    async function addReasonTemplate() {
-
-        // Add reason
-        const reasonTemplate = ReasonTemplate.fromObject({
-            id: '9d0681f0-2045-4a1d-abbc-6bb289934ff9',
-            reasonMessage: 'Test Reason 1',
-            amount: 2.50,
-            importance: 'low',
-        }, logger.nextIndent) as ReasonTemplate;
-        expect(reasonTemplate).to.be.instanceOf(ReasonTemplate);
-        const updatableReasonTemplate = new Updatable<ReasonTemplate>(
-            reasonTemplate,
-            new UpdateProperties(
-                new Date('2011-10-15T10:42:38+0000'),
-                guid.fromString('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7', logger.nextIndent)
-            )
-        );
-        const callResult = await callFunction('changeReasonTemplate', {
-            privateKey: unhashedFunctionCallKey(new DatabaseType('testing')),
-            clubId: clubId.guidString,
-            changeType: 'update',
-            updatableReasonTemplate: updatableReasonTemplate.databaseObject,
-        });
-        expectFunctionSuccess(callResult).to.be.equal(undefined);
-
-        // Check reason
-        const reasonList = await getDatabaseReasonTemplates(clubId, logger.nextIndent);
-        const fetchedReason = reasonList.find(_reason => _reason.property.id.equals(reasonTemplate.id))?.property;
-        expect(fetchedReason).to.deep.equal(reasonTemplate);
-    }
-
-    // eslint-disable-next-line require-jsdoc
-    async function setFine(withTemplate: boolean, timestamp: Date) {
+    async function setFine(timestamp: Date, variant: boolean = false) {
 
         // Set fine
         const fine = Fine.fromObject({
@@ -153,8 +120,10 @@ describe('ChangeFine', () => {
                 },
             },
             number: 2,
-            fineReason: withTemplate ? {
-                reasonTemplateId: '9d0681f0-2045-4a1d-abbc-6bb289934ff9',
+            fineReason: variant ? {
+                reasonMessage: 'Reason 2',
+                amount: 10,
+                importance: 'low',
             } : {
                 reasonMessage: 'Reason',
                 amount: 1.50,
@@ -182,8 +151,7 @@ describe('ChangeFine', () => {
     }
 
     it('Fine set', async () => {
-        await addReasonTemplate();
-        await setFine(true, new Date('2011-10-15T10:42:38+0000'));
+        await setFine(new Date('2011-10-15T10:42:38+0000'));
 
         // Check fines count
         const finesCount = await getDatabaseValue(`${clubId.guidString}/listCounts/fines`);
@@ -201,10 +169,9 @@ describe('ChangeFine', () => {
             changedFine: {
                 date: '2011-10-14T10:42:38.000Z',
                 fineReason: {
-                    id: '9D0681F0-2045-4A1D-ABBC-6BB289934FF9',
-                    reasonMessage: 'Test Reason 1',
-                    amount: 2.50,
-                    importance: 'low',
+                    reasonMessage: 'Reason',
+                    amount: 1.50,
+                    importance: 'high',
                 },
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
                 number: 2,
@@ -225,9 +192,8 @@ describe('ChangeFine', () => {
     });
 
     it('Fine update custom reason', async () => {
-        await addReasonTemplate();
-        await setFine(true, new Date('2011-10-15T10:42:38+0000'));
-        await setFine(false, new Date('2011-10-16T10:42:38+0000'));
+        await setFine(new Date('2011-10-15T10:42:38+0000'));
+        await setFine(new Date('2011-10-16T10:42:38+0000'), true);
 
         // Check fines count
         const finesCount = await getDatabaseValue(`${clubId.guidString}/listCounts/fines`);
@@ -246,75 +212,6 @@ describe('ChangeFine', () => {
             previousFine: {
                 date: '2011-10-14T10:42:38.000Z',
                 fineReason: {
-                    id: '9D0681F0-2045-4A1D-ABBC-6BB289934FF9',
-                    reasonMessage: 'Test Reason 1',
-                    amount: 2.50,
-                    importance: 'low',
-                },
-                id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
-                number: 2,
-                payedState: {
-                    inApp: null,
-                    payDate: null,
-                    state: 'unpayed',
-                },
-                person: {
-                    id: 'D1852AC0-A0E2-4091-AC7E-CB2C23F708D9',
-                    name: {
-                        first: 'John',
-                        last: 'Doe',
-                    },
-                },
-            },
-            changedFine: {
-                date: '2011-10-14T10:42:38.000Z',
-                fineReason: {
-                    id: null,
-                    reasonMessage: 'Reason',
-                    amount: 1.50,
-                    importance: 'high',
-                },
-                id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
-                number: 2,
-                payedState: {
-                    inApp: null,
-                    payDate: null,
-                    state: 'unpayed',
-                },
-                person: {
-                    id: 'D1852AC0-A0E2-4091-AC7E-CB2C23F708D9',
-                    name: {
-                        first: 'John',
-                        last: 'Doe',
-                    },
-                },
-            },
-        });
-    });
-
-    it('Fine update template id', async () => {
-        await addReasonTemplate();
-        await setFine(false, new Date('2011-10-15T10:42:38+0000'));
-        await setFine(true, new Date('2011-10-16T10:42:38+0000'));
-
-        // Check fines count
-        const finesCount = await getDatabaseValue(`${clubId.guidString}/listCounts/fines`);
-        expect(finesCount).to.be.deep.equal({
-            total: 4,
-            undeleted: 4,
-        });
-
-        // Check statistic
-        let statisticsList = await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFine', logger.nextIndent);
-        statisticsList = statisticsList.filter(statistic => {
-            return statistic.previousFine != null;
-        });
-        expect(statisticsList.length).to.be.equal(1);
-        expect(statisticsList[0]).to.be.deep.equal({
-            previousFine: {
-                date: '2011-10-14T10:42:38.000Z',
-                fineReason: {
-                    id: null,
                     reasonMessage: 'Reason',
                     amount: 1.50,
                     importance: 'high',
@@ -337,9 +234,8 @@ describe('ChangeFine', () => {
             changedFine: {
                 date: '2011-10-14T10:42:38.000Z',
                 fineReason: {
-                    id: '9D0681F0-2045-4A1D-ABBC-6BB289934FF9',
-                    reasonMessage: 'Test Reason 1',
-                    amount: 2.50,
+                    reasonMessage: 'Reason 2',
+                    amount: 10,
                     importance: 'low',
                 },
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
@@ -361,8 +257,7 @@ describe('ChangeFine', () => {
     });
 
     it('Fine delete', async () => {
-        await addReasonTemplate();
-        await setFine(true, new Date('2011-10-15T10:42:38+0000'));
+        await setFine(new Date('2011-10-15T10:42:38+0000'));
 
         const fineId = guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', logger);
         const callResult = await callFunction('changeFine', {
@@ -404,10 +299,9 @@ describe('ChangeFine', () => {
             previousFine: {
                 date: '2011-10-14T10:42:38.000Z',
                 fineReason: {
-                    id: '9D0681F0-2045-4A1D-ABBC-6BB289934FF9',
-                    reasonMessage: 'Test Reason 1',
-                    amount: 2.50,
-                    importance: 'low',
+                    reasonMessage: 'Reason',
+                    amount: 1.50,
+                    importance: 'high',
                 },
                 id: '637D6187-68D2-4000-9CB8-7DFC3877D5BA',
                 number: 2,
@@ -429,8 +323,7 @@ describe('ChangeFine', () => {
     });
 
     it('Update deleted fine with lower timestamp', async () => {
-        await addReasonTemplate();
-        await setFine(true, new Date('2011-10-15T10:42:38+0000'));
+        await setFine(new Date('2011-10-15T10:42:38+0000'));
 
         // Delete fine
         const fineId = guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', logger);
@@ -496,8 +389,7 @@ describe('ChangeFine', () => {
     });
 
     it('Update deleted fine', async () => {
-        await addReasonTemplate();
-        await setFine(true, new Date('2011-10-15T10:42:38+0000'));
+        await setFine(new Date('2011-10-15T10:42:38+0000'));
 
         // Delete fine
         const fineId = guid.fromString('637d6187-68d2-4000-9cb8-7dfc3877d5ba', logger);
@@ -576,7 +468,6 @@ describe('ChangeFine', () => {
             changedFine: {
                 date: '2011-10-14T10:42:38.000Z',
                 fineReason: {
-                    id: null,
                     amount: 1.5,
                     importance: 'medium',
                     reasonMessage: 'asdf',

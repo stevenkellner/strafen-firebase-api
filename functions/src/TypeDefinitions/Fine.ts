@@ -266,9 +266,6 @@ export namespace Fine {
             if (!(person instanceof Person))
                 throw httpsError('internal', 'Couldn\'t get person for fine statistic.', logger);
 
-            // Get statistic fine reason.
-            const fineReason = await fine.fineReason.statistic(clubId, databaseType, logger.nextIndent);
-
             // Return statistic.
             return new Statistic(
                 fine.id,
@@ -276,7 +273,7 @@ export namespace Fine {
                 fine.payedState,
                 fine.number,
                 fine.date,
-                fineReason
+                fine.fineReason.statistic
             );
         }
 
