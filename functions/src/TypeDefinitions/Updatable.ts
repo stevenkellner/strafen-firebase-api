@@ -104,7 +104,7 @@ export namespace UpdateProperties {
 /**
  * Updatable type that can be stored in the database.
  */
-interface UpdatableType<DatabaseObject> {
+export interface UpdatableType<DatabaseObject> {
 
     /**
      * Object that will be stored in the database.
@@ -113,7 +113,7 @@ interface UpdatableType<DatabaseObject> {
 }
 
 // Database object that will be stored in the database.
-type DatabaseObjectOf<Updatable> =
+export type DatabaseObjectOf<Updatable> =
     Updatable extends UpdatableType<infer DatabaseObject>
         ? DatabaseObject
         : never;

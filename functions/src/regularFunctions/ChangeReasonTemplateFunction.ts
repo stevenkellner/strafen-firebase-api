@@ -7,6 +7,7 @@ import {
     checkUpdateProperties,
     Deleted,
     reference,
+    getCountUpdate,
 } from '../utils';
 import { ParameterContainer } from '../ParameterContainer';
 import { guid } from '../TypeDefinitions/guid';
@@ -145,6 +146,17 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
             break;
         }
 
+        // Change count
+        const countUpdate = getCountUpdate(previousReasonTemplate, this.parameters.changeType);
+        const reasonTemplatesCountSnapshot = await this.countReference.once('value');
+        if (!reasonTemplatesCountSnapshot.exists)
+            throw httpsError('internal', 'Couldn\'t get list count.', this.logger);
+        const reasonTemplatesCount: { total: number, undeleted: number } = reasonTemplatesCountSnapshot.val();
+        await this.countReference.set({
+            total: reasonTemplatesCount.total + countUpdate.total,
+            undeleted: reasonTemplatesCount.undeleted + countUpdate.undeleted,
+        });
+
         // Save statistic
         await saveStatistic(
             new ChangeReasonTemplateFunction.Statistic(
@@ -165,6 +177,17 @@ export class ChangeReasonTemplateFunction implements IFirebaseFunction<
         return reference(
             // eslint-disable-next-line max-len
             `${this.parameters.clubId.guidString}/reasonTemplates/${this.parameters.updatableReasonTemplate.property.id.guidString}`,
+            this.parameters.databaseType,
+            this.logger.nextIndent
+        );
+    }
+
+    /**
+     * Reference to reason templates fount.
+     */
+    private get countReference(): admin.database.Reference {
+        return reference(
+            `${this.parameters.clubId.guidString}/listCounts/reasonTemplates`,
             this.parameters.databaseType,
             this.logger.nextIndent
         );

@@ -4,11 +4,12 @@ import { cryptionKeys, functionCallKey } from './privateKeys';
 import { guid } from './TypeDefinitions/guid';
 import { DatabaseType } from './TypeDefinitions/DatabaseType';
 import { Logger } from './Logger';
-import { UpdateProperties } from './TypeDefinitions/Updatable';
+import { DatabaseObjectOf, Updatable, UpdatableType, UpdateProperties } from './TypeDefinitions/Updatable';
 import { AuthData } from 'firebase-functions/lib/common/providers/tasks';
 import { Crypter } from './crypter/Crypter';
 import { FunctionsErrorCode } from 'firebase-functions/lib/common/providers/https';
 import { Result } from './Result';
+import { ChangeType } from './TypeDefinitions/ChangeType';
 
 /**
  * Checks prerequirements for firebase function:
@@ -181,7 +182,7 @@ async function toResult<T>(promise: Promise<T>):
     return promise
         .then(value => Result.success<FirebaseFunctionResultSuccess, FirebaseFunctionResultFailure>({
             state: 'success',
-            returnValue: value,
+            returnValue: value ?? null,
         }))
         .catch(reason => Result.failure<FirebaseFunctionResultSuccess, FirebaseFunctionResultFailure>({
             state: 'failure',
@@ -356,6 +357,42 @@ export function unishortBuffer(string: string): Buffer {
         bytes.push(string.charCodeAt(index));
     }
     return Buffer.from(bytes);
+}
+
+/**
+ *   Previous: |  valid  | deleted | undefined
+ * ------------|---------|---------|-----------
+ * ChangeType: |         |         |
+ *      update | +0 / +0 | +0 / +1 |  +1 / +1
+ *      delete | +0 / -1 | +0 / +0 |  +1 / +0   (total / undeleted)
+ * @param { Updatable<T | Deleted<guid>> | undefined } previous Previous updatable type.
+ * @param { ChangeType } changeType  Change type of the update.
+ * @return { { total: number, undeleted: number } } Counts to update.
+ */
+export function getCountUpdate<T extends UpdatableType<DatabaseObjectOf<T>>>(
+    previous: Updatable<T | Deleted<guid>> | undefined,
+    changeType: ChangeType
+):
+    { total: number, undeleted: number } {
+    if (previous === undefined) {
+        if (changeType.value === 'update') {
+            return { total: 1, undeleted: 1 };
+        } else {
+            return { total: 1, undeleted: 0 };
+        }
+    } else if (previous.property instanceof Deleted<guid>) {
+        if (changeType.value === 'update') {
+            return { total: 0, undeleted: 1 };
+        } else {
+            return { total: 0, undeleted: 0 };
+        }
+    } else {
+        if (changeType.value === 'update') {
+            return { total: 0, undeleted: 0 };
+        } else {
+            return { total: 0, undeleted: -1 };
+        }
+    }
 }
 
 /* eslint-disable no-extend-native */

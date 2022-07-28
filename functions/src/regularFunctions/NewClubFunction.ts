@@ -122,6 +122,11 @@ export class NewClubFunction implements IFirebaseFunction<
                     },
                 }),
             },
+            listCounts: {
+                persons: { total: 1, undeleted: 1 },
+                reasonTemplates: { total: 0, undeleted: 0 },
+                fines: { total: 0, undeleted: 0 },
+            },
         };
 
         // Set club properties

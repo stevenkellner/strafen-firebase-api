@@ -116,6 +116,11 @@ describe('NewClub', () => {
                     },
                 },
             },
+            listCounts: {
+                persons: { total: 1, undeleted: 1 },
+                reasonTemplates: { total: 0, undeleted: 0 },
+                fines: { total: 0, undeleted: 0 },
+            },
             regionCode: 'DE',
         });
     });
@@ -244,6 +249,11 @@ describe('NewClub', () => {
                         userId: 'userId',
                     },
                 },
+            },
+            listCounts: {
+                persons: { total: 1, undeleted: 1 },
+                reasonTemplates: { total: 0, undeleted: 0 },
+                fines: { total: 0, undeleted: 0 },
             },
             regionCode: 'DE',
         });

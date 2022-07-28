@@ -7,6 +7,7 @@ import {
     checkUpdateProperties,
     Deleted,
     reference,
+    getCountUpdate,
 } from '../utils';
 import { ParameterContainer } from '../ParameterContainer';
 import { guid } from '../TypeDefinitions/guid';
@@ -146,6 +147,16 @@ export class ChangePersonFunction implements IFirebaseFunction<
             break;
         }
 
+        // Change count
+        const countUpdate = getCountUpdate(previousPerson, this.parameters.changeType);
+        const personsCountSnapshot = await this.countReference.once('value');
+        if (!personsCountSnapshot.exists) throw httpsError('internal', 'Couldn\'t get list count.', this.logger);
+        const personsCount: { total: number, undeleted: number } = personsCountSnapshot.val();
+        await this.countReference.set({
+            total: personsCount.total + countUpdate.total,
+            undeleted: personsCount.undeleted + countUpdate.undeleted,
+        });
+
         // Save statistic
         await saveStatistic(
             new ChangePersonFunction.Statistic(
@@ -162,6 +173,17 @@ export class ChangePersonFunction implements IFirebaseFunction<
     private get personReference(): admin.database.Reference {
         return reference(
             `${this.parameters.clubId.guidString}/persons/${this.parameters.updatablePerson.property.id.guidString}`,
+            this.parameters.databaseType,
+            this.logger.nextIndent
+        );
+    }
+
+    /**
+     * Reference to persons fount.
+     */
+    private get countReference(): admin.database.Reference {
+        return reference(
+            `${this.parameters.clubId.guidString}/listCounts/persons`,
             this.parameters.databaseType,
             this.logger.nextIndent
         );

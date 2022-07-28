@@ -6,6 +6,7 @@ import {
     expectFunctionFailed, expectFunctionSuccess,
     getDatabaseReasonTemplates,
     getDatabaseStatisticsPropertyWithIdentifier,
+    getDatabaseValue,
     signInTestUser,
 } from './utils';
 import { signOut } from 'firebase/auth';
@@ -146,6 +147,13 @@ describe('ChangeReasonTemplate', () => {
     it('Reason template set', async () => {
         const reasonTemplate = await setReasonTemplate(false, new Date('2011-10-15T10:42:38+0000'));
 
+        // Check reason templates count
+        const personsCount = await getDatabaseValue(`${clubId.guidString}/listCounts/reasonTemplates`);
+        expect(personsCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 4,
+        });
+
         // Check statistic
         const statisticsList =
             await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeReasonTemplate', logger.nextIndent);
@@ -159,6 +167,13 @@ describe('ChangeReasonTemplate', () => {
     it('Reason template update', async () => {
         const reasonTemplate1 = await setReasonTemplate(false, new Date('2011-10-15T10:42:38+0000'));
         const reasonTemplate2 = await setReasonTemplate(true, new Date('2011-10-16T10:42:38+0000'));
+
+        // Check reason templates count
+        const personsCount = await getDatabaseValue(`${clubId.guidString}/listCounts/reasonTemplates`);
+        expect(personsCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 4,
+        });
 
         // Check statistic
         let statisticsList =
@@ -197,6 +212,13 @@ describe('ChangeReasonTemplate', () => {
             reasonTemplateList.find(_reasonTemplate => _reasonTemplate.property.id.equals(reasonTemplate.id));
         expect(fetchedReasonTemplate?.property.databaseObject).to.be.deep.equal({
             deleted: true,
+        });
+
+        // Check reason templates count
+        const personsCount = await getDatabaseValue(`${clubId.guidString}/listCounts/reasonTemplates`);
+        expect(personsCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 3,
         });
 
         // Check statistic

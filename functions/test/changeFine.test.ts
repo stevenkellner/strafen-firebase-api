@@ -8,6 +8,7 @@ import {
     getDatabaseReasonTemplates,
     getDatabaseStatisticsPropertyWithIdentifier,
     signInTestUser,
+    getDatabaseValue,
 } from './utils';
 import { signOut } from 'firebase/auth';
 import { expect } from 'chai';
@@ -184,6 +185,13 @@ describe('ChangeFine', () => {
         await addReasonTemplate();
         await setFine(true, new Date('2011-10-15T10:42:38+0000'));
 
+        // Check fines count
+        const finesCount = await getDatabaseValue(`${clubId.guidString}/listCounts/fines`);
+        expect(finesCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 4,
+        });
+
         // Check statistic
         const statisticsList =
             await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFine', logger.nextIndent);
@@ -220,6 +228,13 @@ describe('ChangeFine', () => {
         await addReasonTemplate();
         await setFine(true, new Date('2011-10-15T10:42:38+0000'));
         await setFine(false, new Date('2011-10-16T10:42:38+0000'));
+
+        // Check fines count
+        const finesCount = await getDatabaseValue(`${clubId.guidString}/listCounts/fines`);
+        expect(finesCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 4,
+        });
 
         // Check statistic
         let statisticsList = await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFine', logger.nextIndent);
@@ -281,6 +296,13 @@ describe('ChangeFine', () => {
         await addReasonTemplate();
         await setFine(false, new Date('2011-10-15T10:42:38+0000'));
         await setFine(true, new Date('2011-10-16T10:42:38+0000'));
+
+        // Check fines count
+        const finesCount = await getDatabaseValue(`${clubId.guidString}/listCounts/fines`);
+        expect(finesCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 4,
+        });
 
         // Check statistic
         let statisticsList = await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFine', logger.nextIndent);
@@ -363,6 +385,13 @@ describe('ChangeFine', () => {
         const fetchedFine = fineList.find(_fine => _fine.property.id.equals(fineId))?.property;
         expect(fetchedFine?.databaseObject).to.be.deep.equal({
             deleted: true,
+        });
+
+        // Check fines count
+        const finesCount = await getDatabaseValue(`${clubId.guidString}/listCounts/fines`);
+        expect(finesCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 3,
         });
 
         // Check statistic
@@ -528,6 +557,13 @@ describe('ChangeFine', () => {
             updatableFine: updatableFine.databaseObject,
         });
         expectFunctionSuccess(callResult2).to.be.equal(undefined);
+
+        // Check fines count
+        const finesCount = await getDatabaseValue(`${clubId.guidString}/listCounts/fines`);
+        expect(finesCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 4,
+        });
 
         // Check statistics
         let statisticsList = await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changeFine', logger.nextIndent);

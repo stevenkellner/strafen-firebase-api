@@ -6,7 +6,7 @@ import {
     httpsError,
     checkUpdateProperties,
     Deleted,
-    reference,
+    reference, getCountUpdate,
 } from '../utils';
 import { ParameterContainer } from '../ParameterContainer';
 import { guid } from '../TypeDefinitions/guid';
@@ -147,6 +147,17 @@ export class ChangeFineFunction implements IFirebaseFunction<
             );
             break;
         }
+
+        // Change count
+        const countUpdate = getCountUpdate(previousFine, this.parameters.changeType);
+        const finesCountSnapshot = await this.countReference.once('value');
+        if (!finesCountSnapshot.exists) throw httpsError('internal', 'Couldn\'t get list count.', this.logger);
+        const finesCount: { total: number, undeleted: number } = finesCountSnapshot.val();
+        await this.countReference.set({
+            total: finesCount.total + countUpdate.total,
+            undeleted: finesCount.undeleted + countUpdate.undeleted,
+        });
+
         // Save statistic
         const previousFineStatisist = previousFine?.property instanceof Fine ?
             await previousFine.property.statistic(
@@ -169,6 +180,17 @@ export class ChangeFineFunction implements IFirebaseFunction<
     private get fineReference(): admin.database.Reference {
         return reference(
             `${this.parameters.clubId.guidString}/fines/${this.parameters.updatableFine.property.id.guidString}`,
+            this.parameters.databaseType,
+            this.logger.nextIndent
+        );
+    }
+
+    /**
+     * Reference to fines fount.
+     */
+    private get countReference(): admin.database.Reference {
+        return reference(
+            `${this.parameters.clubId.guidString}/listCounts/fines`,
             this.parameters.databaseType,
             this.logger.nextIndent
         );

@@ -6,6 +6,7 @@ import {
     expectFunctionFailed, expectFunctionSuccess,
     getDatabasePersons,
     getDatabaseStatisticsPropertyWithIdentifier,
+    getDatabaseValue,
     signInTestUser,
 } from './utils';
 import { signOut } from 'firebase/auth';
@@ -163,6 +164,13 @@ describe('ChangePerson', () => {
     it('Person set', async () => {
         const person = await setPerson(false, new Date('2011-10-14T10:42:38+0000'));
 
+        // Check persons count
+        const personsCount = await getDatabaseValue(`${clubId.guidString}/listCounts/persons`);
+        expect(personsCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 4,
+        });
+
         // Check statistic
         const statisticsList =
             await getDatabaseStatisticsPropertyWithIdentifier(clubId, 'changePerson', logger.nextIndent);
@@ -176,6 +184,13 @@ describe('ChangePerson', () => {
     it('Person update', async () => {
         const person1 = await setPerson(false, new Date('2011-10-14T10:42:38+0000'));
         const person2 = await setPerson(true, new Date('2011-10-15T10:42:38+0000'));
+
+        // Check persons count
+        const personsCount = await getDatabaseValue(`${clubId.guidString}/listCounts/persons`);
+        expect(personsCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 4,
+        });
 
         // Check statistic
         let statisticsList =
@@ -213,6 +228,13 @@ describe('ChangePerson', () => {
         const fetchedPerson = personList.find(_person => _person.property.id.equals(person.id))?.property;
         expect(fetchedPerson?.databaseObject).to.be.deep.equal({
             deleted: true,
+        });
+
+        // Check persons count
+        const personsCount = await getDatabaseValue(`${clubId.guidString}/listCounts/persons`);
+        expect(personsCount).to.be.deep.equal({
+            total: 4,
+            undeleted: 3,
         });
 
         // Check statistic

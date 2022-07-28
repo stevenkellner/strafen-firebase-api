@@ -239,7 +239,7 @@ export function expectFunctionSuccess(result: FirebaseFunctionResult): Expect<an
     }
     expect(result.state).to.be.equal('success');
     assert(result.state === 'success');
-    return new Expect(result.returnValue);
+    return new Expect(result.returnValue ?? undefined);
 }
 
 // eslint-disable-next-line require-jsdoc
