@@ -1,62 +1,64 @@
 module.exports = {
-    root: true,
     env: {
-        es6: true,
-        node: true,
+        browser: true,
+        es2021: true,
+        node: true
     },
     extends: [
+        'standard-with-typescript',
         'eslint:recommended',
         'plugin:import/errors',
         'plugin:import/warnings',
         'plugin:import/typescript',
-        'google',
-        'plugin:@typescript-eslint/recommended',
+        'plugin:@typescript-eslint/recommended'
     ],
     parser: '@typescript-eslint/parser',
+    overrides: [],
     parserOptions: {
-        project: ['tsconfig.json', 'tsconfig.dev.json'],
-        sourceType: 'module',
+        project: 'tsconfig.json',
+        ecmaVersion: 'latest',
+        sourceType: 'module'
     },
     ignorePatterns: [
-        '/lib/**/*', // Ignore built files.
-        '/docs/**/*', // Ignore documentation files.
+        '/lib/**/*',
+        '/.eslintrc.js',
+        '/coverage/**/*'
     ],
     plugins: [
         '@typescript-eslint',
-        'import',
+        'import'
     ],
     rules: {
-        'quotes': ['error', 'single'],
-        'indent': ['error', 4],
-        'max-len': ['warn', 120],
-        'require-jsdoc': ['warn', {
-            'require': {
-                'FunctionDeclaration': true,
-                'MethodDefinition': true,
-                'ClassDeclaration': true,
-                'ArrowFunctionExpression': true,
-                'FunctionExpression': true,
-            },
+        '@typescript-eslint/semi': ['error', 'always'],
+        '@typescript-eslint/indent': ['error', 4],
+        '@typescript-eslint/no-empty-function': ['error', {
+            'allow': ['functions', 'arrowFunctions', 'methods', 'constructors', 'asyncFunctions', 'asyncMethods']
         }],
-        'no-case-declarations': 'off',
-        '@typescript-eslint/no-explicit-any': 'off',
-        // "@typescript-eslint/explicit-module-boundary-types": "off",
-        // "@typescript-eslint/no-unused-vars": "off",
-        'curly': 'off',
-        'arrow-parens': 'off',
-        'padded-blocks': 'off',
-        'new-cap': 'off',
-        'prefer-rest-params': 'off',
-        // "no-caller": "off",
+        '@typescript-eslint/method-signature-style': ['error', 'method'],
+        '@typescript-eslint/member-delimiter-style': ['error', {
+        multiline: {
+        delimiter: 'semi',
+        requireLast: true
+        }
+    }],
+        '@typescript-eslint/space-before-function-paren': ['error', 'never'],
         '@typescript-eslint/no-namespace': 'off',
-        'object-curly-spacing': ['warn', 'always'],
-        // "import/export": "off",
-        // "no-extend-native": "off",
-        // "valid-jsdoc": "off",
-        // "no-irregular-whitespace": "off",
-        // "no-prototype-builtins": "off",
+        '@typescript-eslint/no-redeclare': 'off',
+        '@typescript-eslint/no-invalid-void-type': 'off',
+        'n/handle-callback-err': 'off',
+        '@typescript-eslint/no-unused-expressions': 'off',
+        '@typescript-eslint/class-literal-property-style': 'off',
+        'curly': 'off',
+        '@typescript-eslint/explicit-function-return-type': 'off',
+        'object-shorthand': ['error', 'never'],
+        '@typescript-eslint/restrict-template-expressions': 'off',
+        '@typescript-eslint/no-confusing-void-expression': 'off',
+        '@typescript-eslint/consistent-type-assertions': 'off',
         '@typescript-eslint/no-inferrable-types': 'off',
-        'no-trailing-spaces': 'warn',
-        'no-prototype-builtins': 'off',
-    },
-};
+        '@typescript-eslint/consistent-type-definitions': 'off',
+        '@typescript-eslint/space-before-function-paren': 'off',
+        'no-async-promise-executor': 'off',
+        '@typescript-eslint/no-misused-promises': 'off'
+    }
+  }
+    

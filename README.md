@@ -1,9 +1,9 @@
-# Strafen Project Backend
+# Strafen - Firebase Api
 
 Backend of the strafen project, build with firebase functions.
 
 ## Table of Contents
-- [Strafen Project Backend](#strafen-project-backend)
+- [Strafen - Firebase Api](#strafen-firebase-api)
     - [Table of Contents](#table-of-contents)
     - [Type Definitions](#type-definitions)
     - [Firebase Functions](#firebase-functions)
