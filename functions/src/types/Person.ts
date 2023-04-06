@@ -30,24 +30,29 @@ export namespace Person {
             return Guid.fromString(fineId, logger.nextIndent);
         });
 
-        if ('signInData' in value && ((typeof value.signInData !== 'object' || value.signInData === null) && value.signInData !== undefined))
+        let signInData: {
+            hashedUserId: string;
+            signInDate: Date;
+        } | undefined;
+        if (!('signInData' in value) || (typeof value.signInData !== 'object' && value.signInData !== null))
             throw HttpsError('internal', 'Couldn\'t get sign in data for person.', logger);
+        else if (value.signInData !== null) {
+            if (!('hashedUserId' in value.signInData) || typeof value.signInData.hashedUserId !== 'string')
+                throw HttpsError('internal', 'Couldn\'t get hashed user id of sign in data for person.', logger);
 
-        if ('signInData' in value && (!('hashedUserId' in (value.signInData as object)) || typeof (value.signInData as Record<'hashedUserId', unknown>).hashedUserId !== 'string'))
-            throw HttpsError('internal', 'Couldn\'t get hashed user id of sign in data for person.', logger);
+            if (!('signInDate' in value.signInData) || typeof value.signInData.signInDate !== 'string')
+                throw HttpsError('internal', 'Couldn\'t get sign in date of sign in data for person.', logger);
 
-        if ('signInData' in value && (!('signInDate' in (value.signInData as object)) || typeof (value.signInData as Record<'signInDate', unknown>).signInDate !== 'string'))
-            throw HttpsError('internal', 'Couldn\'t get sign in date of sign in data for person.', logger);
+            signInData = {
+                hashedUserId: value.signInData.hashedUserId,
+                signInDate: new Date(value.signInData.signInDate)
+            };
+        }
 
         return {
             name: PersonName.fromObject(value.name, logger.nextIndent),
             fineIds: fineIds,
-            signInData: 'signInData' in value
-                ? {
-                    hashedUserId: (value.signInData as Record<'hashedUserId', string>).hashedUserId,
-                    signInDate: new Date((value.signInData as Record<'signInDate', string>).signInDate)
-                }
-                : undefined
+            signInData: signInData
         };
     }
 
@@ -91,5 +96,43 @@ export namespace Person {
                     signInDate: new Date(person.signInData.signInDate)
                 }
         };
+    }
+
+    export type PersonalProperties = Omit<Person, 'fineIds' | 'signInData'>;
+
+    export namespace PersonalProperties {
+        export function fromObject(value: object | null, logger: ILogger): Omit<Person.PersonalProperties, 'id'> {
+            logger.log('Person.PersonalProperties.fromObject', { value: value });
+
+            if (value === null)
+                throw HttpsError('internal', 'Couldn\'t get person personal properites from null.', logger);
+
+            if (!('name' in value) || typeof value.name !== 'object')
+                throw HttpsError('internal', 'Couldn\'t get name for person personal properites.', logger);
+
+            return {
+                name: PersonName.fromObject(value.name, logger.nextIndent)
+            };
+        }
+
+        export type Flatten = Omit<Person.Flatten, 'fineIds' | 'signInData'>;
+
+        export function flatten(person: Person.PersonalProperties): Person.PersonalProperties.Flatten;
+        export function flatten(person: Omit<Person.PersonalProperties, 'id'>): Omit<Person.PersonalProperties.Flatten, 'id'>;
+        export function flatten(person: Person.PersonalProperties | Omit<Person.PersonalProperties, 'id'>): Person.PersonalProperties.Flatten | Omit<Person.PersonalProperties.Flatten, 'id'> {
+            return {
+                ...('id' in person ? { id: person.id.guidString } : {}),
+                name: PersonName.flatten(person.name)
+            };
+        }
+
+        export function concrete(person: Person.PersonalProperties.Flatten): Person.PersonalProperties;
+        export function concrete(person: Omit<Person.PersonalProperties.Flatten, 'id'>): Omit<Person.PersonalProperties, 'id'>;
+        export function concrete(person: Person.PersonalProperties.Flatten | Omit<Person.PersonalProperties.Flatten, 'id'>): Person.PersonalProperties | Omit<Person.PersonalProperties, 'id'> {
+            return {
+                ...('id' in person ? { id: new Guid(person.id) } : {}),
+                name: PersonName.concrete(person.name)
+            };
+        }
     }
 }

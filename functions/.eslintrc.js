@@ -58,7 +58,8 @@ module.exports = {
         '@typescript-eslint/consistent-type-definitions': 'off',
         '@typescript-eslint/space-before-function-paren': 'off',
         'no-async-promise-executor': 'off',
-        '@typescript-eslint/no-misused-promises': 'off'
+        '@typescript-eslint/no-misused-promises': 'off',
+        '@typescript-eslint/prefer-optional-chain': 'off'
     }
   }
     

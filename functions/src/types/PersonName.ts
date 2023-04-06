@@ -15,12 +15,12 @@ export namespace PersonName {
         if (!('first' in value) || typeof value.first !== 'string')
             throw HttpsError('internal', 'Couldn\'t get first for person name.', logger);
 
-        if ('last' in value && (typeof value.last !== 'string' && value.last !== undefined))
+        if (!('last' in value) || (typeof value.last !== 'string' && value.last !== null))
             throw HttpsError('internal', 'Couldn\'t get last for person name.', logger);
 
         return {
             first: value.first,
-            last: 'last' in value ? value.last as string : undefined
+            last: value.last !== null ? value.last : undefined
         };
     }
 

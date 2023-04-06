@@ -5,7 +5,7 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { type ClubProperties } from '../types/ClubProperties';
 import { Guid } from '../types/Guid';
-import { PersonName } from '../types/PersonName';
+import { type Person } from '../types/Person';
 
 export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFunctionType> {
     public readonly parameters: FunctionType.Parameters<PersonRegisterFunctionType> & { databaseType: DatabaseType };
@@ -16,8 +16,7 @@ export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFu
         const parameterParser = new ParameterParser<FunctionType.Parameters<PersonRegisterFunctionType>>(
             {
                 clubId: ParameterBuilder.build('string', Guid.fromString),
-                personId: ParameterBuilder.build('string', Guid.fromString),
-                personName: ParameterBuilder.build('object', PersonName.fromObject)
+                personId: ParameterBuilder.build('string', Guid.fromString)
             },
             this.logger.nextIndent
         );
@@ -28,9 +27,24 @@ export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFu
     public async executeFunction(): Promise<FunctionType.ReturnType<PersonRegisterFunctionType>> {
         this.logger.log('PersonRegisterFunction.executeFunction', {}, 'info');
         const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, [], this.parameters.databaseType, this.logger.nextIndent);
-        await this.checkPersonExists();
-        await Promise.all(this.setProperties(hashedUserId));
+        const person = await this.getPerson();
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString);
+        await reference.child('authentication').child('clubMember').child(hashedUserId).set('authenticated');
+        await reference.child('persons').child(this.parameters.personId.guidString).set({
+            ...person,
+            signInData: {
+                hashedUserId: hashedUserId,
+                signInDate: new Date().toISOString()
+            }
+        }, 'encrypt');
+        const userReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('users').child(hashedUserId);
+        const userSnapshot = await userReference.snapshot();
+        if (userSnapshot.exists)
+            throw HttpsError('already-exists', 'Person is already registered.', this.logger);
+        await userReference.set({
+            clubId: this.parameters.clubId.guidString,
+            personId: this.parameters.personId.guidString
+        });
         const snapshot = await reference.snapshot();
         return {
             id: this.parameters.clubId.guidString,
@@ -41,39 +55,22 @@ export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFu
         };
     }
 
-    private async checkPersonExists() {
+    private async getPerson(): Promise<Omit<Person.Flatten, 'id'>> {
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('persons').child(this.parameters.personId.guidString);
         const snapshot = await reference.snapshot();
-        if (snapshot.exists)
-            throw HttpsError('already-exists', 'Person already exists.', this.logger);
-    }
-
-    private * setProperties(hashedUserId: string) {
-        const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString);
-        yield reference.child('authentication').child('clubMember').child(hashedUserId).set('authenticated');
-        yield reference.child('persons').child(this.parameters.personId.guidString).set({
-            name: PersonName.flatten(this.parameters.personName),
-            fineIds: [],
-            signInData: {
-                hashedUserId: hashedUserId,
-                signInDate: new Date().toISOString()
-            }
-        }, 'encrypt');
-        yield new Promise(async () => {
-            const userReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('users').child(hashedUserId);
-            const userSnapshot = await userReference.snapshot();
-            if (userSnapshot.exists)
-                throw HttpsError('already-exists', 'User is already registered.', this.logger);
-            await userReference.set({
-                clubId: this.parameters.clubId.guidString,
-                personId: this.parameters.personId.guidString
-            });
-        });
+        if (!snapshot.exists)
+            throw HttpsError('not-found', 'Person doesn\'t exists.', this.logger);
+        const person = snapshot.value('decrypt');
+        if (person.signInData !== null)
+            throw HttpsError('unavailable', 'Person is already registered.', this.logger);
+        return person;
     }
 }
 
 export type PersonRegisterFunctionType = FunctionType<{
     clubId: Guid;
     personId: Guid;
-    personName: PersonName;
-}, ClubProperties.Flatten>;
+}, ClubProperties.Flatten, {
+    clubId: string;
+    personId: string;
+}>;

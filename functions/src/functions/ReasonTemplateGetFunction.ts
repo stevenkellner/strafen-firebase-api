@@ -40,4 +40,6 @@ export class ReasonTemplateGetFunction implements FirebaseFunction<ReasonTemplat
 
 export type ReasonTemplateGetFunctionType = FunctionType<{
     clubId: Guid;
-}, Record<string, Omit<ReasonTemplate.Flatten, 'id'>>>;
+}, Record<string, Omit<ReasonTemplate.Flatten, 'id'>>, {
+    clubId: string;
+}>;

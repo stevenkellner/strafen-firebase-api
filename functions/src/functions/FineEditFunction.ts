@@ -51,4 +51,9 @@ export type FineEditFunctionType = FunctionType<{
     editType: EditType;
     fineId: Guid;
     fine: Omit<Fine, 'id'> | undefined;
-}, void>;
+}, void, {
+    clubId: string;
+    editType: EditType;
+    fineId: string;
+    fine: Omit<Fine.Flatten, 'id'> | undefined;
+}>;

@@ -40,4 +40,6 @@ export class PersonGetFunction implements FirebaseFunction<PersonGetFunctionType
 
 export type PersonGetFunctionType = FunctionType<{
     clubId: Guid;
-}, Record<string, Omit<Person.Flatten, 'id'>>>;
+}, Record<string, Omit<Person.Flatten, 'id'>>, {
+    clubId: string;
+}>;

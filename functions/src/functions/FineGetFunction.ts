@@ -40,4 +40,6 @@ export class FineGetFunction implements FirebaseFunction<FineGetFunctionType> {
 
 export type FineGetFunctionType = FunctionType<{
     clubId: Guid;
-}, Record<string, Omit<Fine.Flatten, 'id'>>>;
+}, Record<string, Omit<Fine.Flatten, 'id'>>, {
+    clubId: string;
+}>;

@@ -3,7 +3,7 @@ import { DeleteAllDataFunction, type DeleteAllDataFunctionType } from './functio
 import { ClubNewFunction, type ClubNewFunctionType } from './functions/ClubNewFunction';
 import { ClubNewTestFunction, type ClubNewTestFunctionType } from './functions/ClubNewTestFunction';
 import { PersonRegisterFunction, type PersonRegisterFunctionType } from './functions/PersonRegisterFunction';
-import { PersonGetSingleFunction, type PersonGetSingleFunctionType } from './functions/PersonGetSingleFunction';
+import { PersonGetCurrentFunction, type PersonGetCurrentFunctionType } from './functions/PersonGetCurrentFunction';
 import { type ClubGetIdFunctionType, ClubGetIdFunction } from './functions/ClubGetIdFunction';
 import { type PersonEditFunctionType, PersonEditFunction } from './functions/PersonEditFunction';
 import { type PersonGetFunctionType, PersonGetFunction } from './functions/PersonGetFunction';
@@ -22,7 +22,7 @@ export const firebaseFunctions = {
     },
     person: {
         register: FirebaseFunctionDescriptor.create<PersonRegisterFunctionType>(PersonRegisterFunction),
-        getSingle: FirebaseFunctionDescriptor.create<PersonGetSingleFunctionType>(PersonGetSingleFunction),
+        getCurrent: FirebaseFunctionDescriptor.create<PersonGetCurrentFunctionType>(PersonGetCurrentFunction),
         edit: FirebaseFunctionDescriptor.create<PersonEditFunctionType>(PersonEditFunction),
         get: FirebaseFunctionDescriptor.create<PersonGetFunctionType>(PersonGetFunction)
     },

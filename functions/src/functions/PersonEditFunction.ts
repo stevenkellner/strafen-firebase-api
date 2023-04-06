@@ -18,7 +18,7 @@ export class PersonEditFunction implements FirebaseFunction<PersonEditFunctionTy
                 clubId: ParameterBuilder.build('string', Guid.fromString),
                 editType: ParameterBuilder.guard('string', EditType.typeGuard),
                 personId: ParameterBuilder.build('string', Guid.fromString),
-                person: ParameterBuilder.optional(ParameterBuilder.build('object', Person.fromObject))
+                person: ParameterBuilder.optional(ParameterBuilder.build('object', Person.PersonalProperties.fromObject))
             },
             this.logger.nextIndent
         );
@@ -31,27 +31,30 @@ export class PersonEditFunction implements FirebaseFunction<PersonEditFunctionTy
         await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('persons').child(this.parameters.personId.guidString);
         const snapshot = await reference.snapshot();
+        const person = snapshot.exists ? snapshot.value('decrypt') : null;
         if (this.parameters.editType === 'delete') {
-            if (snapshot.exists && snapshot.value('decrypt').signInData !== null)
+            if (person === null)
+                return;
+            if (person.signInData !== null)
                 throw HttpsError('unavailable', 'Cannot delete registered person.', this.logger);
-            await Promise.all(snapshot.value('decrypt').fineIds.map(async fineId => {
+            await Promise.all(person.fineIds.map(async fineId => {
                 const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('fines').child(fineId);
                 const snapshot = await reference.snapshot();
                 if (snapshot.exists)
                     await reference.remove();
             }));
-            if (snapshot.exists)
-                await reference.remove();
+            await reference.remove();
         } else {
             if (this.parameters.person === undefined)
-                throw HttpsError('invalid-argument', 'No person in parameters to add / update.', this.logger);
-            if (this.parameters.editType === 'add' && snapshot.exists)
+                throw HttpsError('invalid-argument', 'No person name in parameters to add / update.', this.logger);
+            if (this.parameters.editType === 'add' && person !== null)
                 throw HttpsError('invalid-argument', 'Couldn\'t add existing person.', this.logger);
-            if (this.parameters.editType === 'update' && !snapshot.exists)
+            if (this.parameters.editType === 'update' && person === null)
                 throw HttpsError('invalid-argument', 'Couldn\'t update not existing person.', this.logger);
             await reference.set({
-                ...Person.flatten(this.parameters.person),
-                signInData: snapshot.exists ? snapshot.value('decrypt').signInData : null
+                ...Person.PersonalProperties.flatten(this.parameters.person),
+                fineIds: person?.fineIds ?? [],
+                signInData: person?.signInData ?? null
             }, 'encrypt');
         }
     }
@@ -61,5 +64,10 @@ export type PersonEditFunctionType = FunctionType<{
     clubId: Guid;
     editType: EditType;
     personId: Guid;
-    person: Omit<Person, 'id'> | undefined;
-}, void>;
+    person: Omit<Person.PersonalProperties, 'id'> | undefined;
+}, void, {
+    clubId: string;
+    editType: EditType;
+    personId: string;
+    person: Omit<Person.PersonalProperties.Flatten, 'id'> | undefined;
+}>;

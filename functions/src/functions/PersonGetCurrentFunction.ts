@@ -1,4 +1,4 @@
-import { type DatabaseType, type FirebaseFunction, type ILogger, ParameterBuilder, ParameterContainer, ParameterParser, type FunctionType, HttpsError, Crypter, DatabaseReference } from 'firebase-function';
+import { type DatabaseType, type FirebaseFunction, type ILogger, ParameterContainer, ParameterParser, type FunctionType, HttpsError, Crypter, DatabaseReference } from 'firebase-function';
 import { type AuthData } from 'firebase-functions/lib/common/providers/tasks';
 import { checkUserAuthentication } from '../checkUserAuthentication';
 import { type DatabaseScheme } from '../DatabaseScheme';
@@ -7,24 +7,19 @@ import { type ClubProperties } from '../types/ClubProperties';
 import { Guid } from '../types/Guid';
 import { type Person } from '../types/Person';
 
-export class PersonGetSingleFunction implements FirebaseFunction<PersonGetSingleFunctionType> {
-    public readonly parameters: FunctionType.Parameters<PersonGetSingleFunctionType> & { databaseType: DatabaseType };
+export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurrentFunctionType> {
+    public readonly parameters: FunctionType.Parameters<PersonGetCurrentFunctionType> & { databaseType: DatabaseType };
 
     public constructor(data: Record<string, unknown> & { databaseType: DatabaseType }, private readonly auth: AuthData | undefined, private readonly logger: ILogger) {
-        this.logger.log('PersonGetSingleFunction.constructor', { data: data, auth: auth }, 'notice');
+        this.logger.log('PersonGetCurrentFunction.constructor', { data: data, auth: auth }, 'notice');
         const parameterContainer = new ParameterContainer(data, getPrivateKeys, this.logger.nextIndent);
-        const parameterParser = new ParameterParser<FunctionType.Parameters<PersonGetSingleFunctionType>>(
-            {
-                userId: ParameterBuilder.value('string')
-            },
-            this.logger.nextIndent
-        );
+        const parameterParser = new ParameterParser<FunctionType.Parameters<PersonGetCurrentFunctionType>>({}, this.logger.nextIndent);
         parameterParser.parseParameters(parameterContainer);
         this.parameters = parameterParser.parameters;
     }
 
-    public async executeFunction(): Promise<FunctionType.ReturnType<PersonGetSingleFunctionType>> {
-        this.logger.log('PersonGetSingleFunction.executeFunction', {}, 'info');
+    public async executeFunction(): Promise<FunctionType.ReturnType<PersonGetCurrentFunctionType>> {
+        this.logger.log('PersonGetCurrentFunction.executeFunction', {}, 'info');
         if (this.auth === undefined)
             throw HttpsError('permission-denied', 'The function must be called while authenticated, nobody signed in.', this.logger);
         const hashedUserId = Crypter.sha512(this.auth.uid);
@@ -60,9 +55,7 @@ export class PersonGetSingleFunction implements FirebaseFunction<PersonGetSingle
     }
 }
 
-export type PersonGetSingleFunctionType = FunctionType<{
-    userId: string;
-}, Person.Flatten & {
+export type PersonGetCurrentFunctionType = FunctionType<Record<string, never>, Person.Flatten & {
     signInData: { isAdmin: boolean } | null;
     club: ClubProperties.Flatten;
 }>;

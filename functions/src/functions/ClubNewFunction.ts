@@ -30,30 +30,14 @@ export class ClubNewFunction implements FirebaseFunction<ClubNewFunctionType> {
         this.logger.log('ClubNewFunction.executeFunction', {}, 'info');
         const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, [], this.parameters.databaseType, this.logger.nextIndent);
         await this.checkClubExists();
-        await Promise.all(this.setProperties(hashedUserId));
-    }
-
-    private async checkClubExists() {
-        const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs');
-        const snapshot = await reference.snapshot();
-        const clubExists = snapshot.forEach(snapshot => {
-            return snapshot.child('identifier').value() === this.parameters.clubProperties.identifier;
-        });
-        if (clubExists)
-            throw HttpsError('already-exists', 'Club identifier already exists.', this.logger);
-        if (snapshot.child(this.parameters.clubId.guidString).exists)
-            throw HttpsError('already-exists', 'Club with specified id already exists.', this.logger);
-    }
-
-    private * setProperties(hashedUserId: string) {
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString);
-        yield reference.child('name').set(this.parameters.clubProperties.name);
-        yield reference.child('identifier').set(this.parameters.clubProperties.identifier);
-        yield reference.child('regionCode').set(this.parameters.clubProperties.regionCode);
-        yield reference.child('inAppPaymentActive').set(this.parameters.clubProperties.inAppPaymentActive);
+        await reference.child('name').set(this.parameters.clubProperties.name);
+        await reference.child('identifier').set(this.parameters.clubProperties.identifier);
+        await reference.child('regionCode').set(this.parameters.clubProperties.regionCode);
+        await reference.child('inAppPaymentActive').set(this.parameters.clubProperties.inAppPaymentActive);
         for (const authenticationType of ['clubManager', 'clubMember'] as const)
-            yield reference.child('authentication').child(authenticationType).child(hashedUserId).set('authenticated');
-        yield reference.child('persons').child(this.parameters.personId.guidString).set({
+            await reference.child('authentication').child(authenticationType).child(hashedUserId).set('authenticated');
+        await reference.child('persons').child(this.parameters.personId.guidString).set({
             name: PersonName.flatten(this.parameters.personName),
             fineIds: [],
             signInData: {
@@ -61,18 +45,27 @@ export class ClubNewFunction implements FirebaseFunction<ClubNewFunctionType> {
                 signInDate: new Date().toISOString()
             }
         }, 'encrypt');
-        yield new Promise(async () => {
-            const userReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('users').child(hashedUserId);
-            const userSnapshot = await userReference.snapshot();
-            if (userSnapshot.exists)
-                throw HttpsError('already-exists', 'User is already registered.', this.logger);
-            await userReference.set({
-                clubId: this.parameters.clubId.guidString,
-                personId: this.parameters.personId.guidString
-            });
+        const userReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('users').child(hashedUserId);
+        const userSnapshot = await userReference.snapshot();
+        if (userSnapshot.exists)
+            throw HttpsError('already-exists', 'User is already registered.', this.logger);
+        await userReference.set({
+            clubId: this.parameters.clubId.guidString,
+            personId: this.parameters.personId.guidString
         });
         const clubIdentifierReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubIdentifiers').child(this.parameters.clubProperties.identifier);
-        yield clubIdentifierReference.set(this.parameters.clubId.guidString);
+        await clubIdentifierReference.set(this.parameters.clubId.guidString);
+    }
+
+    private async checkClubExists() {
+        const clubIdentifierReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubIdentifiers').child(this.parameters.clubProperties.identifier);
+        const clubIdentifierSnapshot = await clubIdentifierReference.snapshot();
+        if (clubIdentifierSnapshot.exists)
+            throw HttpsError('already-exists', 'Club identifier already exists.', this.logger);
+        const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString);
+        const snapshot = await reference.snapshot();
+        if (snapshot.exists)
+            throw HttpsError('already-exists', 'Club with specified id already exists.', this.logger);
     }
 }
 
@@ -81,4 +74,9 @@ export type ClubNewFunctionType = FunctionType<{
     clubProperties: Omit<ClubProperties, 'id'>;
     personId: Guid;
     personName: PersonName;
-}, void>;
+}, void, {
+    clubId: string;
+    clubProperties: Omit<ClubProperties.Flatten, 'id'>;
+    personId: string;
+    personName: PersonName.Flatten;
+}>;

@@ -51,4 +51,9 @@ export type ReasonTemplateEditFunctionType = FunctionType<{
     editType: EditType;
     reasonTemplateId: Guid;
     reasonTemplate: Omit<ReasonTemplate, 'id'> | undefined;
-}, void>;
+}, void, {
+    clubId: string;
+    editType: EditType;
+    reasonTemplateId: string;
+    reasonTemplate: Omit<ReasonTemplate.Flatten, 'id'> | undefined;
+}>;

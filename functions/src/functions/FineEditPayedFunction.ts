@@ -30,7 +30,7 @@ export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunc
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('fines').child(this.parameters.fineId.guidString);
         const snapshot = await reference.snapshot();
         if (!snapshot.exists)
-            throw HttpsError('not-found', 'Couldn\t found fine to edit payed state.', this.logger);
+            throw HttpsError('not-found', 'Couldn\'t found fine to edit payed state.', this.logger);
         const fine = snapshot.value('decrypt');
         await reference.set({
             ...fine,
@@ -43,4 +43,8 @@ export type FineEditPayedFunctionType = FunctionType<{
     clubId: Guid;
     fineId: Guid;
     payedState: PayedState;
-}, void>;
+}, void, {
+    clubId: string;
+    fineId: string;
+    payedState: PayedState.Flatten;
+}>;
