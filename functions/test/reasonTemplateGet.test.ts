@@ -1,6 +1,7 @@
 import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
 import * as defaultTestClub from '../src/testClubs/default.json';
+import { mapValues } from './utils';
 import { type ReasonTemplate } from '../src/types/ReasonTemplate';
 
 describe('reasonTemplateGet', () => {
@@ -35,6 +36,11 @@ describe('reasonTemplateGet', () => {
         const result = await firebaseApp.functions.function('reasonTemplate').function('get').call({
             clubId: clubId.guidString
         });
-        result.success.equal(defaultTestClub.reasonTemplates as Record<string, Omit<ReasonTemplate.Flatten, 'id'>>);
+        result.success.equal(mapValues(defaultTestClub.reasonTemplates as Record<string, Omit<ReasonTemplate.Flatten, 'id'>>, entry => {
+            return {
+                id: entry[0],
+                ...entry[1]
+            };
+        }));
     });
 });

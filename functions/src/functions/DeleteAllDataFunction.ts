@@ -7,7 +7,7 @@ export class DeleteAllDataFunction implements FirebaseFunction<DeleteAllDataFunc
     public readonly parameters: FunctionType.Parameters<DeleteAllDataFunctionType> & { databaseType: DatabaseType };
 
     public constructor(data: Record<string, unknown> & { databaseType: DatabaseType }, auth: AuthData | undefined, private readonly logger: ILogger) {
-        this.logger.log('DeleteAllDataFunction.constructor', { data: data, auth: auth }, 'notice');
+        this.logger.log('DeleteAllDataFunction.constructor', { auth: auth }, 'notice');
         const parameterContainer = new ParameterContainer(data, getPrivateKeys, this.logger.nextIndent);
         const parameterParser = new ParameterParser<FunctionType.Parameters<DeleteAllDataFunctionType>>({}, this.logger.nextIndent);
         parameterParser.parseParameters(parameterContainer);

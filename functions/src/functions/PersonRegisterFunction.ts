@@ -11,7 +11,7 @@ export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFu
     public readonly parameters: FunctionType.Parameters<PersonRegisterFunctionType> & { databaseType: DatabaseType };
 
     public constructor(data: Record<string, unknown> & { databaseType: DatabaseType }, private readonly auth: AuthData | undefined, private readonly logger: ILogger) {
-        this.logger.log('PersonRegisterFunction.constructor', { data: data, auth: auth }, 'notice');
+        this.logger.log('PersonRegisterFunction.constructor', { auth: auth }, 'notice');
         const parameterContainer = new ParameterContainer(data, getPrivateKeys, this.logger.nextIndent);
         const parameterParser = new ParameterParser<FunctionType.Parameters<PersonRegisterFunctionType>>(
             {

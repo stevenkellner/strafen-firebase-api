@@ -3,7 +3,7 @@
     "scripts": {
         "lint": "eslint --fix --ext .js,.ts .",
         "build": "tsc",
-        "deploy": "cd .. && firebase deploy --only functions && cd functions",
+        "deploy": "rm -rf lib && cd .. && firebase deploy --only functions && cd functions",
         "logs": "firebase functions:log",
         "test": "mocha --reporter spec -r ts-node/register --timeout 3600000 --reporter-option maxDiffSize=0",
         "testAll": "npm run test test/**/*.test.ts test/*.test.ts",
@@ -14,7 +14,7 @@
     },
     "main": "lib/src/index.js",
     "dependencies": {
-        "firebase-function": "^1.4.28",
+        "firebase-function": "^1.4.36",
         "firebase-functions": "^4.2.1",
         "uuid": "^9.0.0"
     },
@@ -25,10 +25,10 @@
         "@types/mocha": "^10.0.1",
         "@types/node": "^18.15.11",
         "@types/uuid": "^9.0.1",
-        "@typescript-eslint/eslint-plugin": "^5.57.0",
-        "@typescript-eslint/parser": "^5.57.0",
+        "@typescript-eslint/eslint-plugin": "^5.57.1",
+        "@typescript-eslint/parser": "^5.57.1",
         "chai": "^4.3.7",
-        "eslint": "^8.37.0",
+        "eslint": "^8.38.0",
         "eslint-config-standard-with-typescript": "^34.0.1",
         "eslint-plugin-import": "^2.27.5",
         "eslint-plugin-n": "^15.7.0",
@@ -37,7 +37,7 @@
         "mocha": "^10.2.0",
         "nyc": "^15.1.0",
         "ts-node": "^10.9.1",
-        "typescript": "^5.0.3"
+        "typescript": "^5.0.4"
     },
     "nyc": {
         "extends": "@istanbuljs/nyc-config-typescript",

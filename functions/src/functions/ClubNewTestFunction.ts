@@ -10,7 +10,7 @@ export class ClubNewTestFunction implements FirebaseFunction<ClubNewTestFunction
     public readonly parameters: FunctionType.Parameters<ClubNewTestFunctionType> & { databaseType: DatabaseType };
 
     public constructor(data: Record<string, unknown> & { databaseType: DatabaseType }, auth: AuthData | undefined, private readonly logger: ILogger) {
-        this.logger.log('ClubNewTestFunction.constructor', { data: data, auth: auth }, 'notice');
+        this.logger.log('ClubNewTestFunction.constructor', { auth: auth }, 'notice');
         const parameterContainer = new ParameterContainer(data, getPrivateKeys, this.logger.nextIndent);
         const parameterParser = new ParameterParser<FunctionType.Parameters<ClubNewTestFunctionType>>(
             {

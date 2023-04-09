@@ -40,9 +40,9 @@ describe('personGetCurrent', () => {
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: signInDate.toISOString(),
-                isAdmin: false
+                signInDate: signInDate.toISOString()
             },
+            isAdmin: false,
             club: {
                 id: clubId.guidString,
                 name: 'Neuer Verein',
@@ -77,9 +77,9 @@ describe('personGetCurrent', () => {
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: signInDate.toISOString(),
-                isAdmin: true
+                signInDate: signInDate.toISOString()
             },
+            isAdmin: true,
             club: {
                 id: clubId.guidString,
                 name: 'Neuer Verein',

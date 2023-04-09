@@ -11,7 +11,7 @@ export class PersonEditFunction implements FirebaseFunction<PersonEditFunctionTy
     public readonly parameters: FunctionType.Parameters<PersonEditFunctionType> & { databaseType: DatabaseType };
 
     public constructor(data: Record<string, unknown> & { databaseType: DatabaseType }, private readonly auth: AuthData | undefined, private readonly logger: ILogger) {
-        this.logger.log('PersonEditFunction.constructor', { data: data, auth: auth }, 'notice');
+        this.logger.log('PersonEditFunction.constructor', { auth: auth }, 'notice');
         const parameterContainer = new ParameterContainer(data, getPrivateKeys, this.logger.nextIndent);
         const parameterParser = new ParameterParser<FunctionType.Parameters<PersonEditFunctionType>>(
             {

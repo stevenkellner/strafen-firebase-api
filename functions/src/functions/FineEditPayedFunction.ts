@@ -10,7 +10,7 @@ export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunc
     public readonly parameters: FunctionType.Parameters<FineEditPayedFunctionType> & { databaseType: DatabaseType };
 
     public constructor(data: Record<string, unknown> & { databaseType: DatabaseType }, private readonly auth: AuthData | undefined, private readonly logger: ILogger) {
-        this.logger.log('FineEditPayedFunction.constructor', { data: data, auth: auth }, 'notice');
+        this.logger.log('FineEditPayedFunction.constructor', { auth: auth }, 'notice');
         const parameterContainer = new ParameterContainer(data, getPrivateKeys, this.logger.nextIndent);
         const parameterParser = new ParameterParser<FunctionType.Parameters<FineEditPayedFunctionType>>(
             {

@@ -11,7 +11,7 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
     public readonly parameters: FunctionType.Parameters<PersonGetCurrentFunctionType> & { databaseType: DatabaseType };
 
     public constructor(data: Record<string, unknown> & { databaseType: DatabaseType }, private readonly auth: AuthData | undefined, private readonly logger: ILogger) {
-        this.logger.log('PersonGetCurrentFunction.constructor', { data: data, auth: auth }, 'notice');
+        this.logger.log('PersonGetCurrentFunction.constructor', { auth: auth }, 'notice');
         const parameterContainer = new ParameterContainer(data, getPrivateKeys, this.logger.nextIndent);
         const parameterParser = new ParameterParser<FunctionType.Parameters<PersonGetCurrentFunctionType>>({}, this.logger.nextIndent);
         parameterParser.parseParameters(parameterContainer);
@@ -33,17 +33,17 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
         const clubManagerSnapshot = await clubReference.child('authentication').child('clubManager').child(hashedUserId).snapshot();
         const personSnapshot = await clubReference.child('persons').child(personId).snapshot();
         const person = personSnapshot.value('decrypt');
+        if (person.signInData === null)
+            throw HttpsError('internal', 'Couldn\'t get sign in data from logged in person.', this.logger);
         return {
             id: personId,
             name: person.name,
             fineIds: person.fineIds,
-            signInData: person.signInData === null
-                ? null
-                : {
-                    hashedUserId: person.signInData.hashedUserId,
-                    signInDate: person.signInData.signInDate,
-                    isAdmin: clubManagerSnapshot.exists && clubManagerSnapshot.value() === 'authenticated'
-                },
+            signInData: {
+                hashedUserId: person.signInData.hashedUserId,
+                signInDate: person.signInData.signInDate
+            },
+            isAdmin: clubManagerSnapshot.exists && clubManagerSnapshot.value() === 'authenticated',
             club: {
                 id: clubId,
                 name: (await clubReference.child('name').snapshot()).value(),
@@ -56,6 +56,7 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
 }
 
 export type PersonGetCurrentFunctionType = FunctionType<Record<string, never>, Person.Flatten & {
-    signInData: { isAdmin: boolean } | null;
+    signInData: object;
+    isAdmin: boolean;
     club: ClubProperties.Flatten;
 }>;

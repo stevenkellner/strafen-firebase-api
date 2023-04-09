@@ -11,7 +11,7 @@ export class ReasonTemplateEditFunction implements FirebaseFunction<ReasonTempla
     public readonly parameters: FunctionType.Parameters<ReasonTemplateEditFunctionType> & { databaseType: DatabaseType };
 
     public constructor(data: Record<string, unknown> & { databaseType: DatabaseType }, private readonly auth: AuthData | undefined, private readonly logger: ILogger) {
-        this.logger.log('ReasonTemplateEditFunction.constructor', { data: data, auth: auth }, 'notice');
+        this.logger.log('ReasonTemplateEditFunction.constructor', { auth: auth }, 'notice');
         const parameterContainer = new ParameterContainer(data, getPrivateKeys, this.logger.nextIndent);
         const parameterParser = new ParameterParser<FunctionType.Parameters<ReasonTemplateEditFunctionType>>(
             {

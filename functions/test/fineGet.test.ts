@@ -2,6 +2,7 @@ import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
 import * as defaultTestClub from '../src/testClubs/default.json';
 import { type Fine } from '../src/types/Fine';
+import { mapValues } from './utils';
 
 describe('fineGet', () => {
     const clubId = Guid.newGuid();
@@ -35,6 +36,11 @@ describe('fineGet', () => {
         const result = await firebaseApp.functions.function('fine').function('get').call({
             clubId: clubId.guidString
         });
-        result.success.equal(defaultTestClub.fines as Record<string, Omit<Fine.Flatten, 'id'>>);
+        result.success.equal(mapValues(defaultTestClub.fines as Record<string, Omit<Fine.Flatten, 'id'>>, entry => {
+            return {
+                id: entry[0],
+                ...entry[1]
+            };
+        }));
     });
 });

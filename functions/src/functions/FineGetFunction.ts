@@ -10,7 +10,7 @@ export class FineGetFunction implements FirebaseFunction<FineGetFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineGetFunctionType> & { databaseType: DatabaseType };
 
     public constructor(data: Record<string, unknown> & { databaseType: DatabaseType }, private readonly auth: AuthData | undefined, private readonly logger: ILogger) {
-        this.logger.log('FineGetFunction.constructor', { data: data, auth: auth }, 'notice');
+        this.logger.log('FineGetFunction.constructor', { auth: auth }, 'notice');
         const parameterContainer = new ParameterContainer(data, getPrivateKeys, this.logger.nextIndent);
         const parameterParser = new ParameterParser<FunctionType.Parameters<FineGetFunctionType>>(
             {
@@ -27,12 +27,15 @@ export class FineGetFunction implements FirebaseFunction<FineGetFunctionType> {
         await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubMember', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('fines');
         const snapshot = await reference.snapshot();
-        return snapshot.reduce<Record<string, Omit<Fine.Flatten, 'id'>>>({}, (value, snapshot) => {
+        return snapshot.reduce<Record<string, Fine.Flatten>>({}, (value, snapshot) => {
             if (snapshot.key === null)
                 return value;
             return {
                 ...value,
-                [snapshot.key]: snapshot.value('decrypt')
+                [snapshot.key]: {
+                    id: snapshot.key,
+                    ...snapshot.value('decrypt')
+                }
             };
         });
     }
@@ -40,6 +43,6 @@ export class FineGetFunction implements FirebaseFunction<FineGetFunctionType> {
 
 export type FineGetFunctionType = FunctionType<{
     clubId: Guid;
-}, Record<string, Omit<Fine.Flatten, 'id'>>, {
+}, Record<string, Fine.Flatten>, {
     clubId: string;
 }>;

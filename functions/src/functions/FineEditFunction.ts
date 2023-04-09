@@ -11,7 +11,7 @@ export class FineEditFunction implements FirebaseFunction<FineEditFunctionType> 
     public readonly parameters: FunctionType.Parameters<FineEditFunctionType> & { databaseType: DatabaseType };
 
     public constructor(data: Record<string, unknown> & { databaseType: DatabaseType }, private readonly auth: AuthData | undefined, private readonly logger: ILogger) {
-        this.logger.log('FineEditFunction.constructor', { data: data, auth: auth }, 'notice');
+        this.logger.log('FineEditFunction.constructor', { auth: auth }, 'notice');
         const parameterContainer = new ParameterContainer(data, getPrivateKeys, this.logger.nextIndent);
         const parameterParser = new ParameterParser<FunctionType.Parameters<FineEditFunctionType>>(
             {

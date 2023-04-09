@@ -25,6 +25,6 @@
     "fines": {
         "02462A8B-107F-4BAE-A85B-EFF1F727C00F": { "personId": "76025DDE-6893-46D2-BC34-9864BB5B8DAD", "payedState": { "state": "settled" }, "number": 1, "date": "2023-01-24T17:23:45.678+01:00", "fineReason": { "reasonMessage": "test_fine_reason_1", "amount": 1, "importance": "low" } },
         "0B5F958E-9D7D-46E1-8AEE-F52F4370A95A": { "personId": "76025DDE-6893-46D2-BC34-9864BB5B8DAD", "payedState": { "state": "unpayed" }, "number": 2, "date": "2023-01-02T17:23:45.678+01:00", "fineReason": { "reasonMessage": "test_fine_reason_2", "amount": 2.50, "importance": "high" } },
-        "1B5F958E-9D7D-46E1-8AEE-F52F4370A95A": { "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7", "payedState": { "state": "payed", "inApp": "false", "payDate": "2023-01-22T17:23:45.678+01:00" }, "number": 1, "date": "2023-01-20T17:23:45.678+01:00", "fineReason": { "reasonMessage": "test_fine_reason_3", "amount": 2.00, "importance": "medium" } }
+        "1B5F958E-9D7D-46E1-8AEE-F52F4370A95A": { "personId": "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7", "payedState": { "state": "payed", "inApp": false, "payDate": "2023-01-22T17:23:45.678+01:00" }, "number": 1, "date": "2023-01-20T17:23:45.678+01:00", "fineReason": { "reasonMessage": "test_fine_reason_3", "amount": 2.00, "importance": "medium" } }
     }
 }
