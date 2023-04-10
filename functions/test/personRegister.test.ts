@@ -3,6 +3,7 @@ import { Guid } from '../src/types/Guid';
 import { createTestClub, cleanUpFirebase, authenticateTestUser, firebaseApp } from './firebaseApp';
 import { Crypter } from 'firebase-function';
 import { assert } from 'chai';
+import { getInvitationLinkId } from './utils';
 
 describe('personRegister', () => {
     const clubId = Guid.newGuid();
@@ -28,7 +29,6 @@ describe('personRegister', () => {
         result.success.equal({
             id: clubId.guidString,
             name: 'Neuer Verein',
-            identifier: 'demo-team',
             regionCode: 'DE',
             inAppPaymentActive: true
         });
@@ -43,14 +43,16 @@ describe('personRegister', () => {
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: databasePerson.signInData.signInDate
-            }
+            },
+            isInvited: false
         });
         expect(await firebaseApp.database.child('clubs').child(clubId.guidString).child('authentication').child('clubMember').child(hashedUserId).get()).to.be.equal('authenticated');
         expect(await firebaseApp.database.child('clubs').child(clubId.guidString).child('authentication').child('clubManager').child(hashedUserId).exists()).to.be.equal(false);
-        expect(await firebaseApp.database.child('users').child(hashedUserId).get()).to.be.deep.equal({
+        expect(await firebaseApp.database.child('users').child(hashedUserId).get('decrypt')).to.be.deep.equal({
             clubId: clubId.guidString,
             personId: personId.guidString
         });
+        expect(await getInvitationLinkId(clubId, personId)).to.be.equal(null);
     });
 
     it('person not in club', async () => {

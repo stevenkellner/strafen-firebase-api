@@ -10,6 +10,7 @@ export type Person = {
         hashedUserId: string;
         signInDate: Date;
     };
+    isInvited: boolean;
 };
 
 export namespace Person {
@@ -49,10 +50,14 @@ export namespace Person {
             };
         }
 
+        if (!('isInvited' in value) || (typeof value.isInvited !== 'boolean'))
+            throw HttpsError('internal', 'Couldn\'t get isInvited for person.', logger);
+
         return {
             name: PersonName.fromObject(value.name, logger.nextIndent),
             fineIds: fineIds,
-            signInData: signInData
+            signInData: signInData,
+            isInvited: value.isInvited
         };
     }
 
@@ -64,6 +69,7 @@ export namespace Person {
             hashedUserId: string;
             signInDate: string;
         } | null;
+        isInvited: boolean;
     };
 
     export function flatten(person: Person): Person.Flatten;
@@ -78,7 +84,8 @@ export namespace Person {
                 : {
                     hashedUserId: person.signInData.hashedUserId,
                     signInDate: person.signInData.signInDate.toISOString()
-                }
+                },
+            isInvited: person.isInvited
         };
     }
 
@@ -94,11 +101,12 @@ export namespace Person {
                 : {
                     hashedUserId: person.signInData.hashedUserId,
                     signInDate: new Date(person.signInData.signInDate)
-                }
+                },
+            isInvited: person.isInvited
         };
     }
 
-    export type PersonalProperties = Omit<Person, 'fineIds' | 'signInData'>;
+    export type PersonalProperties = Omit<Person, 'fineIds' | 'signInData' | 'isInvited'>;
 
     export namespace PersonalProperties {
         export function fromObject(value: object | null, logger: ILogger): Omit<Person.PersonalProperties, 'id'> {
@@ -115,7 +123,7 @@ export namespace Person {
             };
         }
 
-        export type Flatten = Omit<Person.Flatten, 'fineIds' | 'signInData'>;
+        export type Flatten = Omit<Person.Flatten, 'fineIds' | 'signInData' | 'isInvited'>;
 
         export function flatten(person: Person.PersonalProperties): Person.PersonalProperties.Flatten;
         export function flatten(person: Omit<Person.PersonalProperties, 'id'>): Omit<Person.PersonalProperties.Flatten, 'id'>;

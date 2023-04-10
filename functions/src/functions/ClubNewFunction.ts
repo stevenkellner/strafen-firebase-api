@@ -29,10 +29,11 @@ export class ClubNewFunction implements FirebaseFunction<ClubNewFunctionType> {
     public async executeFunction(): Promise<FunctionType.ReturnType<ClubNewFunctionType>> {
         this.logger.log('ClubNewFunction.executeFunction', {}, 'info');
         const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, [], this.parameters.databaseType, this.logger.nextIndent);
-        await this.checkClubExists();
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString);
+        const snapshot = await reference.snapshot();
+        if (snapshot.exists)
+            throw HttpsError('already-exists', 'Club with specified id already exists.', this.logger);
         await reference.child('name').set(this.parameters.clubProperties.name);
-        await reference.child('identifier').set(this.parameters.clubProperties.identifier);
         await reference.child('regionCode').set(this.parameters.clubProperties.regionCode);
         await reference.child('inAppPaymentActive').set(this.parameters.clubProperties.inAppPaymentActive);
         for (const authenticationType of ['clubManager', 'clubMember'] as const)
@@ -43,7 +44,8 @@ export class ClubNewFunction implements FirebaseFunction<ClubNewFunctionType> {
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: new Date().toISOString()
-            }
+            },
+            isInvited: false
         }, 'encrypt');
         const userReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('users').child(hashedUserId);
         const userSnapshot = await userReference.snapshot();
@@ -52,20 +54,7 @@ export class ClubNewFunction implements FirebaseFunction<ClubNewFunctionType> {
         await userReference.set({
             clubId: this.parameters.clubId.guidString,
             personId: this.parameters.personId.guidString
-        });
-        const clubIdentifierReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubIdentifiers').child(this.parameters.clubProperties.identifier);
-        await clubIdentifierReference.set(this.parameters.clubId.guidString);
-    }
-
-    private async checkClubExists() {
-        const clubIdentifierReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubIdentifiers').child(this.parameters.clubProperties.identifier);
-        const clubIdentifierSnapshot = await clubIdentifierReference.snapshot();
-        if (clubIdentifierSnapshot.exists)
-            throw HttpsError('already-exists', 'Club identifier already exists.', this.logger);
-        const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString);
-        const snapshot = await reference.snapshot();
-        if (snapshot.exists)
-            throw HttpsError('already-exists', 'Club with specified id already exists.', this.logger);
+        }, 'encrypt');
     }
 }
 

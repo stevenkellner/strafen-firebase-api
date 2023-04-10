@@ -20,7 +20,6 @@ export namespace TestClubType {
 
 export type TestClub = {
     name: string;
-    identifier: string;
     regionCode: string;
     inAppPaymentActive: boolean;
     authentication: {

@@ -27,7 +27,7 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
         const userSnapshot = await userReference.snapshot();
         if (!userSnapshot.exists)
             throw HttpsError('not-found', 'Person doesn\'t exist.', this.logger);
-        const { clubId, personId } = userSnapshot.value();
+        const { clubId, personId } = userSnapshot.value('decrypt');
         await checkUserAuthentication(this.auth, new Guid(clubId), 'clubMember', this.parameters.databaseType, this.logger.nextIndent);
         const clubReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(clubId);
         const clubManagerSnapshot = await clubReference.child('authentication').child('clubManager').child(hashedUserId).snapshot();
@@ -43,11 +43,11 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
                 hashedUserId: person.signInData.hashedUserId,
                 signInDate: person.signInData.signInDate
             },
+            isInvited: person.isInvited,
             isAdmin: clubManagerSnapshot.exists && clubManagerSnapshot.value() === 'authenticated',
             club: {
                 id: clubId,
                 name: (await clubReference.child('name').snapshot()).value(),
-                identifier: (await clubReference.child('identifier').snapshot()).value(),
                 regionCode: (await clubReference.child('regionCode').snapshot()).value(),
                 inAppPaymentActive: (await clubReference.child('inAppPaymentActive').snapshot()).value()
             }

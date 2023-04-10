@@ -3,6 +3,7 @@ import { Amount } from '../src/types/Amount';
 import { Fine } from '../src/types/Fine';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
+import { getInvitationLinkId } from './utils';
 
 describe('personEdit', () => {
     const clubId = Guid.newGuid();
@@ -56,6 +57,7 @@ describe('personEdit', () => {
         result.success;
         expect(await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).exists()).to.be.equal(false);
         expect(await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).exists()).to.be.equal(false);
+        expect(await getInvitationLinkId(clubId, personId)).to.be.equal(null);
     });
 
     it('delete registered existing', async () => {
@@ -101,7 +103,8 @@ describe('personEdit', () => {
         expect(databasePerson).to.be.deep.equal({
             name: { first: 'lk', last: 'uioz' },
             fineIds: [],
-            signInData: null
+            signInData: null,
+            isInvited: false
         });
     });
 
@@ -169,7 +172,8 @@ describe('personEdit', () => {
             signInData: {
                 hashedUserId: 'sha_xyz',
                 signInDate: '2022-01-26T17:23:45.678+01:00'
-            }
+            },
+            isInvited: false
         });
     });
 });

@@ -4,7 +4,6 @@ import { Guid } from './Guid';
 export type ClubProperties = {
     id: Guid;
     name: string;
-    identifier: string;
     regionCode: string;
     inAppPaymentActive: boolean;
 };
@@ -19,9 +18,6 @@ export namespace ClubProperties {
         if (!('name' in value) || typeof value.name !== 'string')
             throw HttpsError('internal', 'Couldn\'t get name for club properties.', logger);
 
-        if (!('identifier' in value) || typeof value.identifier !== 'string')
-            throw HttpsError('internal', 'Couldn\'t get identifier for club properties.', logger);
-
         if (!('regionCode' in value) || typeof value.regionCode !== 'string')
             throw HttpsError('internal', 'Couldn\'t get region code for club properties.', logger);
 
@@ -30,7 +26,6 @@ export namespace ClubProperties {
 
         return {
             name: value.name,
-            identifier: value.identifier,
             regionCode: value.regionCode,
             inAppPaymentActive: value.inAppPaymentActive
         };
@@ -39,7 +34,6 @@ export namespace ClubProperties {
     export type Flatten = {
         id: string;
         name: string;
-        identifier: string;
         regionCode: string;
         inAppPaymentActive: boolean;
     };
@@ -50,7 +44,6 @@ export namespace ClubProperties {
         return {
             ...('id' in clubProperties ? { id: clubProperties.id.guidString } : {}),
             name: clubProperties.name,
-            identifier: clubProperties.identifier,
             regionCode: clubProperties.regionCode,
             inAppPaymentActive: clubProperties.inAppPaymentActive
         };
@@ -62,7 +55,6 @@ export namespace ClubProperties {
         return {
             ...('id' in clubProperties ? { id: new Guid(clubProperties.id) } : {}),
             name: clubProperties.name,
-            identifier: clubProperties.identifier,
             regionCode: clubProperties.regionCode,
             inAppPaymentActive: clubProperties.inAppPaymentActive
         };

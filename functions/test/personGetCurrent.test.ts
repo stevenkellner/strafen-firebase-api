@@ -23,7 +23,7 @@ describe('personGetCurrent', () => {
         await firebaseApp.database.child('users').child(hashedUserId).set({
             clubId: clubId.guidString,
             personId: personId.guidString
-        });
+        }, 'encrypt');
         const signInDate = new Date();
         await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).set({
             name: { first: 'lk', last: 'oiqjr' },
@@ -31,7 +31,8 @@ describe('personGetCurrent', () => {
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: signInDate.toISOString()
-            }
+            },
+            isInvited: false
         }, 'encrypt');
         const result = await firebaseApp.functions.function('person').function('getCurrent').call({});
         result.success.equal({
@@ -42,11 +43,11 @@ describe('personGetCurrent', () => {
                 hashedUserId: hashedUserId,
                 signInDate: signInDate.toISOString()
             },
+            isInvited: false,
             isAdmin: false,
             club: {
                 id: clubId.guidString,
                 name: 'Neuer Verein',
-                identifier: 'demo-team',
                 regionCode: 'DE',
                 inAppPaymentActive: true
             }
@@ -60,7 +61,7 @@ describe('personGetCurrent', () => {
         await firebaseApp.database.child('users').child(hashedUserId).set({
             clubId: clubId.guidString,
             personId: personId.guidString
-        });
+        }, 'encrypt');
         const signInDate = new Date();
         await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).set({
             name: { first: 'lk', last: 'oiqjr' },
@@ -68,7 +69,8 @@ describe('personGetCurrent', () => {
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: signInDate.toISOString()
-            }
+            },
+            isInvited: false
         }, 'encrypt');
         const result = await firebaseApp.functions.function('person').function('getCurrent').call({});
         result.success.equal({
@@ -79,11 +81,11 @@ describe('personGetCurrent', () => {
                 hashedUserId: hashedUserId,
                 signInDate: signInDate.toISOString()
             },
+            isInvited: false,
             isAdmin: true,
             club: {
                 id: clubId.guidString,
                 name: 'Neuer Verein',
-                identifier: 'demo-team',
                 regionCode: 'DE',
                 inAppPaymentActive: true
             }

@@ -6,6 +6,7 @@ import { getPrivateKeys } from '../privateKeys';
 import { type ClubProperties } from '../types/ClubProperties';
 import { Guid } from '../types/Guid';
 import { type Person } from '../types/Person';
+import { InvitationLink } from '../types/InvitationLink';
 
 export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFunctionType> {
     public readonly parameters: FunctionType.Parameters<PersonRegisterFunctionType> & { databaseType: DatabaseType };
@@ -35,7 +36,8 @@ export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFu
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: new Date().toISOString()
-            }
+            },
+            isInvited: false
         }, 'encrypt');
         const userReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('users').child(hashedUserId);
         const userSnapshot = await userReference.snapshot();
@@ -44,12 +46,17 @@ export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFu
         await userReference.set({
             clubId: this.parameters.clubId.guidString,
             personId: this.parameters.personId.guidString
-        });
+        }, 'encrypt');
+        const invitationLink = new InvitationLink(this.parameters.clubId, this.parameters.personId, this.parameters.databaseType);
+        const invitationLinkId = await invitationLink.getId();
+        if (invitationLinkId !== null) {
+            const invitationLinkReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('invitationLinks').child(invitationLinkId);
+            await invitationLinkReference.remove();
+        }
         const snapshot = await reference.snapshot();
         return {
             id: this.parameters.clubId.guidString,
             name: snapshot.child('name').value(),
-            identifier: snapshot.child('identifier').value(),
             regionCode: snapshot.child('regionCode').value(),
             inAppPaymentActive: snapshot.child('inAppPaymentActive').value()
         };

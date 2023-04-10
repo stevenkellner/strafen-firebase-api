@@ -5,6 +5,7 @@ import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { TestClubType } from '../types/TestClubType';
 import { type UserAuthenticationType } from '../types/UserAuthentication';
+import { InvitationLink } from '../types/InvitationLink';
 
 export class ClubNewTestFunction implements FirebaseFunction<ClubNewTestFunctionType> {
     public readonly parameters: FunctionType.Parameters<ClubNewTestFunctionType> & { databaseType: DatabaseType };
@@ -30,7 +31,6 @@ export class ClubNewTestFunction implements FirebaseFunction<ClubNewTestFunction
         const testClub = TestClubType.testClub(this.parameters.testClubType);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString);
         await reference.child('name').set(testClub.name);
-        await reference.child('identifier').set(testClub.identifier);
         await reference.child('regionCode').set(testClub.regionCode);
         await reference.child('inAppPaymentActive').set(testClub.inAppPaymentActive);
         for (const authentication of Object.entries(testClub.authentication) as Array<[UserAuthenticationType, { [Key in string]: string }]>)
@@ -47,15 +47,22 @@ export class ClubNewTestFunction implements FirebaseFunction<ClubNewTestFunction
                 await userReference.set({
                     clubId: this.parameters.clubId.guidString,
                     personId: person[0]
-                });
+                }, 'encrypt');
+            }
+            if (person[1].isInvited) {
+                const invitationLink = new InvitationLink(this.parameters.clubId, new Guid(person[0]), this.parameters.databaseType);
+                const invitationLinkId = await invitationLink.createId();
+                const invitationLinkReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('invitationLinks').child(invitationLinkId);
+                await invitationLinkReference.set({
+                    clubId: this.parameters.clubId.guidString,
+                    personId: person[0]
+                }, 'encrypt');
             }
         }
         for (const reasonTemplate of Object.entries(testClub.reasonTemplates))
             await reference.child('reasonTemplates').child(reasonTemplate[0]).set(reasonTemplate[1], 'encrypt');
         for (const fine of Object.entries(testClub.fines))
             await reference.child('fines').child(fine[0]).set(fine[1], 'encrypt');
-        const clubIdentifierReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubIdentifiers').child(testClub.identifier);
-        await clubIdentifierReference.set(this.parameters.clubId.guidString);
     }
 }
 

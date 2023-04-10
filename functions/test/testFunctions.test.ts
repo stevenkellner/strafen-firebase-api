@@ -12,7 +12,7 @@ describe('testFunctions', () => {
     });
 
     it('delete all data | with data', async () => {
-        await firebaseApp.database.child('clubIdentifiers').child('asdf').set('nnkö');
+        await firebaseApp.database.child('clubs').child('asdf').child('name').set('ölkj');
         expect(await firebaseApp.database.exists()).to.be.equal(true);
         const result = await firebaseApp.functions.function('deleteAllData').call({});
         result.success;

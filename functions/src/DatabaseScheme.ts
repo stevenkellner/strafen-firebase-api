@@ -6,18 +6,20 @@ import { type UserAuthenticationType } from './types/UserAuthentication';
 
 export type DatabaseScheme = DatabaseSchemeType<{
     users: {
-        [HashedUserId in string]: {
+        [HashedUserId in string]: CryptedScheme<{
             clubId: string;
             personId: string;
-        }
+        }>
     };
-    clubIdentifiers: {
-        [Identifier in string]: string;
+    invitationLinks: {
+        [Id in string]: CryptedScheme<{
+            clubId: string;
+            personId: string;
+        }>
     };
     clubs: {
         [ClubId in string]: {
             name: string;
-            identifier: string;
             regionCode: string;
             inAppPaymentActive: boolean;
             authentication: {

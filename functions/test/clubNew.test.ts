@@ -22,7 +22,6 @@ describe('clubNew', () => {
             clubId: clubId.guidString,
             clubProperties: {
                 name: 'Test Club',
-                identifier: 'test-club',
                 regionCode: 'DE',
                 inAppPaymentActive: false
             },
@@ -38,20 +37,16 @@ describe('clubNew', () => {
         const databaseValue = await firebaseApp.database.get();
         expect(Object.values(databaseValue.clubs[clubId.guidString].persons).length).to.be.equal(1);
         databaseValue.clubs[clubId.guidString].persons = {};
+        expect(Object.values(databaseValue.users).length).to.be.equal(1);
+        databaseValue.users = {};
+        expect('invitationLinks' in databaseValue).to.be.equal(false);
+        databaseValue.invitationLinks = {};
         expect(databaseValue).to.be.deep.equal({
-            clubIdentifiers: {
-                'test-club': clubId.guidString
-            },
-            users: {
-                [hashedUserId]: {
-                    clubId: clubId.guidString,
-                    personId: personId.guidString
-                }
-            },
+            users: {},
+            invitationLinks: {},
             clubs: {
                 [clubId.guidString]: {
                     name: 'Test Club',
-                    identifier: 'test-club',
                     regionCode: 'DE',
                     inAppPaymentActive: false,
                     authentication: {
@@ -71,7 +66,13 @@ describe('clubNew', () => {
         expect(databasePerson).to.be.deep.equal({
             name: { first: 'asdf', last: null },
             fineIds: [],
-            signInData: { hashedUserId: hashedUserId, signInDate: databasePerson.signInData.signInDate }
+            signInData: { hashedUserId: hashedUserId, signInDate: databasePerson.signInData.signInDate },
+            isInvited: false
+        });
+        const databaseUser = await firebaseApp.database.child('users').child(hashedUserId).get('decrypt');
+        expect(databaseUser).to.be.deep.equal({
+            clubId: clubId.guidString,
+            personId: personId.guidString
         });
     });
 
@@ -80,7 +81,6 @@ describe('clubNew', () => {
             clubId: clubId.guidString,
             clubProperties: {
                 name: 'Test Club',
-                identifier: 'test-club-1',
                 regionCode: 'DE',
                 inAppPaymentActive: false
             },
@@ -95,7 +95,6 @@ describe('clubNew', () => {
             clubId: clubId.guidString,
             clubProperties: {
                 name: 'Test Club',
-                identifier: 'test-club-2',
                 regionCode: 'DE',
                 inAppPaymentActive: false
             },
@@ -108,42 +107,6 @@ describe('clubNew', () => {
         result2.failure.equal({
             code: 'already-exists',
             message: 'Club with specified id already exists.'
-        });
-    });
-
-    it('existings identifier', async () => {
-        const result1 = await firebaseApp.functions.function('club').function('new').call({
-            clubId: Guid.newGuid().guidString,
-            clubProperties: {
-                name: 'Test Club',
-                identifier: 'test-club',
-                regionCode: 'DE',
-                inAppPaymentActive: false
-            },
-            personId: Guid.newGuid().guidString,
-            personName: {
-                first: 'asdf',
-                last: null
-            }
-        });
-        result1.success;
-        const result2 = await firebaseApp.functions.function('club').function('new').call({
-            clubId: clubId.guidString,
-            clubProperties: {
-                name: 'Test Club',
-                identifier: 'test-club',
-                regionCode: 'DE',
-                inAppPaymentActive: false
-            },
-            personId: Guid.newGuid().guidString,
-            personName: {
-                first: 'asdf',
-                last: null
-            }
-        });
-        result2.failure.equal({
-            code: 'already-exists',
-            message: 'Club identifier already exists.'
         });
     });
 });

@@ -6,6 +6,7 @@ import { getPrivateKeys } from '../privateKeys';
 import { EditType } from '../types/EditType';
 import { Guid } from '../types/Guid';
 import { Person } from '../types/Person';
+import { InvitationLink } from '../types/InvitationLink';
 
 export class PersonEditFunction implements FirebaseFunction<PersonEditFunctionType> {
     public readonly parameters: FunctionType.Parameters<PersonEditFunctionType> & { databaseType: DatabaseType };
@@ -44,6 +45,14 @@ export class PersonEditFunction implements FirebaseFunction<PersonEditFunctionTy
                     await reference.remove();
             }));
             await reference.remove();
+            const invitationLink = new InvitationLink(this.parameters.clubId, this.parameters.personId, this.parameters.databaseType);
+            const invitationLinkId = await invitationLink.getId();
+            if (invitationLinkId !== null) {
+                const invitationLinkReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('invitationLinks').child(invitationLinkId);
+                const invitationLinkSnapshot = await invitationLinkReference.snapshot();
+                if (invitationLinkSnapshot.exists)
+                    await invitationLinkReference.remove();
+            }
         } else {
             if (this.parameters.person === undefined)
                 throw HttpsError('invalid-argument', 'No person name in parameters to add / update.', this.logger);
@@ -54,7 +63,8 @@ export class PersonEditFunction implements FirebaseFunction<PersonEditFunctionTy
             await reference.set({
                 ...Person.PersonalProperties.flatten(this.parameters.person),
                 fineIds: person?.fineIds ?? [],
-                signInData: person?.signInData ?? null
+                signInData: person?.signInData ?? null,
+                isInvited: person?.isInvited ?? false
             }, 'encrypt');
         }
     }
