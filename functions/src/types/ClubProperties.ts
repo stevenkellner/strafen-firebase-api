@@ -4,8 +4,6 @@ import { Guid } from './Guid';
 export type ClubProperties = {
     id: Guid;
     name: string;
-    regionCode: string;
-    inAppPaymentActive: boolean;
 };
 
 export namespace ClubProperties {
@@ -18,24 +16,14 @@ export namespace ClubProperties {
         if (!('name' in value) || typeof value.name !== 'string')
             throw HttpsError('internal', 'Couldn\'t get name for club properties.', logger);
 
-        if (!('regionCode' in value) || typeof value.regionCode !== 'string')
-            throw HttpsError('internal', 'Couldn\'t get region code for club properties.', logger);
-
-        if (!('inAppPaymentActive' in value) || typeof value.inAppPaymentActive !== 'boolean')
-            throw HttpsError('internal', 'Couldn\'t get inAppPaymentActive for club properties.', logger);
-
         return {
-            name: value.name,
-            regionCode: value.regionCode,
-            inAppPaymentActive: value.inAppPaymentActive
+            name: value.name
         };
     }
 
     export type Flatten = {
         id: string;
         name: string;
-        regionCode: string;
-        inAppPaymentActive: boolean;
     };
 
     export function flatten(clubProperties: ClubProperties): ClubProperties.Flatten;
@@ -43,9 +31,7 @@ export namespace ClubProperties {
     export function flatten(clubProperties: ClubProperties | Omit<ClubProperties, 'id'>): ClubProperties.Flatten | Omit<ClubProperties.Flatten, 'id'> {
         return {
             ...('id' in clubProperties ? { id: clubProperties.id.guidString } : {}),
-            name: clubProperties.name,
-            regionCode: clubProperties.regionCode,
-            inAppPaymentActive: clubProperties.inAppPaymentActive
+            name: clubProperties.name
         };
     }
 
@@ -54,9 +40,7 @@ export namespace ClubProperties {
     export function concrete(clubProperties: ClubProperties.Flatten | Omit<ClubProperties.Flatten, 'id'>): ClubProperties | Omit<ClubProperties, 'id'> {
         return {
             ...('id' in clubProperties ? { id: new Guid(clubProperties.id) } : {}),
-            name: clubProperties.name,
-            regionCode: clubProperties.regionCode,
-            inAppPaymentActive: clubProperties.inAppPaymentActive
+            name: clubProperties.name
         };
     }
 }

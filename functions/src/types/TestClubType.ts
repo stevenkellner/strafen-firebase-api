@@ -20,8 +20,6 @@ export namespace TestClubType {
 
 export type TestClub = {
     name: string;
-    regionCode: string;
-    inAppPaymentActive: boolean;
     authentication: {
         [AuthenticationType in UserAuthenticationType]: {
             [HashedUserId in string]: 'authenticated';

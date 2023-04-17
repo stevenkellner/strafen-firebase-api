@@ -56,9 +56,7 @@ export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFu
         const snapshot = await reference.snapshot();
         return {
             id: this.parameters.clubId.guidString,
-            name: snapshot.child('name').value(),
-            regionCode: snapshot.child('regionCode').value(),
-            inAppPaymentActive: snapshot.child('inAppPaymentActive').value()
+            name: snapshot.child('name').value()
         };
     }
 

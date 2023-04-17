@@ -2,7 +2,6 @@ import { HttpsError, type ILogger } from 'firebase-function';
 
 export type PayedState = {
     state: 'payed';
-    inApp: boolean;
     payDate: Date;
 } | {
     state: 'unpayed';
@@ -21,15 +20,11 @@ export namespace PayedState {
             throw HttpsError('internal', 'Couldn\'t get state for fine reason.', logger);
 
         if (value.state === 'payed') {
-            if (!('inApp' in value) || typeof value.inApp !== 'boolean')
-                throw HttpsError('internal', 'Couldn\'t get inApp for fine reason.', logger);
-
             if (!('payDate' in value) || typeof value.payDate !== 'string')
                 throw HttpsError('internal', 'Couldn\'t get pay date for fine reason.', logger);
 
             return {
                 state: 'payed',
-                inApp: value.inApp,
                 payDate: new Date(value.payDate)
             };
         } else if (value.state === 'unpayed') {
@@ -46,7 +41,6 @@ export namespace PayedState {
 
     export type Flatten = {
         state: 'payed';
-        inApp: boolean;
         payDate: string;
     } | {
         state: 'unpayed';
@@ -59,7 +53,6 @@ export namespace PayedState {
             case 'payed':
                 return {
                     state: 'payed',
-                    inApp: payedState.inApp,
                     payDate: payedState.payDate.toISOString()
                 };
             case 'unpayed':
@@ -78,7 +71,6 @@ export namespace PayedState {
             case 'payed':
                 return {
                     state: 'payed',
-                    inApp: payedState.inApp,
                     payDate: new Date(payedState.payDate)
                 };
             case 'unpayed':

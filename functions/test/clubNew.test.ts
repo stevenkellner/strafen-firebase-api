@@ -21,9 +21,7 @@ describe('clubNew', () => {
         const result = await firebaseApp.functions.function('club').function('new').call({
             clubId: clubId.guidString,
             clubProperties: {
-                name: 'Test Club',
-                regionCode: 'DE',
-                inAppPaymentActive: false
+                name: 'Test Club'
             },
             personId: personId.guidString,
             personName: {
@@ -47,8 +45,6 @@ describe('clubNew', () => {
             clubs: {
                 [clubId.guidString]: {
                     name: 'Test Club',
-                    regionCode: 'DE',
-                    inAppPaymentActive: false,
                     authentication: {
                         clubMember: {
                             [hashedUserId]: 'authenticated'
@@ -80,9 +76,7 @@ describe('clubNew', () => {
         const result1 = await firebaseApp.functions.function('club').function('new').call({
             clubId: clubId.guidString,
             clubProperties: {
-                name: 'Test Club',
-                regionCode: 'DE',
-                inAppPaymentActive: false
+                name: 'Test Club'
             },
             personId: Guid.newGuid().guidString,
             personName: {
@@ -94,9 +88,7 @@ describe('clubNew', () => {
         const result2 = await firebaseApp.functions.function('club').function('new').call({
             clubId: clubId.guidString,
             clubProperties: {
-                name: 'Test Club',
-                regionCode: 'DE',
-                inAppPaymentActive: false
+                name: 'Test Club'
             },
             personId: Guid.newGuid().guidString,
             personName: {

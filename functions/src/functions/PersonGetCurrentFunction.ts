@@ -47,9 +47,7 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
             isAdmin: clubManagerSnapshot.exists && clubManagerSnapshot.value() === 'authenticated',
             club: {
                 id: clubId,
-                name: (await clubReference.child('name').snapshot()).value(),
-                regionCode: (await clubReference.child('regionCode').snapshot()).value(),
-                inAppPaymentActive: (await clubReference.child('inAppPaymentActive').snapshot()).value()
+                name: (await clubReference.child('name').snapshot()).value()
             }
         };
     }

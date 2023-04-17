@@ -34,8 +34,6 @@ export class ClubNewFunction implements FirebaseFunction<ClubNewFunctionType> {
         if (snapshot.exists)
             throw HttpsError('already-exists', 'Club with specified id already exists.', this.logger);
         await reference.child('name').set(this.parameters.clubProperties.name);
-        await reference.child('regionCode').set(this.parameters.clubProperties.regionCode);
-        await reference.child('inAppPaymentActive').set(this.parameters.clubProperties.inAppPaymentActive);
         for (const authenticationType of ['clubManager', 'clubMember'] as const)
             await reference.child('authentication').child(authenticationType).child(hashedUserId).set('authenticated');
         await reference.child('persons').child(this.parameters.personId.guidString).set({

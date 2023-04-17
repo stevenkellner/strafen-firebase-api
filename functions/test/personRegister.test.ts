@@ -28,9 +28,7 @@ describe('personRegister', () => {
         });
         result.success.equal({
             id: clubId.guidString,
-            name: 'Neuer Verein',
-            regionCode: 'DE',
-            inAppPaymentActive: true
+            name: 'Neuer Verein'
         });
         const databasePerson = await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).get('decrypt');
         assert(databasePerson.signInData !== null);

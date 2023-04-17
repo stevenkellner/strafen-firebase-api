@@ -27,12 +27,9 @@ describe('invitationLinkGetPerson', () => {
             id: personId.guidString,
             name: { first: 'Jane', last: 'Doe' },
             fineIds: [],
-            signInData: null,
             club: {
                 id: clubId.guidString,
-                name: 'Neuer Verein',
-                regionCode: 'DE',
-                inAppPaymentActive: true
+                name: 'Neuer Verein'
             }
         });
     });

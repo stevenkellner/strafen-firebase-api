@@ -47,9 +47,7 @@ describe('personGetCurrent', () => {
             isAdmin: false,
             club: {
                 id: clubId.guidString,
-                name: 'Neuer Verein',
-                regionCode: 'DE',
-                inAppPaymentActive: true
+                name: 'Neuer Verein'
             }
         });
     });
@@ -85,9 +83,7 @@ describe('personGetCurrent', () => {
             isAdmin: true,
             club: {
                 id: clubId.guidString,
-                name: 'Neuer Verein',
-                regionCode: 'DE',
-                inAppPaymentActive: true
+                name: 'Neuer Verein'
             }
         });
     });

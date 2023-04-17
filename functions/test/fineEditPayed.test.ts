@@ -65,14 +65,12 @@ describe('fineEditPayed', () => {
             fineId: fineId.guidString,
             payedState: {
                 state: 'payed',
-                inApp: false,
                 payDate: '2023-02-22T17:23:45.678Z'
             }
         });
         result.success;
         expect((await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt')).payedState).to.be.deep.equal({
             state: 'payed',
-            inApp: false,
             payDate: '2023-02-22T17:23:45.678Z'
         });
     });

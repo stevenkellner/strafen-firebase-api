@@ -31,8 +31,6 @@ export class ClubNewTestFunction implements FirebaseFunction<ClubNewTestFunction
         const testClub = TestClubType.testClub(this.parameters.testClubType);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString);
         await reference.child('name').set(testClub.name);
-        await reference.child('regionCode').set(testClub.regionCode);
-        await reference.child('inAppPaymentActive').set(testClub.inAppPaymentActive);
         for (const authentication of Object.entries(testClub.authentication) as Array<[UserAuthenticationType, { [Key in string]: string }]>)
             for (const user of Object.values(authentication[1]))
                 await reference.child('authentication').child(authentication[0]).child(user).set('authenticated');

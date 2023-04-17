@@ -20,8 +20,6 @@ export type DatabaseScheme = DatabaseSchemeType<{
     clubs: {
         [ClubId in string]: {
             name: string;
-            regionCode: string;
-            inAppPaymentActive: boolean;
             authentication: {
                 [AuthenticationType in UserAuthenticationType]: {
                     [HashedUserId in string]: 'authenticated';
