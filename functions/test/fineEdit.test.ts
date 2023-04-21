@@ -66,8 +66,7 @@ describe('fineEdit', () => {
                 },
                 fineReason: {
                     reasonMessage: 'test-message-1',
-                    amount: 9.50,
-                    importance: 'high'
+                    amount: 9.50
                 }
             }
         });
@@ -82,8 +81,7 @@ describe('fineEdit', () => {
             },
             fineReason: {
                 reasonMessage: 'test-message-1',
-                amount: 9.50,
-                importance: 'high'
+                amount: 9.50
             }
         });
     });
@@ -103,8 +101,7 @@ describe('fineEdit', () => {
                 },
                 fineReason: {
                     reasonMessage: 'test-message-1',
-                    amount: 9.50,
-                    importance: 'high'
+                    amount: 9.50
                 }
             }
         });
@@ -143,8 +140,7 @@ describe('fineEdit', () => {
                 },
                 fineReason: {
                     reasonMessage: 'test-message-1',
-                    amount: 9.50,
-                    importance: 'high'
+                    amount: 9.50
                 }
             }
         });
@@ -169,8 +165,7 @@ describe('fineEdit', () => {
                 },
                 fineReason: {
                     reasonMessage: 'test-message-1',
-                    amount: 9.50,
-                    importance: 'high'
+                    amount: 9.50
                 }
             }
         });
@@ -185,8 +180,7 @@ describe('fineEdit', () => {
             },
             fineReason: {
                 reasonMessage: 'test-message-1',
-                amount: 9.50,
-                importance: 'high'
+                amount: 9.50
             }
         });
     });

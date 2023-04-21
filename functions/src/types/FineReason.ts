@@ -1,11 +1,9 @@
 import { HttpsError, type ILogger } from 'firebase-function';
 import { Amount } from './Amount';
-import { Importance } from './Importance';
 
 export type FineReason = {
     reasonMessage: string;
     amount: Amount;
-    importance: Importance;
 };
 
 export namespace FineReason {
@@ -20,36 +18,28 @@ export namespace FineReason {
 
         if (!('amount' in value) || typeof value.amount !== 'number')
             throw HttpsError('internal', 'Couldn\'t get amount for fine reason.', logger);
-
-        if (!('importance' in value) || typeof value.importance !== 'string' || !Importance.typeGuard(value.importance))
-            throw HttpsError('internal', 'Couldn\'t get importance for fine reason.', logger);
-
         return {
             reasonMessage: value.reasonMessage,
-            amount: Amount.fromNumber(value.amount, logger.nextIndent),
-            importance: value.importance
+            amount: Amount.fromNumber(value.amount, logger.nextIndent)
         };
     }
 
     export type Flatten = {
         reasonMessage: string;
         amount: number;
-        importance: Importance;
     };
 
     export function flatten(fineReason: FineReason): FineReason.Flatten {
         return {
             reasonMessage: fineReason.reasonMessage,
-            amount: Amount.flatten(fineReason.amount),
-            importance: fineReason.importance
+            amount: Amount.flatten(fineReason.amount)
         };
     }
 
     export function concrete(fineReason: FineReason.Flatten): FineReason {
         return {
             reasonMessage: fineReason.reasonMessage,
-            amount: Amount.concrete(fineReason.amount),
-            importance: fineReason.importance
+            amount: Amount.concrete(fineReason.amount)
         };
     }
 }

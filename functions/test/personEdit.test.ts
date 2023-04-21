@@ -37,8 +37,7 @@ describe('personEdit', () => {
             date: new Date(),
             fineReason: {
                 reasonMessage: 'asdf',
-                amount: new Amount(1, 50),
-                importance: 'medium'
+                amount: new Amount(1, 50)
             },
             payedState: {
                 state: 'unpayed'

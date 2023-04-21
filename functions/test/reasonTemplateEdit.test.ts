@@ -59,16 +59,14 @@ describe('reasonTemplateEdit', () => {
             reasonTemplateId: reasonTemplateId.guidString,
             reasonTemplate: {
                 reasonMessage: 'test-message-1',
-                amount: 9.50,
-                importance: 'low'
+                amount: 9.50
             }
         });
         result.success;
         const databasereasonTemplate = await firebaseApp.database.child('clubs').child(clubId.guidString).child('reasonTemplates').child(reasonTemplateId.guidString).get('decrypt');
         expect(databasereasonTemplate).to.be.deep.equal({
             reasonMessage: 'test-message-1',
-            amount: 9.50,
-            importance: 'low'
+            amount: 9.50
         });
     });
 
@@ -80,8 +78,7 @@ describe('reasonTemplateEdit', () => {
             reasonTemplateId: reasonTemplateId.guidString,
             reasonTemplate: {
                 reasonMessage: 'test-message-1',
-                amount: 9.50,
-                importance: 'low'
+                amount: 9.50
             }
         });
         result.failure.equal({
@@ -112,8 +109,7 @@ describe('reasonTemplateEdit', () => {
             reasonTemplateId: reasonTemplateId.guidString,
             reasonTemplate: {
                 reasonMessage: 'test-message-1',
-                amount: 9.50,
-                importance: 'low'
+                amount: 9.50
             }
         });
         result.failure.equal({
@@ -130,16 +126,14 @@ describe('reasonTemplateEdit', () => {
             reasonTemplateId: reasonTemplateId.guidString,
             reasonTemplate: {
                 reasonMessage: 'test-message-1',
-                amount: 9.50,
-                importance: 'high'
+                amount: 9.50
             }
         });
         result.success;
         const databasereasonTemplate = await firebaseApp.database.child('clubs').child(clubId.guidString).child('reasonTemplates').child(reasonTemplateId.guidString).get('decrypt');
         expect(databasereasonTemplate).to.be.deep.equal({
             reasonMessage: 'test-message-1',
-            amount: 9.50,
-            importance: 'high'
+            amount: 9.50
         });
     });
 });

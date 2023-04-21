@@ -1,13 +1,11 @@
 import { HttpsError, type ILogger } from 'firebase-function';
 import { Amount } from './Amount';
 import { Guid } from './Guid';
-import { Importance } from './Importance';
 
 export type ReasonTemplate = {
     id: Guid;
     reasonMessage: string;
     amount: Amount;
-    importance: Importance;
 };
 
 export namespace ReasonTemplate {
@@ -23,13 +21,9 @@ export namespace ReasonTemplate {
         if (!('amount' in value) || typeof value.amount !== 'number')
             throw HttpsError('internal', 'Couldn\'t get amount for reason template.', logger);
 
-        if (!('importance' in value) || typeof value.importance !== 'string' || !Importance.typeGuard(value.importance))
-            throw HttpsError('internal', 'Couldn\'t get importance for reason template.', logger);
-
         return {
             reasonMessage: value.reasonMessage,
-            amount: Amount.fromNumber(value.amount, logger.nextIndent),
-            importance: value.importance
+            amount: Amount.fromNumber(value.amount, logger.nextIndent)
         };
     }
 
@@ -37,7 +31,6 @@ export namespace ReasonTemplate {
         id: string;
         reasonMessage: string;
         amount: number;
-        importance: Importance;
     };
 
     export function flatten(reasonTemplate: ReasonTemplate): ReasonTemplate.Flatten;
@@ -46,8 +39,7 @@ export namespace ReasonTemplate {
         return {
             ...('id' in reasonTemplate ? { id: reasonTemplate.id.guidString } : {}),
             reasonMessage: reasonTemplate.reasonMessage,
-            amount: Amount.flatten(reasonTemplate.amount),
-            importance: reasonTemplate.importance
+            amount: Amount.flatten(reasonTemplate.amount)
         };
     }
 
@@ -57,8 +49,7 @@ export namespace ReasonTemplate {
         return {
             ...('id' in reasonTemplate ? { id: new Guid(reasonTemplate.id) } : {}),
             reasonMessage: reasonTemplate.reasonMessage,
-            amount: Amount.concrete(reasonTemplate.amount),
-            importance: reasonTemplate.importance
+            amount: Amount.concrete(reasonTemplate.amount)
         };
     }
 }
