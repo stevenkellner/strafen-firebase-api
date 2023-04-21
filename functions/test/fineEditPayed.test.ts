@@ -19,27 +19,12 @@ describe('fineEditPayed', () => {
             clubId: clubId.guidString,
             fineId: Guid.newGuid().guidString,
             payedState: {
-                state: 'settled'
+                state: 'unpayed'
             }
         });
         result.failure.equal({
             code: 'not-found',
             message: 'Couldn\'t found fine to edit payed state.'
-        });
-    });
-
-    it('to settled', async () => {
-        const fineId = new Guid('1B5F958E-9D7D-46E1-8AEE-F52F4370A95A');
-        const result = await firebaseApp.functions.function('fine').function('editPayed').call({
-            clubId: clubId.guidString,
-            fineId: fineId.guidString,
-            payedState: {
-                state: 'settled'
-            }
-        });
-        result.success;
-        expect((await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt')).payedState).to.be.deep.equal({
-            state: 'settled'
         });
     });
 

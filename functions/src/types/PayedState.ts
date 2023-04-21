@@ -5,8 +5,6 @@ export type PayedState = {
     payDate: Date;
 } | {
     state: 'unpayed';
-} | {
-    state: 'settled';
 };
 
 export namespace PayedState {
@@ -31,10 +29,6 @@ export namespace PayedState {
             return {
                 state: 'unpayed'
             };
-        } else if (value.state === 'settled') {
-            return {
-                state: 'settled'
-            };
         }
         throw HttpsError('internal', 'Invalid state for fine reason.', logger);
     }
@@ -44,8 +38,6 @@ export namespace PayedState {
         payDate: string;
     } | {
         state: 'unpayed';
-    } | {
-        state: 'settled';
     };
 
     export function flatten(payedState: PayedState): PayedState.Flatten {
@@ -58,10 +50,6 @@ export namespace PayedState {
             case 'unpayed':
                 return {
                     state: 'unpayed'
-                };
-            case 'settled':
-                return {
-                    state: 'settled'
                 };
         }
     }
@@ -76,10 +64,6 @@ export namespace PayedState {
             case 'unpayed':
                 return {
                     state: 'unpayed'
-                };
-            case 'settled':
-                return {
-                    state: 'settled'
                 };
         }
     }
