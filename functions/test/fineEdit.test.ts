@@ -62,12 +62,9 @@ describe('fineEdit', () => {
             fine: {
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
                 date: '2023-02-20T17:23:45.678+01:00',
-                number: 3,
                 payedState: 'unpayed',
-                fineReason: {
-                    reasonMessage: 'test-message-1',
-                    amount: 9.50
-                }
+                reasonMessage: 'test-message-1',
+                amount: 9.50
             }
         });
         result.success;
@@ -75,12 +72,9 @@ describe('fineEdit', () => {
         expect(databaseFine).to.be.deep.equal({
             personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             date: '2023-02-20T16:23:45.678Z',
-            number: 3,
             payedState: 'unpayed',
-            fineReason: {
-                reasonMessage: 'test-message-1',
-                amount: 9.50
-            }
+            reasonMessage: 'test-message-1',
+            amount: 9.50
         });
         const databasePerson = await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7').get('decrypt');
         expect(databasePerson.fineIds.includes(fineId.guidString)).to.be.equal(true);
@@ -95,12 +89,9 @@ describe('fineEdit', () => {
             fine: {
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
                 date: '2023-02-20T17:23:45.678+01:00',
-                number: 3,
                 payedState: 'unpayed',
-                fineReason: {
-                    reasonMessage: 'test-message-1',
-                    amount: 9.50
-                }
+                reasonMessage: 'test-message-1',
+                amount: 9.50
             }
         });
         result.failure.equal({
@@ -132,12 +123,9 @@ describe('fineEdit', () => {
             fine: {
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
                 date: '2023-02-20T17:23:45.678+01:00',
-                number: 3,
                 payedState: 'unpayed',
-                fineReason: {
-                    reasonMessage: 'test-message-1',
-                    amount: 9.50
-                }
+                reasonMessage: 'test-message-1',
+                amount: 9.50
             }
         });
         result.failure.equal({
@@ -155,12 +143,9 @@ describe('fineEdit', () => {
             fine: {
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
                 date: '2023-02-20T17:23:45.678+01:00',
-                number: 3,
                 payedState: 'unpayed',
-                fineReason: {
-                    reasonMessage: 'test-message-1',
-                    amount: 9.50
-                }
+                reasonMessage: 'test-message-1',
+                amount: 9.50
             }
         });
         result.success;
@@ -168,12 +153,9 @@ describe('fineEdit', () => {
         expect(databasefine).to.be.deep.equal({
             personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             date: '2023-02-20T16:23:45.678Z',
-            number: 3,
             payedState: 'unpayed',
-            fineReason: {
-                reasonMessage: 'test-message-1',
-                amount: 9.50
-            }
+            reasonMessage: 'test-message-1',
+            amount: 9.50
         });
     });
 });

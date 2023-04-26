@@ -33,12 +33,9 @@ describe('personEdit', () => {
         const fineId = Guid.newGuid();
         const fine: Omit<Fine, 'id'> = {
             personId: personId,
-            number: 1,
             date: new Date(),
-            fineReason: {
-                reasonMessage: 'asdf',
-                amount: new Amount(1, 50)
-            },
+            reasonMessage: 'asdf',
+            amount: new Amount(1, 50),
             payedState: 'unpayed'
         };
         await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).set(Fine.flatten(fine), 'encrypt');

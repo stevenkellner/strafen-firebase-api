@@ -1,15 +1,15 @@
 import { HttpsError, type ILogger } from 'firebase-function';
-import { FineReason } from './FineReason';
 import { Guid } from './Guid';
 import { PayedState } from './PayedState';
+import { Amount } from './Amount';
 
 export type Fine = {
     id: Guid;
     personId: Guid;
     payedState: PayedState;
-    number: number;
     date: Date;
-    fineReason: FineReason;
+    reasonMessage: string;
+    amount: Amount;
 };
 
 export namespace Fine {
@@ -27,21 +27,21 @@ export namespace Fine {
         if (!PayedState.typeGuard(value.payedState))
             throw HttpsError('internal', 'Couldn\'t get payed state for fine.', logger);
 
-        if (!('number' in value) || typeof value.number !== 'number' || !Number.isInteger(value.number))
-            throw HttpsError('internal', 'Couldn\'t get number for fine.', logger);
-
         if (!('date' in value) || typeof value.date !== 'string')
             throw HttpsError('internal', 'Couldn\'t get date for fine.', logger);
 
-        if (!('fineReason' in value) || typeof value.fineReason !== 'object')
-            throw HttpsError('internal', 'Couldn\'t get fine reason for fine.', logger);
+        if (!('reasonMessage' in value) || typeof value.reasonMessage !== 'string')
+            throw HttpsError('internal', 'Couldn\'t get reason message for fine.', logger);
+
+        if (!('amount' in value) || typeof value.amount !== 'number')
+            throw HttpsError('internal', 'Couldn\'t get amount for fine.', logger);
 
         return {
             personId: new Guid(value.personId),
             payedState: value.payedState,
-            number: value.number,
             date: new Date(value.date),
-            fineReason: FineReason.fromObject(value.fineReason, logger.nextIndent)
+            reasonMessage: value.reasonMessage,
+            amount: Amount.fromNumber(value.amount, logger.nextIndent)
         };
     }
 
@@ -49,9 +49,9 @@ export namespace Fine {
         id: string;
         personId: string;
         payedState: PayedState;
-        number: number;
         date: string;
-        fineReason: FineReason.Flatten;
+        reasonMessage: string;
+        amount: Amount.Flatten;
     };
 
     export function flatten(fine: Fine): Fine.Flatten;
@@ -61,9 +61,9 @@ export namespace Fine {
             ...('id' in fine ? { id: fine.id.guidString } : {}),
             personId: fine.personId.guidString,
             payedState: fine.payedState,
-            number: fine.number,
             date: fine.date.toISOString(),
-            fineReason: FineReason.flatten(fine.fineReason)
+            reasonMessage: fine.reasonMessage,
+            amount: Amount.flatten(fine.amount)
         };
     }
 
@@ -74,9 +74,9 @@ export namespace Fine {
             ...('id' in fine ? { id: new Guid(fine.id) } : {}),
             personId: new Guid(fine.personId),
             payedState: fine.payedState,
-            number: fine.number,
             date: new Date(fine.date),
-            fineReason: FineReason.concrete(fine.fineReason)
+            reasonMessage: fine.reasonMessage,
+            amount: Amount.concrete(fine.amount)
         };
     }
 }
