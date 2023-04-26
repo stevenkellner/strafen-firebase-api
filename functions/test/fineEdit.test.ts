@@ -35,6 +35,8 @@ describe('fineEdit', () => {
         });
         result.success;
         expect(await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).exists()).to.be.equal(false);
+        const databasePerson = await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child('76025DDE-6893-46D2-BC34-9864BB5B8DAD').get('decrypt');
+        expect(databasePerson.fineIds.includes(fineId.guidString)).to.be.equal(false);
     });
 
     it('add not given over', async () => {
@@ -71,8 +73,8 @@ describe('fineEdit', () => {
             }
         });
         result.success;
-        const databasefine = await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt');
-        expect(databasefine).to.be.deep.equal({
+        const databaseFine = await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt');
+        expect(databaseFine).to.be.deep.equal({
             personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             date: '2023-02-20T16:23:45.678Z',
             number: 3,
@@ -84,6 +86,8 @@ describe('fineEdit', () => {
                 amount: 9.50
             }
         });
+        const databasePerson = await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7').get('decrypt');
+        expect(databasePerson.fineIds.includes(fineId.guidString)).to.be.equal(true);
     });
 
     it('add existing', async () => {

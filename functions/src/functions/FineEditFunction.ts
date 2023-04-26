@@ -32,8 +32,17 @@ export class FineEditFunction implements FirebaseFunction<FineEditFunctionType> 
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('fines').child(this.parameters.fineId.guidString);
         const snapshot = await reference.snapshot();
         if (this.parameters.editType === 'delete') {
-            if (snapshot.exists)
+            if (snapshot.exists) {
+                const fine = snapshot.value('decrypt');
                 await reference.remove();
+                const personReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('persons').child(fine.personId);
+                const personSnapshot = await personReference.snapshot();
+                if (personSnapshot.exists) {
+                    const person = personSnapshot.value('decrypt');
+                    person.fineIds = person.fineIds.filter(fineId => fineId !== this.parameters.fineId.guidString);
+                    await personReference.set(person, 'encrypt');
+                }
+            }
         } else {
             if (this.parameters.fine === undefined)
                 throw HttpsError('invalid-argument', 'No fine in parameters to add / update.', this.logger);
@@ -42,6 +51,15 @@ export class FineEditFunction implements FirebaseFunction<FineEditFunctionType> 
             if (this.parameters.editType === 'update' && !snapshot.exists)
                 throw HttpsError('invalid-argument', 'Couldn\'t update not existing fine.', this.logger);
             await reference.set(Fine.flatten(this.parameters.fine), 'encrypt');
+            if (this.parameters.editType === 'add') {
+                const personReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('persons').child(this.parameters.fine.personId.guidString);
+                const personSnapshot = await personReference.snapshot();
+                if (personSnapshot.exists) {
+                    const person = personSnapshot.value('decrypt');
+                    person.fineIds.push(this.parameters.fineId.guidString);
+                    await personReference.set(person, 'encrypt');
+                }
+            }
         }
     }
 }
