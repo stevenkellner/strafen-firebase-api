@@ -22,7 +22,9 @@ export namespace Fine {
         if (!('personId' in value) || typeof value.personId !== 'string')
             throw HttpsError('internal', 'Couldn\'t get person id for fine.', logger);
 
-        if (!('payedState' in value) || typeof value.payedState !== 'object')
+        if (!('payedState' in value) || typeof value.payedState !== 'string')
+            throw HttpsError('internal', 'Couldn\'t get payed state for fine.', logger);
+        if (!PayedState.typeGuard(value.payedState))
             throw HttpsError('internal', 'Couldn\'t get payed state for fine.', logger);
 
         if (!('number' in value) || typeof value.number !== 'number' || !Number.isInteger(value.number))
@@ -36,7 +38,7 @@ export namespace Fine {
 
         return {
             personId: new Guid(value.personId),
-            payedState: PayedState.fromObject(value.payedState, logger.nextIndent),
+            payedState: value.payedState,
             number: value.number,
             date: new Date(value.date),
             fineReason: FineReason.fromObject(value.fineReason, logger.nextIndent)
@@ -46,7 +48,7 @@ export namespace Fine {
     export type Flatten = {
         id: string;
         personId: string;
-        payedState: PayedState.Flatten;
+        payedState: PayedState;
         number: number;
         date: string;
         fineReason: FineReason.Flatten;
@@ -58,7 +60,7 @@ export namespace Fine {
         return {
             ...('id' in fine ? { id: fine.id.guidString } : {}),
             personId: fine.personId.guidString,
-            payedState: PayedState.flatten(fine.payedState),
+            payedState: fine.payedState,
             number: fine.number,
             date: fine.date.toISOString(),
             fineReason: FineReason.flatten(fine.fineReason)
@@ -71,7 +73,7 @@ export namespace Fine {
         return {
             ...('id' in fine ? { id: new Guid(fine.id) } : {}),
             personId: new Guid(fine.personId),
-            payedState: PayedState.concrete(fine.payedState),
+            payedState: fine.payedState,
             number: fine.number,
             date: new Date(fine.date),
             fineReason: FineReason.concrete(fine.fineReason)

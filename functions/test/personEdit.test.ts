@@ -39,9 +39,7 @@ describe('personEdit', () => {
                 reasonMessage: 'asdf',
                 amount: new Amount(1, 50)
             },
-            payedState: {
-                state: 'unpayed'
-            }
+            payedState: 'unpayed'
         };
         await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).set(Fine.flatten(fine), 'encrypt');
         const person = await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).get('decrypt');

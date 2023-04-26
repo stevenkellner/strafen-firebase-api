@@ -18,9 +18,7 @@ describe('fineEditPayed', () => {
         const result = await firebaseApp.functions.function('fine').function('editPayed').call({
             clubId: clubId.guidString,
             fineId: Guid.newGuid().guidString,
-            payedState: {
-                state: 'unpayed'
-            }
+            payedState: 'unpayed'
         });
         result.failure.equal({
             code: 'not-found',
@@ -33,14 +31,10 @@ describe('fineEditPayed', () => {
         const result = await firebaseApp.functions.function('fine').function('editPayed').call({
             clubId: clubId.guidString,
             fineId: fineId.guidString,
-            payedState: {
-                state: 'unpayed'
-            }
+            payedState: 'unpayed'
         });
         result.success;
-        expect((await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt')).payedState).to.be.deep.equal({
-            state: 'unpayed'
-        });
+        expect((await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt')).payedState).to.be.equal('unpayed');
     });
 
     it('to payed', async () => {
@@ -48,15 +42,9 @@ describe('fineEditPayed', () => {
         const result = await firebaseApp.functions.function('fine').function('editPayed').call({
             clubId: clubId.guidString,
             fineId: fineId.guidString,
-            payedState: {
-                state: 'payed',
-                payDate: '2023-02-22T17:23:45.678Z'
-            }
+            payedState: 'payed'
         });
         result.success;
-        expect((await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt')).payedState).to.be.deep.equal({
-            state: 'payed',
-            payDate: '2023-02-22T17:23:45.678Z'
-        });
+        expect((await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt')).payedState).to.be.equal('payed');
     });
 });

@@ -63,9 +63,7 @@ describe('fineEdit', () => {
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
                 date: '2023-02-20T17:23:45.678+01:00',
                 number: 3,
-                payedState: {
-                    state: 'unpayed'
-                },
+                payedState: 'unpayed',
                 fineReason: {
                     reasonMessage: 'test-message-1',
                     amount: 9.50
@@ -78,9 +76,7 @@ describe('fineEdit', () => {
             personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             date: '2023-02-20T16:23:45.678Z',
             number: 3,
-            payedState: {
-                state: 'unpayed'
-            },
+            payedState: 'unpayed',
             fineReason: {
                 reasonMessage: 'test-message-1',
                 amount: 9.50
@@ -100,9 +96,7 @@ describe('fineEdit', () => {
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
                 date: '2023-02-20T17:23:45.678+01:00',
                 number: 3,
-                payedState: {
-                    state: 'unpayed'
-                },
+                payedState: 'unpayed',
                 fineReason: {
                     reasonMessage: 'test-message-1',
                     amount: 9.50
@@ -139,9 +133,7 @@ describe('fineEdit', () => {
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
                 date: '2023-02-20T17:23:45.678+01:00',
                 number: 3,
-                payedState: {
-                    state: 'unpayed'
-                },
+                payedState: 'unpayed',
                 fineReason: {
                     reasonMessage: 'test-message-1',
                     amount: 9.50
@@ -164,9 +156,7 @@ describe('fineEdit', () => {
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
                 date: '2023-02-20T17:23:45.678+01:00',
                 number: 3,
-                payedState: {
-                    state: 'unpayed'
-                },
+                payedState: 'unpayed',
                 fineReason: {
                     reasonMessage: 'test-message-1',
                     amount: 9.50
@@ -179,9 +169,7 @@ describe('fineEdit', () => {
             personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
             date: '2023-02-20T16:23:45.678Z',
             number: 3,
-            payedState: {
-                state: 'unpayed'
-            },
+            payedState: 'unpayed',
             fineReason: {
                 reasonMessage: 'test-message-1',
                 amount: 9.50

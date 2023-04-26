@@ -16,7 +16,7 @@ export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunc
             {
                 clubId: ParameterBuilder.build('string', Guid.fromString),
                 fineId: ParameterBuilder.build('string', Guid.fromString),
-                payedState: ParameterBuilder.build('object', PayedState.fromObject)
+                payedState: ParameterBuilder.guard('string', PayedState.typeGuard)
             },
             this.logger.nextIndent
         );
@@ -34,7 +34,7 @@ export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunc
         const fine = snapshot.value('decrypt');
         await reference.set({
             ...fine,
-            payedState: PayedState.flatten(this.parameters.payedState)
+            payedState: this.parameters.payedState
         }, 'encrypt');
     }
 }
@@ -46,5 +46,5 @@ export type FineEditPayedFunctionType = FunctionType<{
 }, void, {
     clubId: string;
     fineId: string;
-    payedState: PayedState.Flatten;
+    payedState: PayedState;
 }>;
