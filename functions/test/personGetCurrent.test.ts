@@ -30,7 +30,8 @@ describe('personGetCurrent', () => {
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: signInDate.toISOString()
+                signInDate: signInDate.toISOString(),
+                authentication: ['clubMember']
             },
             isInvited: false
         }, 'encrypt');
@@ -41,10 +42,10 @@ describe('personGetCurrent', () => {
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: signInDate.toISOString()
+                signInDate: signInDate.toISOString(),
+                authentication: ['clubMember']
             },
             isInvited: false,
-            isAdmin: false,
             club: {
                 id: clubId.guidString,
                 name: 'Neuer Verein'
@@ -66,7 +67,8 @@ describe('personGetCurrent', () => {
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: signInDate.toISOString()
+                signInDate: signInDate.toISOString(),
+                authentication: ['clubMember', 'clubManager']
             },
             isInvited: false
         }, 'encrypt');
@@ -77,10 +79,10 @@ describe('personGetCurrent', () => {
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: signInDate.toISOString()
+                signInDate: signInDate.toISOString(),
+                authentication: ['clubMember', 'clubManager']
             },
             isInvited: false,
-            isAdmin: true,
             club: {
                 id: clubId.guidString,
                 name: 'Neuer Verein'

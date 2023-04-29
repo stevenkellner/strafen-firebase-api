@@ -40,7 +40,8 @@ describe('personRegister', () => {
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: databasePerson.signInData.signInDate
+                signInDate: databasePerson.signInData.signInDate,
+                authentication: ['clubMember']
             },
             isInvited: false
         });

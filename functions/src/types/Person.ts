@@ -1,6 +1,7 @@
 import { HttpsError, type ILogger } from 'firebase-function';
 import { Guid } from './Guid';
 import { PersonName } from './PersonName';
+import { UserAuthenticationType } from './UserAuthentication';
 
 export type Person = {
     id: Guid;
@@ -9,6 +10,7 @@ export type Person = {
     signInData?: {
         hashedUserId: string;
         signInDate: Date;
+        authentication: UserAuthenticationType[];
     };
     isInvited: boolean;
 };
@@ -34,6 +36,7 @@ export namespace Person {
         let signInData: {
             hashedUserId: string;
             signInDate: Date;
+            authentication: UserAuthenticationType[];
         } | undefined;
         if (!('signInData' in value) || (typeof value.signInData !== 'object' && value.signInData !== null))
             throw HttpsError('internal', 'Couldn\'t get sign in data for person.', logger);
@@ -44,9 +47,19 @@ export namespace Person {
             if (!('signInDate' in value.signInData) || typeof value.signInData.signInDate !== 'string')
                 throw HttpsError('internal', 'Couldn\'t get sign in date of sign in data for person.', logger);
 
+            if (!('authentication' in value.signInData) || !Array.isArray(value.signInData.authentication))
+                throw HttpsError('internal', 'Couldn\'t get authentication of sign in data for person.', logger);
+
+            const authentication = value.signInData.authentication.map((value: unknown) => {
+                if (typeof value !== 'string' || !UserAuthenticationType.typeGuard(value))
+                    throw HttpsError('internal', 'Couldn\'t get authentication of sign in data for person.', logger);
+                return value;
+            });
+
             signInData = {
                 hashedUserId: value.signInData.hashedUserId,
-                signInDate: new Date(value.signInData.signInDate)
+                signInDate: new Date(value.signInData.signInDate),
+                authentication: authentication
             };
         }
 
@@ -68,6 +81,7 @@ export namespace Person {
         signInData: {
             hashedUserId: string;
             signInDate: string;
+            authentication: UserAuthenticationType[];
         } | null;
         isInvited: boolean;
     };
@@ -83,7 +97,8 @@ export namespace Person {
                 ? null
                 : {
                     hashedUserId: person.signInData.hashedUserId,
-                    signInDate: person.signInData.signInDate.toISOString()
+                    signInDate: person.signInData.signInDate.toISOString(),
+                    authentication: person.signInData.authentication
                 },
             isInvited: person.isInvited
         };
@@ -100,7 +115,8 @@ export namespace Person {
                 ? undefined
                 : {
                     hashedUserId: person.signInData.hashedUserId,
-                    signInDate: new Date(person.signInData.signInDate)
+                    signInDate: new Date(person.signInData.signInDate),
+                    authentication: person.signInData.authentication
                 },
             isInvited: person.isInvited
         };

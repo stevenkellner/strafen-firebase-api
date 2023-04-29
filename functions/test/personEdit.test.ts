@@ -165,7 +165,8 @@ describe('personEdit', () => {
             fineIds: ['1B5F958E-9D7D-46E1-8AEE-F52F4370A95A'],
             signInData: {
                 hashedUserId: 'sha_xyz',
-                signInDate: '2022-01-26T17:23:45.678+01:00'
+                signInDate: '2022-01-26T17:23:45.678+01:00',
+                authentication: ['clubMember']
             },
             isInvited: false
         });

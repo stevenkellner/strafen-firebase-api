@@ -29,11 +29,14 @@ export class PersonMakeManagerFunction implements FirebaseFunction<PersonMakeMan
         const personSnapshot = await personReference.snapshot();
         if (!personSnapshot.exists)
             throw HttpsError('not-found', 'Couldn\'t make person manager. Person not found.', this.logger);
-        const hashedUserId = personSnapshot.value('decrypt').signInData?.hashedUserId;
-        if (hashedUserId === undefined)
+        const person = personSnapshot.value('decrypt');
+        if (person.signInData === null)
             throw HttpsError('unavailable', 'Couldn\'t make person manager. Person is not signed in.', this.logger);
-        const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('authentication').child('clubManager').child(hashedUserId);
+        const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('authentication').child('clubManager').child(person.signInData.hashedUserId);
         await reference.set('authenticated');
+        if (!person.signInData.authentication.includes('clubManager'))
+            person.signInData.authentication.push('clubManager');
+        await personReference.set(person, 'encrypt');
     }
 }
 

@@ -62,7 +62,11 @@ describe('clubNew', () => {
         expect(databasePerson).to.be.deep.equal({
             name: { first: 'asdf', last: null },
             fineIds: [],
-            signInData: { hashedUserId: hashedUserId, signInDate: databasePerson.signInData.signInDate },
+            signInData: {
+                hashedUserId: hashedUserId,
+                signInDate: databasePerson.signInData.signInDate,
+                authentication: ['clubMember', 'clubManager']
+            },
             isInvited: false
         });
         const databaseUser = await firebaseApp.database.child('users').child(hashedUserId).get('decrypt');

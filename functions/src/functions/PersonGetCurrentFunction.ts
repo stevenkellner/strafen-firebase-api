@@ -30,7 +30,6 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
         const { clubId, personId } = userSnapshot.value('decrypt');
         await checkUserAuthentication(this.auth, new Guid(clubId), 'clubMember', this.parameters.databaseType, this.logger.nextIndent);
         const clubReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(clubId);
-        const clubManagerSnapshot = await clubReference.child('authentication').child('clubManager').child(hashedUserId).snapshot();
         const personSnapshot = await clubReference.child('persons').child(personId).snapshot();
         const person = personSnapshot.value('decrypt');
         if (person.signInData === null)
@@ -41,10 +40,10 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
             fineIds: person.fineIds,
             signInData: {
                 hashedUserId: person.signInData.hashedUserId,
-                signInDate: person.signInData.signInDate
+                signInDate: person.signInData.signInDate,
+                authentication: person.signInData.authentication
             },
             isInvited: person.isInvited,
-            isAdmin: clubManagerSnapshot.exists && clubManagerSnapshot.value() === 'authenticated',
             club: {
                 id: clubId,
                 name: (await clubReference.child('name').snapshot()).value()
@@ -55,6 +54,5 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
 
 export type PersonGetCurrentFunctionType = FunctionType<Record<string, never>, Person.Flatten & {
     signInData: object;
-    isAdmin: boolean;
     club: ClubProperties.Flatten;
 }>;

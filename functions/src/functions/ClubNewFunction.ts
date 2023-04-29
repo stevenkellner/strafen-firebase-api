@@ -41,7 +41,8 @@ export class ClubNewFunction implements FirebaseFunction<ClubNewFunctionType> {
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: new Date().toISOString()
+                signInDate: new Date().toISOString(),
+                authentication: ['clubMember', 'clubManager']
             },
             isInvited: false
         }, 'encrypt');
