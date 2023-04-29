@@ -14,6 +14,7 @@ import { type FineGetFunctionType, FineGetFunction } from './functions/FineGetFu
 import { InvitationLinkCreateIdFunction, type InvitationLinkCreateIdFunctionType } from './functions/InvitationLinkCreateIdFunction';
 import { InvitationLinkWithdrawFunction, type InvitationLinkWithdrawFunctionType } from './functions/InvitationLinkWithdrawFunction';
 import { InvitationLinkGetPersonFunction, type InvitationLinkGetPersonFunctionType } from './functions/InvitationLinkGetPersonFunction';
+import { PersonMakeManagerFunction, type PersonMakeManagerFunctionType } from './functions/PersonMakeManagerFunction';
 
 export const firebaseFunctions = {
     deleteAllData: FirebaseFunctionDescriptor.create<DeleteAllDataFunctionType>(DeleteAllDataFunction),
@@ -23,6 +24,7 @@ export const firebaseFunctions = {
     },
     person: {
         register: FirebaseFunctionDescriptor.create<PersonRegisterFunctionType>(PersonRegisterFunction),
+        makeManager: FirebaseFunctionDescriptor.create<PersonMakeManagerFunctionType>(PersonMakeManagerFunction),
         getCurrent: FirebaseFunctionDescriptor.create<PersonGetCurrentFunctionType>(PersonGetCurrentFunction),
         edit: FirebaseFunctionDescriptor.create<PersonEditFunctionType>(PersonEditFunction),
         get: FirebaseFunctionDescriptor.create<PersonGetFunctionType>(PersonGetFunction)
