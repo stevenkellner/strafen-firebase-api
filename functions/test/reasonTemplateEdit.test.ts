@@ -59,14 +59,22 @@ describe('reasonTemplateEdit', () => {
             reasonTemplateId: reasonTemplateId.guidString,
             reasonTemplate: {
                 reasonMessage: 'test-message-1',
-                amount: 9.50
+                amount: 9.50,
+                counts: {
+                    item: 'item',
+                    maxCount: null
+                }
             }
         });
         result.success;
         const databasereasonTemplate = await firebaseApp.database.child('clubs').child(clubId.guidString).child('reasonTemplates').child(reasonTemplateId.guidString).get('decrypt');
         expect(databasereasonTemplate).to.be.deep.equal({
             reasonMessage: 'test-message-1',
-            amount: 9.50
+            amount: 9.50,
+            counts: {
+                item: 'item',
+                maxCount: null
+            }
         });
     });
 
@@ -78,7 +86,8 @@ describe('reasonTemplateEdit', () => {
             reasonTemplateId: reasonTemplateId.guidString,
             reasonTemplate: {
                 reasonMessage: 'test-message-1',
-                amount: 9.50
+                amount: 9.50,
+                counts: null
             }
         });
         result.failure.equal({
@@ -109,7 +118,8 @@ describe('reasonTemplateEdit', () => {
             reasonTemplateId: reasonTemplateId.guidString,
             reasonTemplate: {
                 reasonMessage: 'test-message-1',
-                amount: 9.50
+                amount: 9.50,
+                counts: null
             }
         });
         result.failure.equal({
@@ -126,14 +136,22 @@ describe('reasonTemplateEdit', () => {
             reasonTemplateId: reasonTemplateId.guidString,
             reasonTemplate: {
                 reasonMessage: 'test-message-1',
-                amount: 9.50
+                amount: 9.50,
+                counts: {
+                    item: 'minute',
+                    maxCount: 5
+                }
             }
         });
         result.success;
         const databasereasonTemplate = await firebaseApp.database.child('clubs').child(clubId.guidString).child('reasonTemplates').child(reasonTemplateId.guidString).get('decrypt');
         expect(databasereasonTemplate).to.be.deep.equal({
             reasonMessage: 'test-message-1',
-            amount: 9.50
+            amount: 9.50,
+            counts: {
+                item: 'minute',
+                maxCount: 5
+            }
         });
     });
 });

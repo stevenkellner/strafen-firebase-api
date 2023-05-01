@@ -1,11 +1,16 @@
 import { HttpsError, type ILogger } from 'firebase-function';
 import { Amount } from './Amount';
 import { Guid } from './Guid';
+import { ReasonTemplateCountsItem } from './ReasonTemplateCountsItem';
 
 export type ReasonTemplate = {
     id: Guid;
     reasonMessage: string;
     amount: Amount;
+    counts?: {
+        item: ReasonTemplateCountsItem;
+        maxCount?: number;
+    };
 };
 
 export namespace ReasonTemplate {
@@ -21,9 +26,29 @@ export namespace ReasonTemplate {
         if (!('amount' in value) || typeof value.amount !== 'number')
             throw HttpsError('internal', 'Couldn\'t get amount for reason template.', logger);
 
+        let counts: {
+            item: ReasonTemplateCountsItem;
+            maxCount?: number;
+        } | undefined;
+        if (!('counts' in value) || (typeof value.counts !== 'object' && value.counts !== null))
+            throw HttpsError('internal', 'Couldn\'t get counts for reason template.', logger);
+        else if (value.counts !== null) {
+            if (!('item' in value.counts) || typeof value.counts.item !== 'string' || !ReasonTemplateCountsItem.typeGuard(value.counts.item))
+                throw HttpsError('internal', 'Couldn\'t get counts item for reason template.', logger);
+
+            if (!('maxCount' in value.counts) || (typeof value.counts.maxCount !== 'number' && value.counts.maxCount !== null))
+                throw HttpsError('internal', 'Couldn\'t get max counts for reason template.', logger);
+
+            counts = {
+                item: value.counts.item,
+                maxCount: value.counts.maxCount === null ? undefined : value.counts.maxCount
+            };
+        }
+
         return {
             reasonMessage: value.reasonMessage,
-            amount: Amount.fromNumber(value.amount, logger.nextIndent)
+            amount: Amount.fromNumber(value.amount, logger.nextIndent),
+            counts: counts
         };
     }
 
@@ -31,6 +56,10 @@ export namespace ReasonTemplate {
         id: string;
         reasonMessage: string;
         amount: number;
+        counts: {
+            item: ReasonTemplateCountsItem;
+            maxCount: number | null;
+        } | null;
     };
 
     export function flatten(reasonTemplate: ReasonTemplate): ReasonTemplate.Flatten;
@@ -39,7 +68,13 @@ export namespace ReasonTemplate {
         return {
             ...('id' in reasonTemplate ? { id: reasonTemplate.id.guidString } : {}),
             reasonMessage: reasonTemplate.reasonMessage,
-            amount: Amount.flatten(reasonTemplate.amount)
+            amount: Amount.flatten(reasonTemplate.amount),
+            counts: reasonTemplate.counts === undefined
+                ? null
+                : {
+                    item: reasonTemplate.counts.item,
+                    maxCount: reasonTemplate.counts.maxCount === undefined ? null : reasonTemplate.counts.maxCount
+                }
         };
     }
 
@@ -49,7 +84,13 @@ export namespace ReasonTemplate {
         return {
             ...('id' in reasonTemplate ? { id: new Guid(reasonTemplate.id) } : {}),
             reasonMessage: reasonTemplate.reasonMessage,
-            amount: Amount.concrete(reasonTemplate.amount)
+            amount: Amount.concrete(reasonTemplate.amount),
+            counts: reasonTemplate.counts === null
+                ? undefined
+                : {
+                    item: reasonTemplate.counts.item,
+                    maxCount: reasonTemplate.counts.maxCount === null ? undefined : reasonTemplate.counts.maxCount
+                }
         };
     }
 }
