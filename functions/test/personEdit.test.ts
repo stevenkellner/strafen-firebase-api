@@ -166,7 +166,8 @@ describe('personEdit', () => {
             signInData: {
                 hashedUserId: 'sha_xyz',
                 signInDate: '2022-01-26T17:23:45.678+01:00',
-                authentication: ['clubMember']
+                authentication: ['clubMember'],
+                notificationTokens: {}
             },
             isInvited: false
         });

@@ -36,7 +36,8 @@ export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFu
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: new Date().toISOString(),
-                authentication: ['clubMember']
+                authentication: ['clubMember'],
+                notificationTokens: {}
             },
             isInvited: false
         }, 'encrypt');

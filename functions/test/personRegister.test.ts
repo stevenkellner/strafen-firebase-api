@@ -41,7 +41,8 @@ describe('personRegister', () => {
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: databasePerson.signInData.signInDate,
-                authentication: ['clubMember']
+                authentication: ['clubMember'],
+                notificationTokens: {}
             },
             isInvited: false
         });

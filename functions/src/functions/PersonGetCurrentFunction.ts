@@ -38,11 +38,7 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
             id: personId,
             name: person.name,
             fineIds: person.fineIds,
-            signInData: {
-                hashedUserId: person.signInData.hashedUserId,
-                signInDate: person.signInData.signInDate,
-                authentication: person.signInData.authentication
-            },
+            signInData: person.signInData,
             isInvited: person.isInvited,
             club: {
                 id: clubId,

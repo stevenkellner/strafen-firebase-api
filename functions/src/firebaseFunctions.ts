@@ -15,6 +15,8 @@ import { InvitationLinkCreateIdFunction, type InvitationLinkCreateIdFunctionType
 import { InvitationLinkWithdrawFunction, type InvitationLinkWithdrawFunctionType } from './functions/InvitationLinkWithdrawFunction';
 import { InvitationLinkGetPersonFunction, type InvitationLinkGetPersonFunctionType } from './functions/InvitationLinkGetPersonFunction';
 import { PersonMakeManagerFunction, type PersonMakeManagerFunctionType } from './functions/PersonMakeManagerFunction';
+import { type NotificationRegisterFunctionType, NotificationRegisterFunction } from './functions/NotificationRegisterFunction';
+import { NotificationPushFunction, type NotificationPushFunctionType } from './functions/NotificationPushFunction';
 
 export const firebaseFunctions = {
     deleteAllData: FirebaseFunctionDescriptor.create<DeleteAllDataFunctionType>(DeleteAllDataFunction),
@@ -42,5 +44,9 @@ export const firebaseFunctions = {
         createId: FirebaseFunctionDescriptor.create<InvitationLinkCreateIdFunctionType>(InvitationLinkCreateIdFunction),
         withdraw: FirebaseFunctionDescriptor.create<InvitationLinkWithdrawFunctionType>(InvitationLinkWithdrawFunction),
         getPerson: FirebaseFunctionDescriptor.create<InvitationLinkGetPersonFunctionType>(InvitationLinkGetPersonFunction)
+    },
+    notification: {
+        register: FirebaseFunctionDescriptor.create<NotificationRegisterFunctionType>(NotificationRegisterFunction),
+        push: FirebaseFunctionDescriptor.create<NotificationPushFunctionType>(NotificationPushFunction)
     }
 } satisfies FirebaseFunctionsType;

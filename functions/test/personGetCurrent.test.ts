@@ -31,7 +31,8 @@ describe('personGetCurrent', () => {
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: signInDate.toISOString(),
-                authentication: ['clubMember']
+                authentication: ['clubMember'],
+                notificationTokens: {}
             },
             isInvited: false
         }, 'encrypt');
@@ -43,7 +44,8 @@ describe('personGetCurrent', () => {
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: signInDate.toISOString(),
-                authentication: ['clubMember']
+                authentication: ['clubMember'],
+                notificationTokens: {}
             },
             isInvited: false,
             club: {
@@ -68,7 +70,10 @@ describe('personGetCurrent', () => {
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: signInDate.toISOString(),
-                authentication: ['clubMember', 'clubManager']
+                authentication: ['clubMember', 'clubManager'],
+                notificationTokens: {
+                    abc: 'abc123'
+                }
             },
             isInvited: false
         }, 'encrypt');
@@ -80,7 +85,10 @@ describe('personGetCurrent', () => {
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: signInDate.toISOString(),
-                authentication: ['clubMember', 'clubManager']
+                authentication: ['clubMember', 'clubManager'],
+                notificationTokens: {
+                    abc: 'abc123'
+                }
             },
             isInvited: false,
             club: {

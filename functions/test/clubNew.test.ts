@@ -65,7 +65,8 @@ describe('clubNew', () => {
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: databasePerson.signInData.signInDate,
-                authentication: ['clubMember', 'clubManager']
+                authentication: ['clubMember', 'clubManager'],
+                notificationTokens: {}
             },
             isInvited: false
         });
