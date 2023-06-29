@@ -25,9 +25,10 @@ describe('personGetCurrent', () => {
             personId: personId.guidString
         }, 'encrypt');
         const signInDate = new Date();
+        const fineIds = [Guid.newGuid().guidString, Guid.newGuid().guidString, Guid.newGuid().guidString];
         await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).set({
             name: { first: 'lk', last: 'oiqjr' },
-            fineIds: [],
+            fineIds: fineIds,
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: signInDate.toISOString(),
@@ -40,7 +41,7 @@ describe('personGetCurrent', () => {
         result.success.equal({
             id: personId.guidString,
             name: { first: 'lk', last: 'oiqjr' },
-            fineIds: [],
+            fineIds: fineIds,
             signInData: {
                 hashedUserId: hashedUserId,
                 signInDate: signInDate.toISOString(),

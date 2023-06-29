@@ -39,7 +39,18 @@ export class NotificationPushFunction implements FirebaseFunction<NotificationPu
         if (tokens.length === 0)
             return;
         const response = await admin.messaging().sendToDevice(tokens.map(entry => entry[1]), {
-            notification: this.parameters.payload
+            notification: {
+                badge: '1',
+                sound: 'default',
+                title: decodeURIComponent(escape(this.parameters.payload.title)),
+                body: decodeURIComponent(escape(this.parameters.payload.body))
+            },
+            data: {
+                clubId: this.parameters.clubId.guidString,
+                personId: this.parameters.personId.guidString
+            }
+        }, {
+            mutableContent: true
         });
         for (let index = 0; index < tokens.length; index++) {
             const result = response.results[index];

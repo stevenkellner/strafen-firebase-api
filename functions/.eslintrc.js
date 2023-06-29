@@ -5,11 +5,7 @@ module.exports = {
         node: true
     },
     extends: [
-        'standard-with-typescript',
         'eslint:recommended',
-        'plugin:import/errors',
-        'plugin:import/warnings',
-        'plugin:import/typescript',
         'plugin:@typescript-eslint/recommended'
     ],
     parser: '@typescript-eslint/parser',
@@ -26,7 +22,6 @@ module.exports = {
     ],
     plugins: [
         '@typescript-eslint',
-        'import'
     ],
     rules: {
         '@typescript-eslint/semi': ['error', 'always'],
@@ -59,7 +54,8 @@ module.exports = {
         '@typescript-eslint/space-before-function-paren': 'off',
         'no-async-promise-executor': 'off',
         '@typescript-eslint/no-misused-promises': 'off',
-        '@typescript-eslint/prefer-optional-chain': 'off'
+        '@typescript-eslint/prefer-optional-chain': 'off',
+        'no-constant-condition': 'off'
     }
   }
     

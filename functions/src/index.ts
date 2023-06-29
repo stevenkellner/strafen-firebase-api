@@ -1,8 +1,8 @@
 import * as admin from 'firebase-admin';
 import { createFirebaseFunctions } from 'firebase-function';
-import { firebaseFunctions } from './firebaseFunctions';
+import { firebaseFunctions } from './functions/firebaseFunctions';
 import { getPrivateKeys } from './privateKeys';
 
 admin.initializeApp();
 
-export = createFirebaseFunctions(firebaseFunctions, getPrivateKeys);
+export = createFirebaseFunctions(getPrivateKeys, {}, firebaseFunctions);
