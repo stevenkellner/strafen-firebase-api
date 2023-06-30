@@ -2,7 +2,7 @@ import { Crypter } from 'firebase-function';
 import { FirebaseApp } from 'firebase-function/lib/src/testUtils';
 import { type DatabaseScheme } from '../src/DatabaseScheme';
 // import { type firebaseFunctions } from '../src/functions/firebaseFunctions';
-import { type firebaseFunctions as debugFirebaseFunctions } from '../src/functions/firebaseFunctions';
+import { type firebaseFunctions as debugFirebaseFunctions } from '../src/firebaseFunctions';
 import { type UserAuthenticationType } from '../src/types/UserAuthentication';
 import { callSecretKey, cryptionKeys, firebaseConfig, testUser } from './privateKeys';
 import { type Guid } from '../src/types/Guid';

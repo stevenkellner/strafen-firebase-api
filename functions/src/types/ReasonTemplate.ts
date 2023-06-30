@@ -14,6 +14,21 @@ export type ReasonTemplate = {
 };
 
 export namespace ReasonTemplate {
+    export function fromObjectWithId(value: object | null, logger: ILogger): ReasonTemplate {
+        logger.log('ReasonTemplate.fromObject', { value: value });
+
+        if (value === null)
+            throw HttpsError('internal', 'Couldn\'t get reason template from null.', logger);
+
+        if (!('id' in value) || typeof value.id !== 'string')
+            throw HttpsError('internal', 'Couldn\'t get id for reason template.', logger);
+
+        return { 
+            ... ReasonTemplate.fromObject(value, logger.nextIndent),
+            id: Guid.fromString(value.id, logger.nextIndent),
+        };
+    }
+
     export function fromObject(value: object | null, logger: ILogger): Omit<ReasonTemplate, 'id'> {
         logger.log('ReasonTemplate.fromObject', { value: value });
 

@@ -12,6 +12,21 @@ export type Person = {
 };
 
 export namespace Person {
+    export function fromObjectWithId(value: object | null, logger: ILogger): Person {
+        logger.log('Person.fromObject', { value: value });
+
+        if (value === null)
+            throw HttpsError('internal', 'Couldn\'t get person from null.', logger);
+
+        if (!('id' in value) || typeof value.id !== 'string')
+            throw HttpsError('internal', 'Couldn\'t get id for person.', logger);
+
+        return { 
+            ... Person.fromObject(value, logger.nextIndent),
+            id: Guid.fromString(value.id, logger.nextIndent),
+        };
+    }
+
     export function fromObject(value: object | null, logger: ILogger): Omit<Person, 'id'> {
         logger.log('Person.fromObject', { value: value });
 
@@ -78,6 +93,21 @@ export namespace Person {
     export type PersonalProperties = Omit<Person, 'fineIds' | 'signInData' | 'isInvited'>;
 
     export namespace PersonalProperties {
+        export function fromObjectWithId(value: object | null, logger: ILogger): PersonalProperties {
+            logger.log('PersonalProperties.fromObject', { value: value });
+    
+            if (value === null)
+                throw HttpsError('internal', 'Couldn\'t get personal properites from null.', logger);
+    
+            if (!('id' in value) || typeof value.id !== 'string')
+                throw HttpsError('internal', 'Couldn\'t get id for personal properites.', logger);
+    
+            return { 
+                ... PersonalProperties.fromObject(value, logger.nextIndent),
+                id: Guid.fromString(value.id, logger.nextIndent),
+            };
+        }
+
         export function fromObject(value: object | null, logger: ILogger): Omit<Person.PersonalProperties, 'id'> {
             logger.log('Person.PersonalProperties.fromObject', { value: value });
 
