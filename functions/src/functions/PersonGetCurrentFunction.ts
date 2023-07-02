@@ -42,7 +42,8 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
             isInvited: person.isInvited,
             club: {
                 id: clubId,
-                name: (await clubReference.child('name').snapshot()).value()
+                name: (await clubReference.child('name').snapshot()).value(),
+                paypalMeLink: (await clubReference.child('paypalMeLink').snapshot()).value('decrypt')
             }
         };
     }

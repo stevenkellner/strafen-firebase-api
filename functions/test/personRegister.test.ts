@@ -28,7 +28,8 @@ describe('personRegister', () => {
         });
         result.success.equal({
             id: clubId.guidString,
-            name: 'Neuer Verein'
+            name: 'Neuer Verein',
+            paypalMeLink: 'paypal.me/test'
         });
         const databasePerson = await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).get('decrypt');
         assert(databasePerson.signInData !== null);

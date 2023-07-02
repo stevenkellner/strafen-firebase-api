@@ -20,6 +20,7 @@ export namespace TestClubType {
 
 export type TestClub = {
     name: string;
+    paypalMeLink: string | null;
     authentication: {
         [AuthenticationType in UserAuthenticationType]: {
             [HashedUserId in string]: 'authenticated';

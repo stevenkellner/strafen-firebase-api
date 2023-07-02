@@ -5,6 +5,7 @@ import { type ReasonTemplate } from './types/ReasonTemplate';
 import { type UserAuthenticationType } from './types/UserAuthentication';
 
 export type DatabaseScheme = DatabaseSchemeType<{
+    version: string;
     users: {
         [HashedUserId in string]: CryptedScheme<{
             clubId: string;
@@ -20,6 +21,7 @@ export type DatabaseScheme = DatabaseSchemeType<{
     clubs: {
         [ClubId in string]: {
             name: string;
+            paypalMeLink: CryptedScheme<string | null>;
             authentication: {
                 [AuthenticationType in UserAuthenticationType]: {
                     [HashedUserId in string]: 'authenticated';

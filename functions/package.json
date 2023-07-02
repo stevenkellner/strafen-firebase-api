@@ -7,7 +7,8 @@
         "logs": "firebase functions:log",
         "test": "mocha --reporter spec -r ts-node/register --timeout 3600000 --reporter-option maxDiffSize=0",
         "testAll": "npm run test test/**/*.test.ts test/*.test.ts",
-        "test:coverage": "nyc npm run test"
+        "test:coverage": "nyc npm run test",
+        "migrate": "ts-node src/migrateDatabase"
     },
     "engines": {
         "node": "16"

@@ -7,6 +7,7 @@ import { InvitationLinkWithdrawFunction, type InvitationLinkWithdrawFunctionType
 import { InvitationLinkGetPersonFunction, type InvitationLinkGetPersonFunctionType } from './functions/InvitationLinkGetPersonFunction';
 import { type NotificationRegisterFunctionType, NotificationRegisterFunction } from './functions/NotificationRegisterFunction';
 import { NotificationPushFunction, type NotificationPushFunctionType } from './functions/NotificationPushFunction';
+import { PaypalMeSetFunction, PaypalMeSetFunctionType } from './functions/PaypalMeSetFunction';
 
 import { PersonRegisterFunction, type PersonRegisterFunctionType } from './functions/PersonRegisterFunction';
 import { PersonMakeManagerFunction, type PersonMakeManagerFunctionType } from './functions/PersonMakeManagerFunction';
@@ -54,6 +55,9 @@ export const firebaseFunctions = {
         delete: FirebaseFunctionDescriptor.create<FineDeleteFunctionType>(FineDeleteFunction),
         editPayed: FirebaseFunctionDescriptor.create<FineEditPayedFunctionType>(FineEditPayedFunction),
         get: FirebaseFunctionDescriptor.create<FineGetFunctionType>(FineGetFunction)
+    },
+    paypalMe: {
+        set: FirebaseFunctionDescriptor.create<PaypalMeSetFunctionType>(PaypalMeSetFunction)
     },
     invitationLink: {
         createId: FirebaseFunctionDescriptor.create<InvitationLinkCreateIdFunctionType>(InvitationLinkCreateIdFunction),

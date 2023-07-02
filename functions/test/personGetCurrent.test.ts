@@ -51,7 +51,8 @@ describe('personGetCurrent', () => {
             isInvited: false,
             club: {
                 id: clubId.guidString,
-                name: 'Neuer Verein'
+                name: 'Neuer Verein',
+                paypalMeLink: 'paypal.me/test'
             }
         });
     });
@@ -94,7 +95,8 @@ describe('personGetCurrent', () => {
             isInvited: false,
             club: {
                 id: clubId.guidString,
-                name: 'Neuer Verein'
+                name: 'Neuer Verein',
+                paypalMeLink: 'paypal.me/test'
             }
         });
     });

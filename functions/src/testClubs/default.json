@@ -1,5 +1,6 @@
 {
     "name": "Neuer Verein",
+    "paypalMeLink": "paypal.me/test",
     "authentication": {
         "clubManager": {
             "sha_xyz": "authenticated"

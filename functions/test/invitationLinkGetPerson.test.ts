@@ -29,7 +29,8 @@ describe('invitationLinkGetPerson', () => {
             fineIds: [],
             club: {
                 id: clubId.guidString,
-                name: 'Neuer Verein'
+                name: 'Neuer Verein',
+                paypalMeLink: 'paypal.me/test'
             }
         });
     });

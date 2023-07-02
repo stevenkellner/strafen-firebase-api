@@ -37,7 +37,8 @@ export class InvitationLinkGetPersonFunction implements FirebaseFunction<Invitat
             fineIds: person.fineIds,
             club: {
                 id: clubId,
-                name: (await clubReference.child('name').snapshot()).value()
+                name: (await clubReference.child('name').snapshot()).value(),
+                paypalMeLink: (await clubReference.child('paypalMeLink').snapshot()).value('decrypt')
             }
         };
     }

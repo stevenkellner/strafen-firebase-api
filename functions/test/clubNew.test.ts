@@ -21,7 +21,8 @@ describe('clubNew', () => {
         const result = await firebaseApp.functions.function('club').function('new').call({
             clubId: clubId.guidString,
             clubProperties: {
-                name: 'Test Club'
+                name: 'Test Club',
+                paypalMeLink: 'paypal.me/asdf'
             },
             personId: personId.guidString,
             personName: {
@@ -33,13 +34,16 @@ describe('clubNew', () => {
         assert(firebaseApp.auth.currentUser !== null);
         const hashedUserId = Crypter.sha512(firebaseApp.auth.currentUser.uid);
         const databaseValue = await firebaseApp.database.get();
+        delete (databaseValue.clubs[clubId.guidString] as { paypalMeLink?: unknown }).paypalMeLink;
         expect(Object.values(databaseValue.clubs[clubId.guidString].persons).length).to.be.equal(1);
         databaseValue.clubs[clubId.guidString].persons = {};
         expect(Object.values(databaseValue.users).length).to.be.equal(1);
         databaseValue.users = {};
         expect('invitationLinks' in databaseValue).to.be.equal(false);
         databaseValue.invitationLinks = {};
+        databaseValue.version = '0.0.0';
         expect(databaseValue).to.be.deep.equal({
+            version: '0.0.0',
             users: {},
             invitationLinks: {},
             clubs: {
@@ -57,6 +61,8 @@ describe('clubNew', () => {
                 } as never
             }
         });
+        const databasePaypalMeLink = await firebaseApp.database.child('clubs').child(clubId.guidString).child('paypalMeLink').get('decrypt');
+        expect(databasePaypalMeLink).to.be.equal('paypal.me/asdf');
         const databasePerson = await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).get('decrypt');
         assert(databasePerson.signInData !== null);
         expect(databasePerson).to.be.deep.equal({
@@ -81,7 +87,8 @@ describe('clubNew', () => {
         const result1 = await firebaseApp.functions.function('club').function('new').call({
             clubId: clubId.guidString,
             clubProperties: {
-                name: 'Test Club'
+                name: 'Test Club',
+                paypalMeLink: null
             },
             personId: Guid.newGuid().guidString,
             personName: {
@@ -93,7 +100,8 @@ describe('clubNew', () => {
         const result2 = await firebaseApp.functions.function('club').function('new').call({
             clubId: clubId.guidString,
             clubProperties: {
-                name: 'Test Club'
+                name: 'Test Club',
+                paypalMeLink: null
             },
             personId: Guid.newGuid().guidString,
             personName: {
