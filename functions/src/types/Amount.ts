@@ -17,6 +17,14 @@ export namespace Amount {
         return new Amount(amountValue, Math.floor(subUnitValue));
     }
 
+    export function description(amount: Amount): string {
+        if (amount.subUnitValue === 0)
+            return `${amount.value} €`;
+        if (amount.subUnitValue <= 9)
+            return `${amount.value}.0${amount.subUnitValue} €`;
+        return `${amount.value}.${amount.subUnitValue} €`;
+    }
+
     export type Flatten = number;
 
     export function flatten(amount: Amount): Amount.Flatten {

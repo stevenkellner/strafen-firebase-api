@@ -2,6 +2,8 @@ import { HttpsError, type ILogger } from 'firebase-function';
 import { Guid } from './Guid';
 import { PayedState } from './PayedState';
 import { Amount } from './Amount';
+import { Person } from './Person';
+import { PersonName } from './PersonName';
 
 export type Fine = {
     id: Guid;
@@ -58,6 +60,10 @@ export namespace Fine {
             reasonMessage: value.reasonMessage,
             amount: Amount.fromNumber(value.amount, logger.nextIndent)
         };
+    }
+
+    export function description(fine: Omit<Fine, 'id'>, person: Omit<Person, 'id'>): string {
+        return `${fine.reasonMessage} (${Amount.description(fine.amount)}, ${PersonName.description(person.name)}, ${PayedState.description(fine.payedState)}, ${fine.date.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })})`;
     }
 
     export type Flatten = {

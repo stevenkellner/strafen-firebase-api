@@ -5,6 +5,8 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { InvitationLink } from '../types/InvitationLink';
+import { notifyCreator } from '../utils';
+import { Person } from '../types/Person';
 
 export class PersonDeleteFunction implements FirebaseFunction<PersonDeleteFunctionType> {
     public readonly parameters: FunctionType.Parameters<PersonDeleteFunctionType> & { databaseType: DatabaseType };
@@ -25,7 +27,7 @@ export class PersonDeleteFunction implements FirebaseFunction<PersonDeleteFuncti
 
     public async executeFunction(): Promise<FunctionType.ReturnType<PersonDeleteFunctionType>> {
         this.logger.log('PersonDeleteFunction.executeFunction', {}, 'info');
-        await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
+        const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('persons').child(this.parameters.personId.guidString);
         const snapshot = await reference.snapshot();
         if (!snapshot.exists)
@@ -48,6 +50,8 @@ export class PersonDeleteFunction implements FirebaseFunction<PersonDeleteFuncti
             if (invitationLinkSnapshot.exists)
                 await invitationLinkReference.remove();
         }
+        
+        await notifyCreator({ state: 'person-delete', person: Person.concrete(person) }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
     }
 }
 

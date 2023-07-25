@@ -4,6 +4,8 @@ import { checkUserAuthentication } from '../checkUserAuthentication';
 import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
+import { notifyCreator } from '../utils';
+import { Fine } from '../types/Fine';
 
 export class FineDeleteFunction implements FirebaseFunction<FineDeleteFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineDeleteFunctionType> & { databaseType: DatabaseType };
@@ -24,7 +26,7 @@ export class FineDeleteFunction implements FirebaseFunction<FineDeleteFunctionTy
 
     public async executeFunction(): Promise<FunctionType.ReturnType<FineDeleteFunctionType>> {
         this.logger.log('FineDeleteFunction.executeFunction', {}, 'info');
-        await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
+        const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('fines').child(this.parameters.fineId.guidString);
         const snapshot = await reference.snapshot();
         if (!snapshot.exists)
@@ -38,6 +40,8 @@ export class FineDeleteFunction implements FirebaseFunction<FineDeleteFunctionTy
             person.fineIds = person.fineIds.filter(fineId => fineId !== this.parameters.fineId.guidString);
             await personReference.set(person, 'encrypt');
         }
+
+        await notifyCreator({ state: 'fine-delete', fine: Fine.concrete(fine) }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
     }
 }
 

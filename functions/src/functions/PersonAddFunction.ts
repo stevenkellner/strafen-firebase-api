@@ -5,7 +5,7 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { Person } from '../types/Person';
-import { removeKey } from '../utils';
+import { notifyCreator, removeKey } from '../utils';
 
 export class PersonAddFunction implements FirebaseFunction<PersonAddFunctionType> {
     public readonly parameters: FunctionType.Parameters<PersonAddFunctionType> & { databaseType: DatabaseType };
@@ -26,7 +26,7 @@ export class PersonAddFunction implements FirebaseFunction<PersonAddFunctionType
 
     public async executeFunction(): Promise<FunctionType.ReturnType<PersonAddFunctionType>> {
         this.logger.log('PersonAddFunction.executeFunction', {}, 'info');
-        await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
+        const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('persons').child(this.parameters.person.id.guidString);
         const snapshot = await reference.snapshot();
         if (snapshot.exists)
@@ -37,6 +37,8 @@ export class PersonAddFunction implements FirebaseFunction<PersonAddFunctionType
             signInData: null,
             isInvited: false
         }, 'encrypt');
+
+        await notifyCreator({ state: 'person-add', person: this.parameters.person }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
     }
 }
 

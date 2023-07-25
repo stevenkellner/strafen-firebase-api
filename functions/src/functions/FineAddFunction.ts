@@ -5,7 +5,7 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Fine } from '../types/Fine';
 import { Guid } from '../types/Guid';
-import { removeKey } from '../utils';
+import { notifyCreator, removeKey } from '../utils';
 
 export class FineAddFunction implements FirebaseFunction<FineAddFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineAddFunctionType> & { databaseType: DatabaseType };
@@ -26,7 +26,7 @@ export class FineAddFunction implements FirebaseFunction<FineAddFunctionType> {
 
     public async executeFunction(): Promise<FunctionType.ReturnType<FineAddFunctionType>> {
         this.logger.log('FineAddFunction.executeFunction', {}, 'info');
-        await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
+        const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('fines').child(this.parameters.fine.id.guidString);
         const snapshot = await reference.snapshot();
         if (snapshot.exists)
@@ -39,6 +39,8 @@ export class FineAddFunction implements FirebaseFunction<FineAddFunctionType> {
             person.fineIds.push(this.parameters.fine.id.guidString);
             await personReference.set(person, 'encrypt');
         }
+
+        await notifyCreator({ state: 'fine-add', fine: this.parameters.fine }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
     }
 }
 

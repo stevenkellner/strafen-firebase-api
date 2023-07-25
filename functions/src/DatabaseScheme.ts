@@ -27,6 +27,9 @@ export type DatabaseScheme = DatabaseSchemeType<{
                     [HashedUserId in string]: 'authenticated';
                 }
             };
+            creator: {
+                id: string;
+            } | null;
             persons: {
                 [PersonId in string]: CryptedScheme<Omit<Person.Flatten, 'id'>>
             };

@@ -4,6 +4,8 @@ import { checkUserAuthentication } from '../checkUserAuthentication';
 import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
+import { notifyCreator } from '../utils';
+import { ReasonTemplate } from '../types/ReasonTemplate';
 
 export class ReasonTemplateDeleteFunction implements FirebaseFunction<ReasonTemplateDeleteFunctionType> {
     public readonly parameters: FunctionType.Parameters<ReasonTemplateDeleteFunctionType> & { databaseType: DatabaseType };
@@ -24,11 +26,15 @@ export class ReasonTemplateDeleteFunction implements FirebaseFunction<ReasonTemp
 
     public async executeFunction(): Promise<FunctionType.ReturnType<ReasonTemplateDeleteFunctionType>> {
         this.logger.log('ReasonTemplateDeleteFunction.executeFunction', {}, 'info');
-        await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
+        const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('reasonTemplates').child(this.parameters.reasonTemplateId.guidString);
         const snapshot = await reference.snapshot();
-        if (snapshot.exists)
-            await reference.remove();
+        if (!snapshot.exists)
+            return;
+        const reasonTemplate = snapshot.value('decrypt');
+        await reference.remove();
+
+        await notifyCreator({ state: 'reason-template-delete', reasonTemplate: ReasonTemplate.concrete(reasonTemplate) }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
     }
 }
 

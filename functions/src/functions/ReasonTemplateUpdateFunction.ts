@@ -5,7 +5,7 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { ReasonTemplate } from '../types/ReasonTemplate';
-import { removeKey } from '../utils';
+import { notifyCreator, removeKey } from '../utils';
 
 export class ReasonTemplateUpdateFunction implements FirebaseFunction<ReasonTemplateUpdateFunctionType> {
     public readonly parameters: FunctionType.Parameters<ReasonTemplateUpdateFunctionType> & { databaseType: DatabaseType };
@@ -26,12 +26,14 @@ export class ReasonTemplateUpdateFunction implements FirebaseFunction<ReasonTemp
 
     public async executeFunction(): Promise<FunctionType.ReturnType<ReasonTemplateUpdateFunctionType>> {
         this.logger.log('ReasonTemplateUpdateFunction.executeFunction', {}, 'info');
-        await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
+        const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('reasonTemplates').child(this.parameters.reasonTemplate.id.guidString);
         const snapshot = await reference.snapshot();
         if (!snapshot.exists)
             throw HttpsError('invalid-argument', 'Couldn\'t update not existing reason template.', this.logger);
         await reference.set(ReasonTemplate.flatten(removeKey(this.parameters.reasonTemplate, 'id')), 'encrypt');
+
+        await notifyCreator({ state: 'reason-template-update', reasonTemplate: this.parameters.reasonTemplate }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
     }
 }
 

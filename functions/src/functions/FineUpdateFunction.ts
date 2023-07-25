@@ -5,7 +5,7 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Fine } from '../types/Fine';
 import { Guid } from '../types/Guid';
-import { removeKey } from '../utils';
+import { notifyCreator, removeKey } from '../utils';
 
 export class FineUpdateFunction implements FirebaseFunction<FineUpdateFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineUpdateFunctionType> & { databaseType: DatabaseType };
@@ -26,12 +26,14 @@ export class FineUpdateFunction implements FirebaseFunction<FineUpdateFunctionTy
 
     public async executeFunction(): Promise<FunctionType.ReturnType<FineUpdateFunctionType>> {
         this.logger.log('FineUpdateFunction.executeFunction', {}, 'info');
-        await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
+        const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('fines').child(this.parameters.fine.id.guidString);
         const snapshot = await reference.snapshot();
         if (!snapshot.exists)
             throw HttpsError('invalid-argument', 'Couldn\'t update not existing fine.', this.logger);
         await reference.set(Fine.flatten(removeKey(this.parameters.fine, 'id')), 'encrypt');
+
+        await notifyCreator({ state: 'fine-update', fine: this.parameters.fine }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
     }
 }
 

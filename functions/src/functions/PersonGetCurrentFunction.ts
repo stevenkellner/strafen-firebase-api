@@ -6,6 +6,7 @@ import { getPrivateKeys } from '../privateKeys';
 import { type ClubProperties } from '../types/ClubProperties';
 import { Guid } from '../types/Guid';
 import { type Person } from '../types/Person';
+import { SignInData } from '../types/SignInData';
 
 export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurrentFunctionType> {
     public readonly parameters: FunctionType.Parameters<PersonGetCurrentFunctionType> & { databaseType: DatabaseType };
@@ -50,6 +51,6 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
 }
 
 export type PersonGetCurrentFunctionType = FunctionType<Record<string, never>, Person.Flatten & {
-    signInData: object;
+    signInData: SignInData.Flatten;
     club: ClubProperties.Flatten;
 }>;

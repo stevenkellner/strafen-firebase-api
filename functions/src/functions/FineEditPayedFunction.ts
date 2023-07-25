@@ -5,6 +5,8 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { PayedState } from '../types/PayedState';
+import { notifyCreator } from '../utils';
+import { Fine } from '../types/Fine';
 
 export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineEditPayedFunctionType> & { databaseType: DatabaseType };
@@ -26,7 +28,7 @@ export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunc
 
     public async executeFunction(): Promise<FunctionType.ReturnType<FineEditPayedFunctionType>> {
         this.logger.log('FineEditPayedFunction.executeFunction', {}, 'info');
-        await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
+        const hashedUserId = await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubManager', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('fines').child(this.parameters.fineId.guidString);
         const snapshot = await reference.snapshot();
         if (!snapshot.exists)
@@ -36,6 +38,11 @@ export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunc
             ...fine,
             payedState: this.parameters.payedState
         }, 'encrypt');
+
+        await notifyCreator({ state: 'fine-edit-payed', fine: Fine.concrete({
+            ...fine,
+            payedState: this.parameters.payedState
+        })}, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
     }
 }
 

@@ -6,7 +6,7 @@ import { MigrateDatabaseFunction, type MigrateDatabaseFunctionType } from './fun
 
 admin.initializeApp();
 
-export = createFirebaseFunctions(getPrivateKeys, {}, {
+export = createFirebaseFunctions(getPrivateKeys, firebaseFunctions, {
     ...firebaseFunctions,
     migrate: {
         database: FirebaseFunctionDescriptor.create<MigrateDatabaseFunctionType>(MigrateDatabaseFunction)

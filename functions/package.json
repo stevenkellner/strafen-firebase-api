@@ -16,7 +16,7 @@
     "main": "lib/src/index.js",
     "dependencies": {
         "braintree": "^3.16.0",
-        "firebase-function": "^1.4.49",
+        "firebase-function": "^1.4.54",
         "firebase-functions": "^4.4.1",
         "js-base64": "^3.7.5",
         "uuid": "^9.0.0"

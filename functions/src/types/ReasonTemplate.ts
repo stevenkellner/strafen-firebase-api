@@ -67,6 +67,14 @@ export namespace ReasonTemplate {
         };
     }
 
+    export function description(reasonTemplate: Omit<ReasonTemplate, 'id'>): string {
+        if (reasonTemplate.counts === undefined)
+            return `${reasonTemplate.reasonMessage} (${Amount.description(reasonTemplate.amount)})`;
+        if (reasonTemplate.counts.maxCount === undefined)
+            return `${reasonTemplate.reasonMessage} (pro ${ReasonTemplateCountsItem.description(reasonTemplate.counts.item)}, ${Amount.description(reasonTemplate.amount)})`;
+        return `${reasonTemplate.reasonMessage} (pro ${ReasonTemplateCountsItem.description(reasonTemplate.counts.item)}, max. ${reasonTemplate.counts.maxCount}, ${Amount.description(reasonTemplate.amount)})`;
+    }
+
     export type Flatten = {
         id: string;
         reasonMessage: string;

@@ -24,6 +24,12 @@ export namespace PersonName {
         };
     }
 
+    export function description(name: PersonName) {
+        if (name.last === undefined)
+            return name.first;
+        return `${name.first} ${name.last}`;
+    }
+
     export type Flatten = {
         first: string;
         last: string | null;
