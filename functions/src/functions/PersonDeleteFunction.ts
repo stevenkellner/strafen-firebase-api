@@ -5,8 +5,8 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { InvitationLink } from '../types/InvitationLink';
-import { notifyCreator } from '../utils';
 import { Person } from '../types/Person';
+import { CreatorNotifier } from '../CreatorNotifier';
 
 export class PersonDeleteFunction implements FirebaseFunction<PersonDeleteFunctionType> {
     public readonly parameters: FunctionType.Parameters<PersonDeleteFunctionType> & { databaseType: DatabaseType };
@@ -50,8 +50,8 @@ export class PersonDeleteFunction implements FirebaseFunction<PersonDeleteFuncti
             if (invitationLinkSnapshot.exists)
                 await invitationLinkReference.remove();
         }
-        
-        await notifyCreator({ state: 'person-delete', person: Person.concrete(person) }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);        
+        await creatorNotifier.notify({ state: 'person-delete', person: Person.concrete(person) });
     }
 }
 

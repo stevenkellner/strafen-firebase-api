@@ -19,6 +19,8 @@ export class MigrateDatabaseFunction implements FirebaseFunction<MigrateDatabase
         const version = await this.getCurrentVersion();
         if (version.major < 1)
             await this.migrateToVersion_1_0_0();
+        if (version.major < 1 || version.minor < 1)
+            await this.migrateToVersion_1_1_0();
     }
 
     private async getCurrentVersion(): Promise<{ major: number; minor: number; patch: number }> {
@@ -52,6 +54,10 @@ export class MigrateDatabaseFunction implements FirebaseFunction<MigrateDatabase
         });
         await Promise.all(allPromises);
         await this.setVersion({ major: 1, minor: 0, patch: 0 });
+    }
+
+    private async migrateToVersion_1_1_0() {
+        await this.setVersion({ major: 1, minor: 1, patch: 0 });
     }
 }
 

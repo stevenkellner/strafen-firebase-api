@@ -62,6 +62,7 @@ export class ClubNewTestFunction implements FirebaseFunction<ClubNewTestFunction
             await reference.child('reasonTemplates').child(reasonTemplate[0]).set(reasonTemplate[1], 'encrypt');
         for (const fine of Object.entries(testClub.fines))
             await reference.child('fines').child(fine[0]).set(fine[1], 'encrypt');
+        await reference.child('changes').set(testClub.changes);
     }
 }
 

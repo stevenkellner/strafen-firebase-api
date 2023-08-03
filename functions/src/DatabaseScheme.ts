@@ -39,6 +39,17 @@ export type DatabaseScheme = DatabaseSchemeType<{
             fines: {
                 [FineId in string]: CryptedScheme<Omit<Fine.Flatten, 'id'>>
             };
+            changes: {
+                persons: {
+                    [PersonId in string]: string
+                };
+                reasonTemplates: {
+                    [ReasonTemplateId in string]: string
+                };
+                fines: {
+                    [FineId in string]: string
+                };
+            };
         }
     };
 }>;

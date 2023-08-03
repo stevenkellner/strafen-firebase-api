@@ -5,7 +5,8 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { Person } from '../types/Person';
-import { notifyCreator, removeKey } from '../utils';
+import { removeKey } from '../utils';
+import { CreatorNotifier } from '../CreatorNotifier';
 
 export class PersonAddFunction implements FirebaseFunction<PersonAddFunctionType> {
     public readonly parameters: FunctionType.Parameters<PersonAddFunctionType> & { databaseType: DatabaseType };
@@ -37,8 +38,8 @@ export class PersonAddFunction implements FirebaseFunction<PersonAddFunctionType
             signInData: null,
             isInvited: false
         }, 'encrypt');
-
-        await notifyCreator({ state: 'person-add', person: this.parameters.person }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        await creatorNotifier.notify({ state: 'person-add', person: this.parameters.person });
     }
 }
 

@@ -4,6 +4,7 @@ import { firebaseApp, cleanUpFirebase } from './firebaseApp';
 import { testUser } from './privateKeys';
 import { Crypter } from 'firebase-function';
 import { assert } from 'chai';
+import { DatabaseScheme } from '../src/DatabaseScheme';
 
 describe('clubNew', () => {
     const clubId = Guid.newGuid();
@@ -58,7 +59,7 @@ describe('clubNew', () => {
                         }
                     },
                     persons: {}
-                } as never
+                } as DatabaseScheme['clubs'][string]
             }
         });
         const databasePaypalMeLink = await firebaseApp.database.child('clubs').child(clubId.guidString).child('paypalMeLink').get('decrypt');

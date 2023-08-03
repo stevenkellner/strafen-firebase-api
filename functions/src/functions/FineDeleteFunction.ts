@@ -4,8 +4,8 @@ import { checkUserAuthentication } from '../checkUserAuthentication';
 import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
-import { notifyCreator } from '../utils';
 import { Fine } from '../types/Fine';
+import { CreatorNotifier } from '../CreatorNotifier';
 
 export class FineDeleteFunction implements FirebaseFunction<FineDeleteFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineDeleteFunctionType> & { databaseType: DatabaseType };
@@ -40,8 +40,8 @@ export class FineDeleteFunction implements FirebaseFunction<FineDeleteFunctionTy
             person.fineIds = person.fineIds.filter(fineId => fineId !== this.parameters.fineId.guidString);
             await personReference.set(person, 'encrypt');
         }
-
-        await notifyCreator({ state: 'fine-delete', fine: Fine.concrete(fine) }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        await creatorNotifier.notify({ state: 'fine-delete', fine: Fine.concrete(fine) });
     }
 }
 

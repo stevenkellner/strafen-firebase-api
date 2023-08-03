@@ -4,8 +4,8 @@ import { checkUserAuthentication } from '../checkUserAuthentication';
 import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
-import { notifyCreator } from '../utils';
 import { ReasonTemplate } from '../types/ReasonTemplate';
+import { CreatorNotifier } from '../CreatorNotifier';
 
 export class ReasonTemplateDeleteFunction implements FirebaseFunction<ReasonTemplateDeleteFunctionType> {
     public readonly parameters: FunctionType.Parameters<ReasonTemplateDeleteFunctionType> & { databaseType: DatabaseType };
@@ -33,8 +33,8 @@ export class ReasonTemplateDeleteFunction implements FirebaseFunction<ReasonTemp
             return;
         const reasonTemplate = snapshot.value('decrypt');
         await reference.remove();
-
-        await notifyCreator({ state: 'reason-template-delete', reasonTemplate: ReasonTemplate.concrete(reasonTemplate) }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);        
+        await creatorNotifier.notify({ state: 'reason-template-delete', reasonTemplate: ReasonTemplate.concrete(reasonTemplate) });
     }
 }
 

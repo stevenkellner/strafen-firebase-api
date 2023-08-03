@@ -5,7 +5,8 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Fine } from '../types/Fine';
 import { Guid } from '../types/Guid';
-import { notifyCreator, removeKey } from '../utils';
+import { removeKey } from '../utils';
+import { CreatorNotifier } from '../CreatorNotifier';
 
 export class FineAddFunction implements FirebaseFunction<FineAddFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineAddFunctionType> & { databaseType: DatabaseType };
@@ -39,8 +40,8 @@ export class FineAddFunction implements FirebaseFunction<FineAddFunctionType> {
             person.fineIds.push(this.parameters.fine.id.guidString);
             await personReference.set(person, 'encrypt');
         }
-
-        await notifyCreator({ state: 'fine-add', fine: this.parameters.fine }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        await creatorNotifier.notify({ state: 'fine-add', fine: this.parameters.fine });
     }
 }
 

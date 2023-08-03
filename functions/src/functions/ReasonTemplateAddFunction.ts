@@ -5,7 +5,8 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { ReasonTemplate } from '../types/ReasonTemplate';
-import { notifyCreator, removeKey } from '../utils';
+import { removeKey } from '../utils';
+import { CreatorNotifier } from '../CreatorNotifier';
 
 export class ReasonTemplateAddFunction implements FirebaseFunction<ReasonTemplateAddFunctionType> {
     public readonly parameters: FunctionType.Parameters<ReasonTemplateAddFunctionType> & { databaseType: DatabaseType };
@@ -32,8 +33,8 @@ export class ReasonTemplateAddFunction implements FirebaseFunction<ReasonTemplat
         if (snapshot.exists)
             throw HttpsError('invalid-argument', 'Couldn\'t add existing reason template.', this.logger);
         await reference.set(ReasonTemplate.flatten(removeKey(this.parameters.reasonTemplate, 'id')), 'encrypt');
-
-        await notifyCreator({ state: 'reason-template-add', reasonTemplate: this.parameters.reasonTemplate }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);        
+        await creatorNotifier.notify({ state: 'reason-template-add', reasonTemplate: this.parameters.reasonTemplate });
     }
 }
 

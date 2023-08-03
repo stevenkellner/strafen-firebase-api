@@ -5,7 +5,8 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Fine } from '../types/Fine';
 import { Guid } from '../types/Guid';
-import { notifyCreator, removeKey } from '../utils';
+import { removeKey } from '../utils';
+import { CreatorNotifier } from '../CreatorNotifier';
 
 export class FineUpdateFunction implements FirebaseFunction<FineUpdateFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineUpdateFunctionType> & { databaseType: DatabaseType };
@@ -32,8 +33,8 @@ export class FineUpdateFunction implements FirebaseFunction<FineUpdateFunctionTy
         if (!snapshot.exists)
             throw HttpsError('invalid-argument', 'Couldn\'t update not existing fine.', this.logger);
         await reference.set(Fine.flatten(removeKey(this.parameters.fine, 'id')), 'encrypt');
-
-        await notifyCreator({ state: 'fine-update', fine: this.parameters.fine }, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        await creatorNotifier.notify({ state: 'fine-update', fine: this.parameters.fine });
     }
 }
 

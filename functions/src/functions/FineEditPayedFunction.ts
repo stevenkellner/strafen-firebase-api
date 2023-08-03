@@ -5,8 +5,8 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { PayedState } from '../types/PayedState';
-import { notifyCreator } from '../utils';
 import { Fine } from '../types/Fine';
+import { CreatorNotifier } from '../CreatorNotifier';
 
 export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineEditPayedFunctionType> & { databaseType: DatabaseType };
@@ -38,11 +38,11 @@ export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunc
             ...fine,
             payedState: this.parameters.payedState
         }, 'encrypt');
-
-        await notifyCreator({ state: 'fine-edit-payed', fine: Fine.concrete({
+        const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        creatorNotifier.notify({ state: 'fine-edit-payed', fine: Fine.concrete({
             ...fine,
             payedState: this.parameters.payedState
-        })}, this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
+        })});
     }
 }
 

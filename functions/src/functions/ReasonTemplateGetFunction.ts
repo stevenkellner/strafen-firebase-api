@@ -27,15 +27,12 @@ export class ReasonTemplateGetFunction implements FirebaseFunction<ReasonTemplat
         await checkUserAuthentication(this.auth, this.parameters.clubId, 'clubMember', this.parameters.databaseType, this.logger.nextIndent);
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('reasonTemplates');
         const snapshot = await reference.snapshot();
-        return snapshot.reduce<Record<string, ReasonTemplate.Flatten>>({}, (value, snapshot) => {
+        return snapshot.reduceInto<Record<string, ReasonTemplate.Flatten>>({}, (value, snapshot) => {
             if (snapshot.key === null)
-                return value;
-            return {
-                ...value,
-                [snapshot.key]: {
-                    id: snapshot.key,
-                    ...snapshot.value('decrypt')
-                }
+                return;
+            value[snapshot.key] = {
+                id: snapshot.key,
+                ...snapshot.value('decrypt')
             };
         });
     }

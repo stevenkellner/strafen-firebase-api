@@ -35,4 +35,15 @@ export type TestClub = {
     fines: {
         [FineId in string]: Omit<Fine.Flatten, 'id'>
     };
+    changes: {
+        persons: {
+            [PersonId in string]: string
+        };
+        reasonTemplates: {
+            [ReasonTemplateId in string]: string
+        };
+        fines: {
+            [FineId in string]: string
+        };
+    };
 };

@@ -16,17 +16,20 @@ import { PersonAddFunction, type PersonAddFunctionType } from './functions/Perso
 import { PersonUpdateFunction, type PersonUpdateFunctionType } from './functions/PersonUpdateFunction';
 import { PersonDeleteFunction, type PersonDeleteFunctionType } from './functions/PersonDeleteFunction';
 import { PersonGetFunction, type PersonGetFunctionType } from './functions/PersonGetFunction';
+import { PersonGetSingleFunction, type PersonGetSingleFunctionType } from './functions/PersonGetSingleFunction';
 
 import { ReasonTemplateAddFunction, type ReasonTemplateAddFunctionType } from './functions/ReasonTemplateAddFunction';
 import { ReasonTemplateUpdateFunction, type ReasonTemplateUpdateFunctionType } from './functions/ReasonTemplateUpdateFunction';
 import { ReasonTemplateDeleteFunction, type ReasonTemplateDeleteFunctionType } from './functions/ReasonTemplateDeleteFunction';
 import { ReasonTemplateGetFunction, type ReasonTemplateGetFunctionType } from './functions/ReasonTemplateGetFunction';
+import { ReasonTemplateGetSingleFunction, type ReasonTemplateGetSingleFunctionType } from './functions/ReasonTemplateGetSingleFunction';
 
 import { FineAddFunction, type FineAddFunctionType } from './functions/FineAddFunction';
 import { FineUpdateFunction, type FineUpdateFunctionType } from './functions/FineUpdateFunction';
 import { FineDeleteFunction, type FineDeleteFunctionType } from './functions/FineDeleteFunction';
 import { FineEditPayedFunction, type FineEditPayedFunctionType } from './functions/FineEditPayedFunction';
 import { FineGetFunction, type FineGetFunctionType } from './functions/FineGetFunction';
+import { FineGetSingleFunction, type FineGetSingleFunctionType } from './functions/FineGetSingleFunction';
 
 export const firebaseFunctions = {
     deleteAllData: FirebaseFunctionDescriptor.create<DeleteAllDataFunctionType>(DeleteAllDataFunction),
@@ -41,20 +44,23 @@ export const firebaseFunctions = {
         add: FirebaseFunctionDescriptor.create<PersonAddFunctionType>(PersonAddFunction),
         update: FirebaseFunctionDescriptor.create<PersonUpdateFunctionType>(PersonUpdateFunction),
         delete: FirebaseFunctionDescriptor.create<PersonDeleteFunctionType>(PersonDeleteFunction),
-        get: FirebaseFunctionDescriptor.create<PersonGetFunctionType>(PersonGetFunction)
+        get: FirebaseFunctionDescriptor.create<PersonGetFunctionType>(PersonGetFunction),
+        getSingle: FirebaseFunctionDescriptor.create<PersonGetSingleFunctionType>(PersonGetSingleFunction)
     },
     reasonTemplate: {
         add: FirebaseFunctionDescriptor.create<ReasonTemplateAddFunctionType>(ReasonTemplateAddFunction),
         update: FirebaseFunctionDescriptor.create<ReasonTemplateUpdateFunctionType>(ReasonTemplateUpdateFunction),
         delete: FirebaseFunctionDescriptor.create<ReasonTemplateDeleteFunctionType>(ReasonTemplateDeleteFunction),
-        get: FirebaseFunctionDescriptor.create<ReasonTemplateGetFunctionType>(ReasonTemplateGetFunction)
+        get: FirebaseFunctionDescriptor.create<ReasonTemplateGetFunctionType>(ReasonTemplateGetFunction),
+        getSingle: FirebaseFunctionDescriptor.create<ReasonTemplateGetSingleFunctionType>(ReasonTemplateGetSingleFunction)
     },
     fine: {
         add: FirebaseFunctionDescriptor.create<FineAddFunctionType>(FineAddFunction),
         update: FirebaseFunctionDescriptor.create<FineUpdateFunctionType>(FineUpdateFunction),
         delete: FirebaseFunctionDescriptor.create<FineDeleteFunctionType>(FineDeleteFunction),
         editPayed: FirebaseFunctionDescriptor.create<FineEditPayedFunctionType>(FineEditPayedFunction),
-        get: FirebaseFunctionDescriptor.create<FineGetFunctionType>(FineGetFunction)
+        get: FirebaseFunctionDescriptor.create<FineGetFunctionType>(FineGetFunction),
+        getSingle: FirebaseFunctionDescriptor.create<FineGetSingleFunctionType>(FineGetSingleFunction)
     },
     paypalMe: {
         set: FirebaseFunctionDescriptor.create<PaypalMeSetFunctionType>(PaypalMeSetFunction)
