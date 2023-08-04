@@ -22,7 +22,8 @@ export async function createTestClub(clubId: Guid, testClubType: TestClubType = 
 }
 
 export async function authenticateTestUser(clubId: Guid) {
-    await firebaseApp.auth.signIn(testUser.email, testUser.password);
+    if (firebaseApp.auth.currentUser === null)
+        await firebaseApp.auth.signIn(testUser.email, testUser.password);
     const authenticationTypes: UserAuthenticationType[] = ['clubMember', 'clubManager'];
     await Promise.all(authenticationTypes.map(async authenticationType => await authenticateUser(authenticationType, clubId)));
 }
@@ -35,5 +36,4 @@ async function authenticateUser(authenticationType: UserAuthenticationType, club
 export async function cleanUpFirebase() {
     const result = await firebaseApp.functions.function('deleteAllData').call({});
     result.success;
-    await firebaseApp.auth.signOut();
 }

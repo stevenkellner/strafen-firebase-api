@@ -1,6 +1,7 @@
 import { expect } from 'firebase-function/lib/src/testUtils';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
+import { UtcDate } from 'firebase-function';
 
 describe('personMakeManager', () => {
     const clubId = Guid.newGuid();
@@ -43,5 +44,7 @@ describe('personMakeManager', () => {
         });
         result.success;
         expect(await firebaseApp.database.child('clubs').child(clubId.guidString).child('authentication').child('clubManager').child('sha_xyz').get()).to.be.equal('authenticated');
+        const databasePersonChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('persons').child('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7').get();
+        expect(UtcDate.decode(databasePersonChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 });

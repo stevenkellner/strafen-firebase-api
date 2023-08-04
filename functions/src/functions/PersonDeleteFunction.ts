@@ -7,6 +7,7 @@ import { Guid } from '../types/Guid';
 import { InvitationLink } from '../types/InvitationLink';
 import { Person } from '../types/Person';
 import { CreatorNotifier } from '../CreatorNotifier';
+import { valueChanged } from '../utils';
 
 export class PersonDeleteFunction implements FirebaseFunction<PersonDeleteFunctionType> {
     public readonly parameters: FunctionType.Parameters<PersonDeleteFunctionType> & { databaseType: DatabaseType };
@@ -38,10 +39,13 @@ export class PersonDeleteFunction implements FirebaseFunction<PersonDeleteFuncti
         await Promise.all(person.fineIds.map(async fineId => {
             const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('fines').child(fineId);
             const snapshot = await reference.snapshot();
-            if (snapshot.exists)
+            if (snapshot.exists) {
                 await reference.remove();
+                await valueChanged(new Guid(fineId), this.parameters.clubId, this.parameters.databaseType, 'fines');
+            }
         }));
         await reference.remove();
+        await valueChanged(this.parameters.personId, this.parameters.clubId, this.parameters.databaseType, 'persons');
         const invitationLink = new InvitationLink(this.parameters.clubId, this.parameters.personId, this.parameters.databaseType);
         const invitationLinkId = await invitationLink.getId();
         if (invitationLinkId !== null) {

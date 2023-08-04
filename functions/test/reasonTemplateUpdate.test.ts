@@ -1,6 +1,7 @@
 import { expect } from 'firebase-function/lib/src/testUtils';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
+import { UtcDate } from 'firebase-function';
 
 describe('reasonTemplateUpdate', () => {
     const clubId = Guid.newGuid();
@@ -55,5 +56,7 @@ describe('reasonTemplateUpdate', () => {
                 maxCount: 5
             }
         });
+        const databaseReasonTemplateChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('reasonTemplates').child(reasonTemplateId.guidString).get();
+        expect(UtcDate.decode(databaseReasonTemplateChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 });

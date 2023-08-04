@@ -1,6 +1,7 @@
 import { expect } from 'firebase-function/lib/src/testUtils';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
+import { UtcDate } from 'firebase-function';
 
 describe('fineAdd', () => {
     const clubId = Guid.newGuid();
@@ -21,7 +22,7 @@ describe('fineAdd', () => {
             fine: {
                 id: fineId.guidString,
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                date: '2023-02-20T17:23:45.678+01:00',
+                date: '2023-02-20-17-23',
                 payedState: 'unpayed',
                 reasonMessage: 'test-message-1',
                 amount: 9.50
@@ -31,13 +32,17 @@ describe('fineAdd', () => {
         const databaseFine = await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt');
         expect(databaseFine).to.be.deep.equal({
             personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-            date: '2023-02-20T16:23:45.678Z',
+            date: '2023-02-20-17-23',
             payedState: 'unpayed',
             reasonMessage: 'test-message-1',
             amount: 9.50
         });
         const databasePerson = await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7').get('decrypt');
         expect(databasePerson.fineIds.includes(fineId.guidString)).to.be.equal(true);
+        const databaseFineChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('fines').child(fineId.guidString).get();
+        expect(UtcDate.decode(databaseFineChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
+        const databasePersonChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('persons').child('7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7').get();
+        expect(UtcDate.decode(databasePersonChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 
     it('add existing', async () => {
@@ -47,7 +52,7 @@ describe('fineAdd', () => {
             fine: {
                 id: fineId.guidString,
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                date: '2023-02-20T17:23:45.678+01:00',
+                date: '2023-02-20-17-23',
                 payedState: 'unpayed',
                 reasonMessage: 'test-message-1',
                 amount: 9.50

@@ -4,6 +4,7 @@ import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { checkUserAuthentication } from '../checkUserAuthentication';
 import { type DatabaseScheme } from '../DatabaseScheme';
+import { valueChanged } from '../utils';
 
 export class PersonMakeManagerFunction implements FirebaseFunction<PersonMakeManagerFunctionType> {
     public readonly parameters: FunctionType.Parameters<PersonMakeManagerFunctionType> & { databaseType: DatabaseType };
@@ -37,6 +38,7 @@ export class PersonMakeManagerFunction implements FirebaseFunction<PersonMakeMan
         if (!person.signInData.authentication.includes('clubManager'))
             person.signInData.authentication.push('clubManager');
         await personReference.set(person, 'encrypt');
+        await valueChanged(this.parameters.personId, this.parameters.clubId, this.parameters.databaseType, 'persons');
     }
 }
 

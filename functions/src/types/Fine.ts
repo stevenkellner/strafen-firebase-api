@@ -1,4 +1,4 @@
-import { HttpsError, type ILogger } from 'firebase-function';
+import { HttpsError, UtcDate, type ILogger } from 'firebase-function';
 import { Guid } from './Guid';
 import { PayedState } from './PayedState';
 import { Amount } from './Amount';
@@ -9,7 +9,7 @@ export type Fine = {
     id: Guid;
     personId: Guid;
     payedState: PayedState;
-    date: Date;
+    date: UtcDate;
     reasonMessage: string;
     amount: Amount;
 };
@@ -56,14 +56,14 @@ export namespace Fine {
         return {
             personId: new Guid(value.personId),
             payedState: value.payedState,
-            date: new Date(value.date),
+            date: UtcDate.decode(value.date),
             reasonMessage: value.reasonMessage,
             amount: Amount.fromNumber(value.amount, logger.nextIndent)
         };
     }
 
     export function description(fine: Omit<Fine, 'id'>, person: Omit<Person, 'id'>): string {
-        return `${fine.reasonMessage} (${Amount.description(fine.amount)}, ${PersonName.description(person.name)}, ${PayedState.description(fine.payedState)}, ${fine.date.toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })})`;
+        return `${fine.reasonMessage} (${Amount.description(fine.amount)}, ${PersonName.description(person.name)}, ${PayedState.description(fine.payedState)}, ${fine.date.description('de-DE', 'Europe/Berlin')})`;
     }
 
     export type Flatten = {
@@ -82,7 +82,7 @@ export namespace Fine {
             ...('id' in fine ? { id: fine.id.guidString } : {}),
             personId: fine.personId.guidString,
             payedState: fine.payedState,
-            date: fine.date.toISOString(),
+            date: fine.date.encoded,
             reasonMessage: fine.reasonMessage,
             amount: Amount.flatten(fine.amount)
         };
@@ -95,7 +95,7 @@ export namespace Fine {
             ...('id' in fine ? { id: new Guid(fine.id) } : {}),
             personId: new Guid(fine.personId),
             payedState: fine.payedState,
-            date: new Date(fine.date),
+            date: UtcDate.decode(fine.date),
             reasonMessage: fine.reasonMessage,
             amount: Amount.concrete(fine.amount)
         };

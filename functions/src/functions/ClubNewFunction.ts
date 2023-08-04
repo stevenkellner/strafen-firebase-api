@@ -1,4 +1,4 @@
-import { type DatabaseType, type FirebaseFunction, type ILogger, ParameterBuilder, ParameterContainer, ParameterParser, type FunctionType, DatabaseReference, HttpsError } from 'firebase-function';
+import { type DatabaseType, type FirebaseFunction, type ILogger, ParameterBuilder, ParameterContainer, ParameterParser, type FunctionType, DatabaseReference, HttpsError, UtcDate } from 'firebase-function';
 import { type AuthData } from 'firebase-functions/lib/common/providers/tasks';
 import { checkUserAuthentication } from '../checkUserAuthentication';
 import { type DatabaseScheme } from '../DatabaseScheme';
@@ -6,6 +6,7 @@ import { getPrivateKeys } from '../privateKeys';
 import { ClubProperties } from '../types/ClubProperties';
 import { Guid } from '../types/Guid';
 import { PersonName } from '../types/PersonName';
+import { valueChanged } from '../utils';
 
 export class ClubNewFunction implements FirebaseFunction<ClubNewFunctionType> {
     public readonly parameters: FunctionType.Parameters<ClubNewFunctionType> & { databaseType: DatabaseType };
@@ -42,12 +43,13 @@ export class ClubNewFunction implements FirebaseFunction<ClubNewFunctionType> {
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: new Date().toISOString(),
+                signInDate: UtcDate.now.encoded,
                 authentication: ['clubMember', 'clubManager'],
                 notificationTokens: {}
             },
             isInvited: false
         }, 'encrypt');
+        await valueChanged(this.parameters.personId, this.parameters.clubId, this.parameters.databaseType, 'persons');
         const userReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('users').child(hashedUserId);
         const userSnapshot = await userReference.snapshot();
         if (userSnapshot.exists)

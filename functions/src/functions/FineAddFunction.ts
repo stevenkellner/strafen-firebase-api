@@ -5,7 +5,7 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Fine } from '../types/Fine';
 import { Guid } from '../types/Guid';
-import { removeKey } from '../utils';
+import { removeKey, valueChanged } from '../utils';
 import { CreatorNotifier } from '../CreatorNotifier';
 
 export class FineAddFunction implements FirebaseFunction<FineAddFunctionType> {
@@ -33,12 +33,14 @@ export class FineAddFunction implements FirebaseFunction<FineAddFunctionType> {
         if (snapshot.exists)
             throw HttpsError('invalid-argument', 'Couldn\'t add existing fine.', this.logger);
         await reference.set(Fine.flatten(removeKey(this.parameters.fine, 'id')), 'encrypt');
+        await valueChanged(this.parameters.fine.id, this.parameters.clubId, this.parameters.databaseType, 'fines');
         const personReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('persons').child(this.parameters.fine.personId.guidString);
         const personSnapshot = await personReference.snapshot();
         if (personSnapshot.exists) {
             const person = personSnapshot.value('decrypt');
             person.fineIds.push(this.parameters.fine.id.guidString);
             await personReference.set(person, 'encrypt');
+            await valueChanged(this.parameters.fine.personId, this.parameters.clubId, this.parameters.databaseType, 'persons');
         }
         const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
         await creatorNotifier.notify({ state: 'fine-add', fine: this.parameters.fine });

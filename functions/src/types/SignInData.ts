@@ -1,9 +1,9 @@
-import { HttpsError, type ILogger } from 'firebase-function';
+import { HttpsError, UtcDate, type ILogger } from 'firebase-function';
 import { UserAuthenticationType } from './UserAuthentication';
 
 export type SignInData = {
     hashedUserId: string;
-    signInDate: Date;
+    signInDate: UtcDate;
     authentication: UserAuthenticationType[];
     notificationTokens: Record<string, string>;
 };
@@ -42,7 +42,7 @@ export namespace SignInData {
 
         return {
             hashedUserId: value.hashedUserId,
-            signInDate: new Date(value.signInDate),
+            signInDate: UtcDate.decode(value.signInDate),
             authentication: authentication,
             notificationTokens: notificationTokens
         };
@@ -62,7 +62,7 @@ export namespace SignInData {
             return null;
         return {
             hashedUserId: signInData.hashedUserId,
-            signInDate: signInData.signInDate.toISOString(),
+            signInDate: signInData.signInDate.encoded,
             authentication: signInData.authentication,
             notificationTokens: signInData.notificationTokens
         };
@@ -75,7 +75,7 @@ export namespace SignInData {
             return undefined;
         return {
             hashedUserId: signInData.hashedUserId,
-            signInDate: new Date(signInData.signInDate),
+            signInDate: UtcDate.decode(signInData.signInDate),
             authentication: signInData.authentication,
             notificationTokens: signInData.notificationTokens
         };

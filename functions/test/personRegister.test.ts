@@ -1,7 +1,7 @@
 import { expect } from 'firebase-function/lib/src/testUtils';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, cleanUpFirebase, authenticateTestUser, firebaseApp } from './firebaseApp';
-import { Crypter } from 'firebase-function';
+import { Crypter, UtcDate } from 'firebase-function';
 import { assert } from 'chai';
 import { getInvitationLinkId } from './utils';
 
@@ -54,6 +54,8 @@ describe('personRegister', () => {
             personId: personId.guidString
         });
         expect(await getInvitationLinkId(clubId, personId)).to.be.equal(null);
+        const databasePersonChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('persons').child(personId.guidString).get();
+        expect(UtcDate.decode(databasePersonChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 
     it('person not in club', async () => {

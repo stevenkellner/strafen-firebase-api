@@ -5,7 +5,7 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { Person } from '../types/Person';
-import { removeKey } from '../utils';
+import { removeKey, valueChanged } from '../utils';
 import { CreatorNotifier } from '../CreatorNotifier';
 
 export class PersonUpdateFunction implements FirebaseFunction<PersonUpdateFunctionType> {
@@ -39,6 +39,7 @@ export class PersonUpdateFunction implements FirebaseFunction<PersonUpdateFuncti
             signInData: person.signInData,
             isInvited: person.isInvited
         }, 'encrypt');
+        await valueChanged(this.parameters.person.id, this.parameters.clubId, this.parameters.databaseType, 'persons');
         const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);        
         await creatorNotifier.notify({ state: 'person-update', person: this.parameters.person });
     }

@@ -1,6 +1,7 @@
 import { expect } from 'firebase-function/lib/src/testUtils';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
+import { UtcDate } from 'firebase-function';
 
 describe('fineUpdate', () => {
     const clubId = Guid.newGuid();
@@ -21,7 +22,7 @@ describe('fineUpdate', () => {
             fine: {
                 id: fineId.guidString,
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                date: '2023-02-20T17:23:45.678+01:00',
+                date: '2023-02-20-17-23',
                 payedState: 'unpayed',
                 reasonMessage: 'test-message-1',
                 amount: 9.50
@@ -40,7 +41,7 @@ describe('fineUpdate', () => {
             fine: {
                 id: fineId.guidString,
                 personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-                date: '2023-02-20T17:23:45.678+01:00',
+                date: '2023-02-20-17-23',
                 payedState: 'unpayed',
                 reasonMessage: 'test-message-1',
                 amount: 9.50
@@ -50,10 +51,12 @@ describe('fineUpdate', () => {
         const databasefine = await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt');
         expect(databasefine).to.be.deep.equal({
             personId: '7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7',
-            date: '2023-02-20T16:23:45.678Z',
+            date: '2023-02-20-17-23',
             payedState: 'unpayed',
             reasonMessage: 'test-message-1',
             amount: 9.50
         });
+        const databaseFineChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('fines').child(fineId.guidString).get();
+        expect(UtcDate.decode(databaseFineChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 });

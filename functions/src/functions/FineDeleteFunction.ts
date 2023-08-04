@@ -6,6 +6,7 @@ import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { Fine } from '../types/Fine';
 import { CreatorNotifier } from '../CreatorNotifier';
+import { valueChanged } from '../utils';
 
 export class FineDeleteFunction implements FirebaseFunction<FineDeleteFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineDeleteFunctionType> & { databaseType: DatabaseType };
@@ -33,12 +34,14 @@ export class FineDeleteFunction implements FirebaseFunction<FineDeleteFunctionTy
             return;
         const fine = snapshot.value('decrypt');
         await reference.remove();
+        await valueChanged(this.parameters.fineId, this.parameters.clubId, this.parameters.databaseType, 'fines');
         const personReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs').child(this.parameters.clubId.guidString).child('persons').child(fine.personId);
         const personSnapshot = await personReference.snapshot();
         if (personSnapshot.exists) {
             const person = personSnapshot.value('decrypt');
             person.fineIds = person.fineIds.filter(fineId => fineId !== this.parameters.fineId.guidString);
             await personReference.set(person, 'encrypt');
+            await valueChanged(new Guid(fine.personId), this.parameters.clubId, this.parameters.databaseType, 'persons');
         }
         const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
         await creatorNotifier.notify({ state: 'fine-delete', fine: Fine.concrete(fine) });

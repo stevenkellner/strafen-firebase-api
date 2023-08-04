@@ -1,6 +1,7 @@
 import { expect } from 'firebase-function/lib/src/testUtils';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
+import { UtcDate } from 'firebase-function';
 
 describe('fineEditPayed', () => {
     const clubId = Guid.newGuid();
@@ -35,6 +36,8 @@ describe('fineEditPayed', () => {
         });
         result.success;
         expect((await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt')).payedState).to.be.equal('unpayed');
+        const databaseFineChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('fines').child(fineId.guidString).get();
+        expect(UtcDate.decode(databaseFineChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 
     it('to payed', async () => {
@@ -46,5 +49,7 @@ describe('fineEditPayed', () => {
         });
         result.success;
         expect((await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt')).payedState).to.be.equal('payed');
+        const databaseFineChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('fines').child(fineId.guidString).get();
+        expect(UtcDate.decode(databaseFineChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 });

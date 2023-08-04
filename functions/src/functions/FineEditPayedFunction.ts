@@ -7,6 +7,7 @@ import { Guid } from '../types/Guid';
 import { PayedState } from '../types/PayedState';
 import { Fine } from '../types/Fine';
 import { CreatorNotifier } from '../CreatorNotifier';
+import { valueChanged } from '../utils';
 
 export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunctionType> {
     public readonly parameters: FunctionType.Parameters<FineEditPayedFunctionType> & { databaseType: DatabaseType };
@@ -38,6 +39,7 @@ export class FineEditPayedFunction implements FirebaseFunction<FineEditPayedFunc
             ...fine,
             payedState: this.parameters.payedState
         }, 'encrypt');
+        await valueChanged(this.parameters.fineId, this.parameters.clubId, this.parameters.databaseType, 'fines');
         const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);
         creatorNotifier.notify({ state: 'fine-edit-payed', fine: Fine.concrete({
             ...fine,

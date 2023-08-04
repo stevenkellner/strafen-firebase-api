@@ -1,6 +1,7 @@
 import { expect } from 'firebase-function/lib/src/testUtils';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
+import { UtcDate } from 'firebase-function';
 
 describe('reasonTemplateDelete', () => {
     const clubId = Guid.newGuid();
@@ -31,5 +32,7 @@ describe('reasonTemplateDelete', () => {
         });
         result.success;
         expect(await firebaseApp.database.child('clubs').child(clubId.guidString).child('reasonTemplates').child(reasonTemplateId.guidString).exists()).to.be.equal(false);
+        const databaseReasonTemplateChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('reasonTemplates').child(reasonTemplateId.guidString).get();
+        expect(UtcDate.decode(databaseReasonTemplateChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 });

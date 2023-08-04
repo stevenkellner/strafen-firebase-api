@@ -4,6 +4,7 @@ import { Fine } from '../src/types/Fine';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
 import { getInvitationLinkId } from './utils';
+import { UtcDate } from 'firebase-function';
 
 describe('personDelete', () => {
     const clubId = Guid.newGuid();
@@ -31,7 +32,7 @@ describe('personDelete', () => {
         const fineId = Guid.newGuid();
         const fine: Omit<Fine, 'id'> = {
             personId: personId,
-            date: new Date(),
+            date: UtcDate.now,
             reasonMessage: 'asdf',
             amount: new Amount(1, 50),
             payedState: 'unpayed'
@@ -48,6 +49,10 @@ describe('personDelete', () => {
         expect(await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).exists()).to.be.equal(false);
         expect(await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).exists()).to.be.equal(false);
         expect(await getInvitationLinkId(clubId, personId)).to.be.equal(null);
+        const databasePersonChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('persons').child(personId.guidString).get();
+        expect(UtcDate.decode(databasePersonChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
+        const databaseFineChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('fines').child(fineId.guidString).get();
+        expect(UtcDate.decode(databaseFineChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 
     it('delete registered existing', async () => {

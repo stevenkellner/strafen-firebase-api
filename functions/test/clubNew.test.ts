@@ -2,7 +2,7 @@ import { expect } from 'firebase-function/lib/src/testUtils';
 import { Guid } from '../src/types/Guid';
 import { firebaseApp, cleanUpFirebase } from './firebaseApp';
 import { testUser } from './privateKeys';
-import { Crypter } from 'firebase-function';
+import { Crypter, UtcDate } from 'firebase-function';
 import { assert } from 'chai';
 import { DatabaseScheme } from '../src/DatabaseScheme';
 
@@ -38,6 +38,9 @@ describe('clubNew', () => {
         delete (databaseValue.clubs[clubId.guidString] as { paypalMeLink?: unknown }).paypalMeLink;
         expect(Object.values(databaseValue.clubs[clubId.guidString].persons).length).to.be.equal(1);
         databaseValue.clubs[clubId.guidString].persons = {};
+        expect(Object.values(databaseValue.clubs[clubId.guidString].changes.persons).length).to.be.equal(1);
+        expect(UtcDate.decode(databaseValue.clubs[clubId.guidString].changes.persons[personId.guidString]).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
+        databaseValue.clubs[clubId.guidString].changes.persons = {};
         expect(Object.values(databaseValue.users).length).to.be.equal(1);
         databaseValue.users = {};
         expect('invitationLinks' in databaseValue).to.be.equal(false);
@@ -58,7 +61,10 @@ describe('clubNew', () => {
                             [hashedUserId]: 'authenticated'
                         }
                     },
-                    persons: {}
+                    persons: {},
+                    changes: {
+                        persons: {}
+                    }
                 } as DatabaseScheme['clubs'][string]
             }
         });

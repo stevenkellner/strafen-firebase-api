@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, cleanUpFirebase, authenticateTestUser, firebaseApp } from './firebaseApp';
-import { Crypter } from 'firebase-function';
+import { Crypter, UtcDate } from 'firebase-function';
 
 describe('personGetCurrent', () => {
     const clubId = Guid.newGuid();
@@ -24,14 +24,14 @@ describe('personGetCurrent', () => {
             clubId: clubId.guidString,
             personId: personId.guidString
         }, 'encrypt');
-        const signInDate = new Date();
+        const signInDate = UtcDate.now;
         const fineIds = [Guid.newGuid().guidString, Guid.newGuid().guidString, Guid.newGuid().guidString];
         await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).set({
             name: { first: 'lk', last: 'oiqjr' },
             fineIds: fineIds,
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: signInDate.toISOString(),
+                signInDate: signInDate.encoded,
                 authentication: ['clubMember'],
                 notificationTokens: {}
             },
@@ -44,7 +44,7 @@ describe('personGetCurrent', () => {
             fineIds: fineIds,
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: signInDate.toISOString(),
+                signInDate: signInDate.encoded,
                 authentication: ['clubMember'],
                 notificationTokens: {}
             },
@@ -65,13 +65,13 @@ describe('personGetCurrent', () => {
             clubId: clubId.guidString,
             personId: personId.guidString
         }, 'encrypt');
-        const signInDate = new Date();
+        const signInDate = UtcDate.now;
         await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).set({
             name: { first: 'lk', last: 'oiqjr' },
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: signInDate.toISOString(),
+                signInDate: signInDate.encoded,
                 authentication: ['clubMember', 'clubManager'],
                 notificationTokens: {
                     abc: 'abc123'
@@ -86,7 +86,7 @@ describe('personGetCurrent', () => {
             fineIds: [],
             signInData: {
                 hashedUserId: hashedUserId,
-                signInDate: signInDate.toISOString(),
+                signInDate: signInDate.encoded,
                 authentication: ['clubMember', 'clubManager'],
                 notificationTokens: {
                     abc: 'abc123'

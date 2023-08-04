@@ -1,4 +1,4 @@
-import { FirebaseFunctionDescriptor, type FirebaseFunctionsType } from 'firebase-function';
+import { FirebaseFunctionDescriptor, type FirebaseFunctions } from 'firebase-function';
 import { DeleteAllDataFunction, type DeleteAllDataFunctionType } from './functions/DeleteAllDataFunction';
 import { ClubNewFunction, type ClubNewFunctionType } from './functions/ClubNewFunction';
 import { ClubNewTestFunction, type ClubNewTestFunctionType } from './functions/ClubNewTestFunction';
@@ -8,6 +8,8 @@ import { InvitationLinkGetPersonFunction, type InvitationLinkGetPersonFunctionTy
 import { type NotificationRegisterFunctionType, NotificationRegisterFunction } from './functions/NotificationRegisterFunction';
 import { NotificationPushFunction, type NotificationPushFunctionType } from './functions/NotificationPushFunction';
 import { PaypalMeSetFunction, PaypalMeSetFunctionType } from './functions/PaypalMeSetFunction';
+import { DailyCleanupFunction } from './functions/DailyCleanupFunction';
+import { ExecuteScheduleFunction, ExecuteScheduleFunctionType } from './functions/ExecuteScheduleFunction';
 
 import { PersonRegisterFunction, type PersonRegisterFunctionType } from './functions/PersonRegisterFunction';
 import { PersonMakeManagerFunction, type PersonMakeManagerFunctionType } from './functions/PersonMakeManagerFunction';
@@ -33,6 +35,8 @@ import { FineGetSingleFunction, type FineGetSingleFunctionType } from './functio
 
 export const firebaseFunctions = {
     deleteAllData: FirebaseFunctionDescriptor.create<DeleteAllDataFunctionType>(DeleteAllDataFunction),
+    executeSchedule: FirebaseFunctionDescriptor.create<ExecuteScheduleFunctionType>(ExecuteScheduleFunction),
+    dailyCleanup: ['0 1 * * *', DailyCleanupFunction],
     club: {
         new: FirebaseFunctionDescriptor.create<ClubNewFunctionType>(ClubNewFunction),
         newTest: FirebaseFunctionDescriptor.create<ClubNewTestFunctionType>(ClubNewTestFunction)
@@ -74,4 +78,4 @@ export const firebaseFunctions = {
         register: FirebaseFunctionDescriptor.create<NotificationRegisterFunctionType>(NotificationRegisterFunction),
         push: FirebaseFunctionDescriptor.create<NotificationPushFunctionType>(NotificationPushFunction)
     }
-} satisfies FirebaseFunctionsType;
+} satisfies FirebaseFunctions;

@@ -1,6 +1,7 @@
 import { expect } from 'firebase-function/lib/src/testUtils';
 import { Guid } from '../src/types/Guid';
 import { createTestClub, authenticateTestUser, cleanUpFirebase, firebaseApp } from './firebaseApp';
+import { UtcDate } from 'firebase-function';
 
 describe('personUpdate', () => {
     const clubId = Guid.newGuid();
@@ -45,11 +46,13 @@ describe('personUpdate', () => {
             fineIds: ['1B5F958E-9D7D-46E1-8AEE-F52F4370A95A'],
             signInData: {
                 hashedUserId: 'sha_xyz',
-                signInDate: '2022-01-26T17:23:45.678+01:00',
+                signInDate: '2022-01-26-17-23',
                 authentication: ['clubMember'],
                 notificationTokens: {}
             },
             isInvited: false
         });
+        const databasePersonChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('persons').child(personId.guidString).get();
+        expect(UtcDate.decode(databasePersonChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 });

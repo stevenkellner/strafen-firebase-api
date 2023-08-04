@@ -5,7 +5,7 @@ import { type DatabaseScheme } from '../DatabaseScheme';
 import { getPrivateKeys } from '../privateKeys';
 import { Guid } from '../types/Guid';
 import { ReasonTemplate } from '../types/ReasonTemplate';
-import { removeKey } from '../utils';
+import { removeKey, valueChanged } from '../utils';
 import { CreatorNotifier } from '../CreatorNotifier';
 
 export class ReasonTemplateUpdateFunction implements FirebaseFunction<ReasonTemplateUpdateFunctionType> {
@@ -33,6 +33,7 @@ export class ReasonTemplateUpdateFunction implements FirebaseFunction<ReasonTemp
         if (!snapshot.exists)
             throw HttpsError('invalid-argument', 'Couldn\'t update not existing reason template.', this.logger);
         await reference.set(ReasonTemplate.flatten(removeKey(this.parameters.reasonTemplate, 'id')), 'encrypt');
+        await valueChanged(this.parameters.reasonTemplate.id, this.parameters.clubId, this.parameters.databaseType, 'reasonTemplates');
         const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);        
         await creatorNotifier.notify({ state: 'reason-template-update', reasonTemplate: this.parameters.reasonTemplate });
     }

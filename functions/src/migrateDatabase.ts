@@ -1,4 +1,4 @@
-import { Crypter, DatabaseType, VerboseType } from "firebase-function";
+import { Crypter, DatabaseType, UtcDate, VerboseType } from "firebase-function";
 import { argv } from "process";
 import { getPrivateKeys } from "./privateKeys";
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -15,7 +15,7 @@ const app = initializeApp(firebaseConfig);
 const functions = getFunctions(app, 'europe-west1');
 
 const crypter = new Crypter(getPrivateKeys(databaseType).cryptionKeys);
-const expiresAtIsoDate = new Date(new Date().getTime() + 60000).toISOString();
+const expiresAtUtcDate = UtcDate.now.advanced({ minute: 1 });
 const callableFunction = httpsCallable<{
     verbose: VerboseType.Value;
     databaseType: DatabaseType.Value;
@@ -29,8 +29,8 @@ callableFunction({
     verbose: 'coloredVerbose',
     databaseType: databaseType.value,
     callSecret: {
-        expiresAt: expiresAtIsoDate,
-        hashedData: Crypter.sha512(expiresAtIsoDate, getPrivateKeys(databaseType).callSecretKey)
+        expiresAt: expiresAtUtcDate.encoded,
+        hashedData: Crypter.sha512(expiresAtUtcDate.encoded, getPrivateKeys(databaseType).callSecretKey)
     },
     parameters: crypter.encodeEncrypt({})
 });
