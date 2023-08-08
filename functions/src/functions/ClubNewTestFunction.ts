@@ -36,7 +36,20 @@ export class ClubNewTestFunction implements FirebaseFunction<ClubNewTestFunction
             for (const user of Object.values(authentication[1]))
                 await reference.child('authentication').child(authentication[0]).child(user).set('authenticated');
         for (const person of Object.entries(testClub.persons)) {
-            await reference.child('persons').child(person[0]).set(person[1], 'encrypt');
+            let invitationLinkId: string | null = null;
+            if (person[1].invitationLinkId !== null) {
+                const invitationLink = new InvitationLink(this.parameters.clubId, new Guid(person[0]), this.parameters.databaseType);
+                invitationLinkId = await invitationLink.createId();
+                const invitationLinkReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('invitationLinks').child(invitationLinkId);
+                await invitationLinkReference.set({
+                    clubId: this.parameters.clubId.guidString,
+                    personId: person[0]
+                }, 'encrypt');
+            }
+            await reference.child('persons').child(person[0]).set({
+                ...person[1],
+                invitationLinkId: invitationLinkId
+            }, 'encrypt');
             const hashedUserId = person[1].signInData?.hashedUserId;
             if (hashedUserId !== undefined) {
                 const userReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('users').child(hashedUserId);
@@ -44,15 +57,6 @@ export class ClubNewTestFunction implements FirebaseFunction<ClubNewTestFunction
                 if (userSnapshot.exists)
                     throw HttpsError('already-exists', 'User is already registered.', this.logger);
                 await userReference.set({
-                    clubId: this.parameters.clubId.guidString,
-                    personId: person[0]
-                }, 'encrypt');
-            }
-            if (person[1].isInvited) {
-                const invitationLink = new InvitationLink(this.parameters.clubId, new Guid(person[0]), this.parameters.databaseType);
-                const invitationLinkId = await invitationLink.createId();
-                const invitationLinkReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('invitationLinks').child(invitationLinkId);
-                await invitationLinkReference.set({
                     clubId: this.parameters.clubId.guidString,
                     personId: person[0]
                 }, 'encrypt');

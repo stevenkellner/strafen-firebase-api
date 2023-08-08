@@ -40,7 +40,7 @@ export class PersonGetCurrentFunction implements FirebaseFunction<PersonGetCurre
             name: person.name,
             fineIds: person.fineIds,
             signInData: person.signInData,
-            isInvited: person.isInvited,
+            invitationLinkId: person.invitationLinkId,
             club: {
                 id: clubId,
                 name: (await clubReference.child('name').snapshot()).value(),

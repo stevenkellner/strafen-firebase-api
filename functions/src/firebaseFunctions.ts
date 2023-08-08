@@ -19,12 +19,14 @@ import { PersonUpdateFunction, type PersonUpdateFunctionType } from './functions
 import { PersonDeleteFunction, type PersonDeleteFunctionType } from './functions/PersonDeleteFunction';
 import { PersonGetFunction, type PersonGetFunctionType } from './functions/PersonGetFunction';
 import { PersonGetSingleFunction, type PersonGetSingleFunctionType } from './functions/PersonGetSingleFunction';
+import { PersonGetChangesFunction, type PersonGetChangesFunctionType } from './functions/PersonGetChangesFunction';
 
 import { ReasonTemplateAddFunction, type ReasonTemplateAddFunctionType } from './functions/ReasonTemplateAddFunction';
 import { ReasonTemplateUpdateFunction, type ReasonTemplateUpdateFunctionType } from './functions/ReasonTemplateUpdateFunction';
 import { ReasonTemplateDeleteFunction, type ReasonTemplateDeleteFunctionType } from './functions/ReasonTemplateDeleteFunction';
 import { ReasonTemplateGetFunction, type ReasonTemplateGetFunctionType } from './functions/ReasonTemplateGetFunction';
 import { ReasonTemplateGetSingleFunction, type ReasonTemplateGetSingleFunctionType } from './functions/ReasonTemplateGetSingleFunction';
+import { ReasonTemplateGetChangesFunction, type ReasonTemplateGetChangesFunctionType } from './functions/ReasonTemplateGetChangesFunction';
 
 import { FineAddFunction, type FineAddFunctionType } from './functions/FineAddFunction';
 import { FineUpdateFunction, type FineUpdateFunctionType } from './functions/FineUpdateFunction';
@@ -32,6 +34,7 @@ import { FineDeleteFunction, type FineDeleteFunctionType } from './functions/Fin
 import { FineEditPayedFunction, type FineEditPayedFunctionType } from './functions/FineEditPayedFunction';
 import { FineGetFunction, type FineGetFunctionType } from './functions/FineGetFunction';
 import { FineGetSingleFunction, type FineGetSingleFunctionType } from './functions/FineGetSingleFunction';
+import { FineGetChangesFunction, type FineGetChangesFunctionType } from './functions/FineGetChangesFunction';
 
 export const firebaseFunctions = {
     deleteAllData: FirebaseFunctionDescriptor.create<DeleteAllDataFunctionType>(DeleteAllDataFunction),
@@ -49,14 +52,16 @@ export const firebaseFunctions = {
         update: FirebaseFunctionDescriptor.create<PersonUpdateFunctionType>(PersonUpdateFunction),
         delete: FirebaseFunctionDescriptor.create<PersonDeleteFunctionType>(PersonDeleteFunction),
         get: FirebaseFunctionDescriptor.create<PersonGetFunctionType>(PersonGetFunction),
-        getSingle: FirebaseFunctionDescriptor.create<PersonGetSingleFunctionType>(PersonGetSingleFunction)
+        getSingle: FirebaseFunctionDescriptor.create<PersonGetSingleFunctionType>(PersonGetSingleFunction),
+        getChanges: FirebaseFunctionDescriptor.create<PersonGetChangesFunctionType>(PersonGetChangesFunction)
     },
     reasonTemplate: {
         add: FirebaseFunctionDescriptor.create<ReasonTemplateAddFunctionType>(ReasonTemplateAddFunction),
         update: FirebaseFunctionDescriptor.create<ReasonTemplateUpdateFunctionType>(ReasonTemplateUpdateFunction),
         delete: FirebaseFunctionDescriptor.create<ReasonTemplateDeleteFunctionType>(ReasonTemplateDeleteFunction),
         get: FirebaseFunctionDescriptor.create<ReasonTemplateGetFunctionType>(ReasonTemplateGetFunction),
-        getSingle: FirebaseFunctionDescriptor.create<ReasonTemplateGetSingleFunctionType>(ReasonTemplateGetSingleFunction)
+        getSingle: FirebaseFunctionDescriptor.create<ReasonTemplateGetSingleFunctionType>(ReasonTemplateGetSingleFunction),
+        getChanges: FirebaseFunctionDescriptor.create<ReasonTemplateGetChangesFunctionType>(ReasonTemplateGetChangesFunction)
     },
     fine: {
         add: FirebaseFunctionDescriptor.create<FineAddFunctionType>(FineAddFunction),
@@ -64,7 +69,8 @@ export const firebaseFunctions = {
         delete: FirebaseFunctionDescriptor.create<FineDeleteFunctionType>(FineDeleteFunction),
         editPayed: FirebaseFunctionDescriptor.create<FineEditPayedFunctionType>(FineEditPayedFunction),
         get: FirebaseFunctionDescriptor.create<FineGetFunctionType>(FineGetFunction),
-        getSingle: FirebaseFunctionDescriptor.create<FineGetSingleFunctionType>(FineGetSingleFunction)
+        getSingle: FirebaseFunctionDescriptor.create<FineGetSingleFunctionType>(FineGetSingleFunction),
+        getChanges: FirebaseFunctionDescriptor.create<FineGetChangesFunctionType>(FineGetChangesFunction)
     },
     paypalMe: {
         set: FirebaseFunctionDescriptor.create<PaypalMeSetFunctionType>(PaypalMeSetFunction)

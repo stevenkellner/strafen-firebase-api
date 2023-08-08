@@ -15,7 +15,7 @@ describe('fineGetSingle', () => {
         await cleanUpFirebase();
     });
 
-    it('get fine', async () => {
+    it('get not existing fine', async () => {
         const result = await firebaseApp.functions.function('fine').function('getSingle').call({
             clubId: clubId.guidString,
             fineId: Guid.newGuid().guidString
@@ -23,7 +23,7 @@ describe('fineGetSingle', () => {
         result.success.equal(null);
     });
 
-    it('get not existing fine', async () => {
+    it('get fine', async () => {
         const fineId = '02462A8B-107F-4BAE-A85B-EFF1F727C00F' as const;
         const result = await firebaseApp.functions.function('fine').function('getSingle').call({
             clubId: clubId.guidString,

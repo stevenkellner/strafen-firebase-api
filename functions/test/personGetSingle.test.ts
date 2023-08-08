@@ -15,7 +15,7 @@ describe('personGetSingle', () => {
         await cleanUpFirebase();
     });
 
-    it('get person', async () => {
+    it('get not existing person', async () => {
         const result = await firebaseApp.functions.function('person').function('getSingle').call({
             clubId: clubId.guidString,
             personId: Guid.newGuid().guidString
@@ -23,7 +23,7 @@ describe('personGetSingle', () => {
         result.success.equal(null);
     });
 
-    it('get not existing person', async () => {
+    it('get person', async () => {
         const personId = '76025DDE-6893-46D2-BC34-9864BB5B8DAD' as const;
         const result = await firebaseApp.functions.function('person').function('getSingle').call({
             clubId: clubId.guidString,

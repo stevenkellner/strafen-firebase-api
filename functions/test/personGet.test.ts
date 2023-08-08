@@ -36,7 +36,16 @@ describe('personGet', () => {
         const result = await firebaseApp.functions.function('person').function('get').call({
             clubId: clubId.guidString
         });
+        const invitationLinkIds: Record<string, string> = {};
+        if (result.success) {
+            for (const person of Object.values(result.success.value)) {
+                if (person.invitationLinkId !== null)
+                    invitationLinkIds[person.id] = person.invitationLinkId;
+            }
+        }
         result.success.equal(mapValues(defaultTestClub.persons as TestClub['persons'], entry => {
+            if (entry[0] in invitationLinkIds)
+                entry[1].invitationLinkId = invitationLinkIds[entry[0]];
             return {
                 id: entry[0],
                 ...entry[1]

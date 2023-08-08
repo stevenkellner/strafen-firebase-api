@@ -27,7 +27,7 @@ describe('invitationLinkCreateId', () => {
             personId: personId.guidString
         });
         const person = await firebaseApp.database.child('clubs').child(clubId.guidString).child('persons').child(personId.guidString).get('decrypt');
-        expect(person.isInvited).to.be.equal(true);
+        expect(person.invitationLinkId).to.be.equal(id);
     });
 
     it('create id twice', async () => {

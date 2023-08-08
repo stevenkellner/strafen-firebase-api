@@ -36,7 +36,7 @@ export class PersonAddFunction implements FirebaseFunction<PersonAddFunctionType
             ...Person.PersonalProperties.flatten(removeKey(this.parameters.person, 'id')),
             fineIds: [],
             signInData: null,
-            isInvited: false
+            invitationLinkId: null
         }, 'encrypt');
         await valueChanged(this.parameters.person.id, this.parameters.clubId, this.parameters.databaseType, 'persons');
         const creatorNotifier = new CreatorNotifier(this.parameters.clubId, hashedUserId, this.parameters.databaseType, this.logger.nextIndent);

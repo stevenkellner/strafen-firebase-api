@@ -17,13 +17,13 @@ describe('dailyCleanup', () => {
 
     it('cleanup', async () => {
         const personId = Guid.newGuid();
-        const date = UtcDate.now;
-        await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('persons').child(personId.guidString).set(date.encoded);
+        const value = `${UtcDate.now.encoded}_${Guid.newGuid().guidString.slice(0, 8)}`;
+        await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('persons').child(personId.guidString).set(value);
         const result = await firebaseApp.functions.function('executeSchedule').call({ type: 'dailyCleanup' });
         result.success;
         const changes = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').get();
         expect(changes.persons).to.be.deep.equal({
-            [personId.guidString]: date.encoded
+            [personId.guidString]: value
         });
         expect(Object.values(changes.reasonTemplates ?? {}).length).to.be.equal(0);
         expect(Object.values(changes.fines ?? {}).length).to.be.equal(0);

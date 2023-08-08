@@ -11,9 +11,9 @@
         }
     },
     "persons": {
-        "76025DDE-6893-46D2-BC34-9864BB5B8DAD": { "name": { "first": "John", "last": null }, "fineIds": ["02462A8B-107F-4BAE-A85B-EFF1F727C00F", "0B5F958E-9D7D-46E1-8AEE-F52F4370A95A"], "signInData": { "hashedUserId": "sha_abc", "signInDate": "2022-01-24-17-23", "authentication": ["clubMember", "clubManager"], "notificationTokens": {} }, "isInvited": false },
-        "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9": { "name": { "first": "Jane", "last": "Doe" }, "fineIds": [], "signInData": null, "isInvited": true },
-        "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7": { "name": { "first": "Max", "last": "Mustermann" }, "fineIds": ["1B5F958E-9D7D-46E1-8AEE-F52F4370A95A"], "signInData": { "hashedUserId": "sha_xyz", "signInDate": "2022-01-26-17-23", "authentication": ["clubMember"], "notificationTokens": {} }, "isInvited": false }
+        "76025DDE-6893-46D2-BC34-9864BB5B8DAD": { "name": { "first": "John", "last": null }, "fineIds": ["02462A8B-107F-4BAE-A85B-EFF1F727C00F", "0B5F958E-9D7D-46E1-8AEE-F52F4370A95A"], "signInData": { "hashedUserId": "sha_abc", "signInDate": "2022-01-24-17-23", "authentication": ["clubMember", "clubManager"], "notificationTokens": {} }, "invitationLinkId": null },
+        "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9": { "name": { "first": "Jane", "last": "Doe" }, "fineIds": [], "signInData": null, "invitationLinkId": "" },
+        "7BB9AB2B-8516-4847-8B5F-1A94B78EC7B7": { "name": { "first": "Max", "last": "Mustermann" }, "fineIds": ["1B5F958E-9D7D-46E1-8AEE-F52F4370A95A"], "signInData": { "hashedUserId": "sha_xyz", "signInDate": "2022-01-26-17-23", "authentication": ["clubMember"], "notificationTokens": {} }, "invitationLinkId": null }
     },
     "reasonTemplates": {
         "062FB0CB-F730-497B-BCF5-A4F907A6DCD5": { "reasonMessage": "test_reason_1", "amount": 1, "counts": null },
@@ -27,14 +27,17 @@
     },
     "changes": {
         "persons": {
-            "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9": "2023-01-01-00-00"
+            "D1852AC0-A0E2-4091-AC7E-CB2C23F708D9": "2023-01-01-00-00_5A247FF8",
+            "20DC6151-F666-42DA-BE75-3DCC95A6118A": "2023-01-01-00-00_70F65715"
         },
         "reasonTemplates": {
-            "062FB0CB-F730-497B-BCF5-A4F907A6DCD5": "2023-01-01-00-00",
-            "16805D21-5E8D-43E9-BB5C-7B4A790F0CE7": "2023-01-01-00-00"
+            "062FB0CB-F730-497B-BCF5-A4F907A6DCD5": "2023-01-01-00-00_C383CBC1",
+            "16805D21-5E8D-43E9-BB5C-7B4A790F0CE7": "2023-01-01-00-00_C003D4B0",
+            "3EAF4C79-185F-4A26-A80B-9A252769EA41": "2023-01-01-00-00_355D21D9"
         },
         "fines": {
-            "1B5F958E-9D7D-46E1-8AEE-F52F4370A95A": "2023-01-01-00-00"
+            "1B5F958E-9D7D-46E1-8AEE-F52F4370A95A": "2023-01-01-00-00_6AE5DCAE",
+            "442AD0E0-9809-4C4D-B3A3-9F56AA939CD5": "2023-01-01-00-00_11048D9D"
         }
     }
 }

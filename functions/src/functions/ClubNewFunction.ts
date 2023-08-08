@@ -47,7 +47,7 @@ export class ClubNewFunction implements FirebaseFunction<ClubNewFunctionType> {
                 authentication: ['clubMember', 'clubManager'],
                 notificationTokens: {}
             },
-            isInvited: false
+            invitationLinkId: null
         }, 'encrypt');
         await valueChanged(this.parameters.personId, this.parameters.clubId, this.parameters.databaseType, 'persons');
         const userReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('users').child(hashedUserId);

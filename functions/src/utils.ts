@@ -26,5 +26,9 @@ export function baseDatabase(getDatabaseType: DatabaseType | { databaseType: Dat
 
 export async function valueChanged(id: Guid, clubId: Guid, databaseType: DatabaseType, type: 'persons' | 'reasonTemplates' | 'fines') {
     const reference = baseDatabase(databaseType).child('clubs').child(clubId.guidString).child('changes').child(type).child(id.guidString);
-    await reference.set(UtcDate.now.encoded);
+    await reference.set(`${UtcDate.now.encoded}_${Guid.newGuid().guidString.slice(0, 8)}`);
 }
+
+export type Deletable<T extends { id: unknown }> = T | { 
+    deleted: T['id'];
+};

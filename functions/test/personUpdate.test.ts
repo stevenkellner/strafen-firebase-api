@@ -50,9 +50,9 @@ describe('personUpdate', () => {
                 authentication: ['clubMember'],
                 notificationTokens: {}
             },
-            isInvited: false
+            invitationLinkId: null
         });
         const databasePersonChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('persons').child(personId.guidString).get();
-        expect(UtcDate.decode(databasePersonChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
+        expect(UtcDate.decode(databasePersonChange.slice(0, 16)).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 });

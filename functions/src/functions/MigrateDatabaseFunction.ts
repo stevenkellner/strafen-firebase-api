@@ -1,7 +1,9 @@
-import { type DatabaseType, type FirebaseFunction, type ILogger, ParameterContainer, ParameterParser, type FunctionType, DatabaseReference, HttpsError } from 'firebase-function';
+import { type DatabaseType, type FirebaseFunction, type ILogger, ParameterContainer, ParameterParser, type FunctionType, DatabaseReference, HttpsError, UtcDate } from 'firebase-function';
 import { type AuthData } from 'firebase-functions/lib/common/providers/tasks';
 import { getPrivateKeys } from '../privateKeys';
 import { DatabaseScheme } from '../DatabaseScheme';
+import { valueChanged } from '../utils';
+import { Guid } from '../types/Guid';
 
 export class MigrateDatabaseFunction implements FirebaseFunction<MigrateDatabaseFunctionType> {
     public readonly parameters: FunctionType.Parameters<MigrateDatabaseFunctionType> & { databaseType: DatabaseType };
@@ -21,6 +23,8 @@ export class MigrateDatabaseFunction implements FirebaseFunction<MigrateDatabase
             await this.migrateToVersion_1_0_0();
         if (version.major < 1 || version.minor < 1)
             await this.migrateToVersion_1_1_0();
+        if (version.major < 1 || version.minor < 1 || version.patch < 1)
+            await this.migrateToVersion_1_1_1();
     }
 
     private async getCurrentVersion(): Promise<{ major: number; minor: number; patch: number }> {
@@ -47,17 +51,51 @@ export class MigrateDatabaseFunction implements FirebaseFunction<MigrateDatabase
     private async migrateToVersion_1_0_0() {
         const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs');
         const snapshot = await reference.snapshot();
-        const allPromises: Promise<unknown>[] = [];
-        snapshot.forEach(clubSnapshot => {
+        await Promise.all(snapshot.map(async clubSnapshot => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            allPromises.push(reference.child(clubSnapshot.key!).child('paypalMeLink').set(null, 'encrypt'));
-        });
-        await Promise.all(allPromises);
+            await reference.child(clubSnapshot.key!).child('paypalMeLink').set(null, 'encrypt');
+        }));
         await this.setVersion({ major: 1, minor: 0, patch: 0 });
     }
 
     private async migrateToVersion_1_1_0() {
+        const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs');
+        const snapshot = await reference.snapshot();
+        await Promise.all(snapshot.map(async clubSnapshot => {
+            await Promise.all(clubSnapshot.child('persons').map(async personSnapshot => {
+                const person = personSnapshot.value('decrypt');
+                if (person.signInData !== null)
+                    person.signInData.signInDate = UtcDate.fromIsoDate(person.signInData.signInDate).encoded;
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                await reference.child(clubSnapshot.key!).child('persons').child(personSnapshot.key!).set(person, 'encrypt');
+            }));
+            await Promise.all(clubSnapshot.child('fines').map(async fineSnapshot => {
+                const fine = fineSnapshot.value('decrypt');
+                fine.date = UtcDate.fromIsoDate(fine.date).encoded;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                await reference.child(clubSnapshot.key!).child('fines').child(fineSnapshot.key!).set(fine, 'encrypt');
+            }));
+        }));
         await this.setVersion({ major: 1, minor: 1, patch: 0 });
+    }
+
+    private async migrateToVersion_1_1_1() {
+        const reference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('clubs');
+        const snapshot = await reference.snapshot();
+        await Promise.all(snapshot.map(async clubSnapshot => {
+            await Promise.all(clubSnapshot.child('persons').map(async personSnapshot => {
+                const person = personSnapshot.value('decrypt');
+                if ((person as unknown as { isInvited: boolean }).isInvited) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    await valueChanged(new Guid(personSnapshot.key!), new Guid(clubSnapshot.key!), this.parameters.databaseType, 'persons');
+                }
+                person.invitationLinkId = null;
+                delete (person as unknown as { isInvited?: boolean }).isInvited;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                await reference.child(clubSnapshot.key!).child('persons').child(personSnapshot.key!).set(person, 'encrypt');
+            }));
+        }));
+        await this.setVersion({ major: 1, minor: 1, patch: 1 });
     }
 }
 

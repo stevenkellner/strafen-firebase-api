@@ -39,7 +39,7 @@ describe('clubNew', () => {
         expect(Object.values(databaseValue.clubs[clubId.guidString].persons).length).to.be.equal(1);
         databaseValue.clubs[clubId.guidString].persons = {};
         expect(Object.values(databaseValue.clubs[clubId.guidString].changes.persons).length).to.be.equal(1);
-        expect(UtcDate.decode(databaseValue.clubs[clubId.guidString].changes.persons[personId.guidString]).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
+        expect(UtcDate.decode(databaseValue.clubs[clubId.guidString].changes.persons[personId.guidString].slice(0, 16)).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
         databaseValue.clubs[clubId.guidString].changes.persons = {};
         expect(Object.values(databaseValue.users).length).to.be.equal(1);
         databaseValue.users = {};
@@ -81,7 +81,7 @@ describe('clubNew', () => {
                 authentication: ['clubMember', 'clubManager'],
                 notificationTokens: {}
             },
-            isInvited: false
+            invitationLinkId: null
         });
         const databaseUser = await firebaseApp.database.child('users').child(hashedUserId).get('decrypt');
         expect(databaseUser).to.be.deep.equal({

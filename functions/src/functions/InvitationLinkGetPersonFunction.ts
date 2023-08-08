@@ -46,6 +46,6 @@ export class InvitationLinkGetPersonFunction implements FirebaseFunction<Invitat
 
 export type InvitationLinkGetPersonFunctionType = FunctionType<{
     invitationLinkId: string;
-}, Omit<Person.Flatten, 'signInData' | 'isInvited'> & {
+}, Omit<Person.Flatten, 'signInData' | 'invitationLinkId'> & {
     club: ClubProperties.Flatten;
 }>;

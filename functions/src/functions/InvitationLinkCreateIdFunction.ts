@@ -42,7 +42,7 @@ export class InvitationLinkCreateIdFunction implements FirebaseFunction<Invitati
         }, 'encrypt');
         await personReference.set({
             ...person,
-            isInvited: true
+            invitationLinkId: id
         }, 'encrypt');
         return id;
     }

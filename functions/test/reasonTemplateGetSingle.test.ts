@@ -15,7 +15,7 @@ describe('reasonTemplateGetSingle', () => {
         await cleanUpFirebase();
     });
 
-    it('get reasonTemplate', async () => {
+    it('get not existing reasonTemplate', async () => {
         const result = await firebaseApp.functions.function('reasonTemplate').function('getSingle').call({
             clubId: clubId.guidString,
             reasonTemplateId: Guid.newGuid().guidString
@@ -23,7 +23,7 @@ describe('reasonTemplateGetSingle', () => {
         result.success.equal(null);
     });
 
-    it('get not existing reasonTemplate', async () => {
+    it('get reasonTemplate', async () => {
         const reasonTemplateId = '062FB0CB-F730-497B-BCF5-A4F907A6DCD5' as const;
         const result = await firebaseApp.functions.function('reasonTemplate').function('getSingle').call({
             clubId: clubId.guidString,

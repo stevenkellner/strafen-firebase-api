@@ -35,7 +35,7 @@ describe('personGetCurrent', () => {
                 authentication: ['clubMember'],
                 notificationTokens: {}
             },
-            isInvited: false
+            invitationLinkId: null
         }, 'encrypt');
         const result = await firebaseApp.functions.function('person').function('getCurrent').call({});
         result.success.equal({
@@ -48,7 +48,7 @@ describe('personGetCurrent', () => {
                 authentication: ['clubMember'],
                 notificationTokens: {}
             },
-            isInvited: false,
+            invitationLinkId: null,
             club: {
                 id: clubId.guidString,
                 name: 'Neuer Verein',
@@ -77,7 +77,7 @@ describe('personGetCurrent', () => {
                     abc: 'abc123'
                 }
             },
-            isInvited: false
+            invitationLinkId: null
         }, 'encrypt');
         const result = await firebaseApp.functions.function('person').function('getCurrent').call({});
         result.success.equal({
@@ -92,7 +92,7 @@ describe('personGetCurrent', () => {
                     abc: 'abc123'
                 }
             },
-            isInvited: false,
+            invitationLinkId: null,
             club: {
                 id: clubId.guidString,
                 name: 'Neuer Verein',

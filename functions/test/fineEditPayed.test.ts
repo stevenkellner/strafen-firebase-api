@@ -37,7 +37,7 @@ describe('fineEditPayed', () => {
         result.success;
         expect((await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt')).payedState).to.be.equal('unpayed');
         const databaseFineChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('fines').child(fineId.guidString).get();
-        expect(UtcDate.decode(databaseFineChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
+        expect(UtcDate.decode(databaseFineChange.slice(0, 16)).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 
     it('to payed', async () => {
@@ -50,6 +50,6 @@ describe('fineEditPayed', () => {
         result.success;
         expect((await firebaseApp.database.child('clubs').child(clubId.guidString).child('fines').child(fineId.guidString).get('decrypt')).payedState).to.be.equal('payed');
         const databaseFineChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('fines').child(fineId.guidString).get();
-        expect(UtcDate.decode(databaseFineChange).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
+        expect(UtcDate.decode(databaseFineChange.slice(0, 16)).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));
     });
 });

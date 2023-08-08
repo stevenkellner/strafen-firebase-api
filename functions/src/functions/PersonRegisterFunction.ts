@@ -40,7 +40,7 @@ export class PersonRegisterFunction implements FirebaseFunction<PersonRegisterFu
                 authentication: ['clubMember'],
                 notificationTokens: {}
             },
-            isInvited: false
+            invitationLinkId: null
         }, 'encrypt');
         await valueChanged(this.parameters.personId, this.parameters.clubId, this.parameters.databaseType, 'persons');
         const userReference = DatabaseReference.base<DatabaseScheme>(getPrivateKeys(this.parameters.databaseType)).child('users').child(hashedUserId);

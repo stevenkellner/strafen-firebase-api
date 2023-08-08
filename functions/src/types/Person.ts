@@ -8,7 +8,7 @@ export type Person = {
     name: PersonName;
     fineIds: Guid[];
     signInData?: SignInData;
-    isInvited: boolean;
+    invitationLinkId?: string;
 };
 
 export namespace Person {
@@ -47,14 +47,14 @@ export namespace Person {
         if (!('signInData' in value) || typeof value.signInData !== 'object')
             throw HttpsError('internal', 'Couldn\'t get sign in data for person.', logger);
 
-        if (!('isInvited' in value) || typeof value.isInvited !== 'boolean')
-            throw HttpsError('internal', 'Couldn\'t get isInvited for person.', logger);
+        if (!('invitationLinkId' in value) || (typeof value.invitationLinkId !== 'string' && value.invitationLinkId !== null))
+            throw HttpsError('internal', 'Couldn\'t get invitationLinkId for person.', logger);
 
         return {
             name: PersonName.fromObject(value.name, logger.nextIndent),
             fineIds: fineIds,
             signInData: SignInData.fromObject(value.signInData, logger.nextIndent),
-            isInvited: value.isInvited
+            invitationLinkId: value.invitationLinkId !== null ? value.invitationLinkId : undefined
         };
     }
 
@@ -63,7 +63,7 @@ export namespace Person {
         name: PersonName.Flatten;
         fineIds: string[];
         signInData: SignInData.Flatten | null;
-        isInvited: boolean;
+        invitationLinkId: string | null;
     };
 
     export function flatten(person: Person): Person.Flatten;
@@ -74,7 +74,7 @@ export namespace Person {
             name: PersonName.flatten(person.name),
             fineIds: person.fineIds.map(fineId => fineId.guidString),
             signInData: SignInData.flatten(person.signInData),
-            isInvited: person.isInvited
+            invitationLinkId: person.invitationLinkId ?? null
         };
     }
 
@@ -86,11 +86,11 @@ export namespace Person {
             name: PersonName.concrete(person.name),
             fineIds: person.fineIds.map(fineId => new Guid(fineId)),
             signInData: SignInData.concrete(person.signInData),
-            isInvited: person.isInvited
+            invitationLinkId: person.invitationLinkId ?? undefined
         };
     }
 
-    export type PersonalProperties = Omit<Person, 'fineIds' | 'signInData' | 'isInvited'>;
+    export type PersonalProperties = Omit<Person, 'fineIds' | 'signInData' | 'invitationLinkId'>;
 
     export namespace PersonalProperties {
         export function fromObjectWithId(value: object | null, logger: ILogger): PersonalProperties {
@@ -122,7 +122,7 @@ export namespace Person {
             };
         }
 
-        export type Flatten = Omit<Person.Flatten, 'fineIds' | 'signInData' | 'isInvited'>;
+        export type Flatten = Omit<Person.Flatten, 'fineIds' | 'signInData' | 'invitationLinkId'>;
 
         export function flatten(person: Person.PersonalProperties): Person.PersonalProperties.Flatten;
         export function flatten(person: Omit<Person.PersonalProperties, 'id'>): Omit<Person.PersonalProperties.Flatten, 'id'>;
