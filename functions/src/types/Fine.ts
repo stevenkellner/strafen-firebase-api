@@ -1,9 +1,9 @@
 import { HttpsError, UtcDate, type ILogger } from 'firebase-function';
 import { Guid } from './Guid';
 import { PayedState } from './PayedState';
-import { Amount } from './Amount';
 import { Person } from './Person';
 import { PersonName } from './PersonName';
+import { FineAmount } from './FineAmount';
 
 export type Fine = {
     id: Guid;
@@ -11,7 +11,7 @@ export type Fine = {
     payedState: PayedState;
     date: UtcDate;
     reasonMessage: string;
-    amount: Amount;
+    amount: FineAmount;
 };
 
 export namespace Fine {
@@ -50,7 +50,7 @@ export namespace Fine {
         if (!('reasonMessage' in value) || typeof value.reasonMessage !== 'string')
             throw HttpsError('internal', 'Couldn\'t get reason message for fine.', logger);
 
-        if (!('amount' in value) || typeof value.amount !== 'number')
+        if (!('amount' in value))
             throw HttpsError('internal', 'Couldn\'t get amount for fine.', logger);
 
         return {
@@ -58,12 +58,12 @@ export namespace Fine {
             payedState: value.payedState,
             date: UtcDate.decode(value.date),
             reasonMessage: value.reasonMessage,
-            amount: Amount.fromNumber(value.amount, logger.nextIndent)
+            amount: FineAmount.fromUnknown(value.amount, logger.nextIndent)
         };
     }
 
     export function description(fine: Omit<Fine, 'id'>, person: Omit<Person, 'id'>): string {
-        return `${fine.reasonMessage} (${Amount.description(fine.amount)}, ${PersonName.description(person.name)}, ${PayedState.description(fine.payedState)}, ${fine.date.description('de-DE', 'Europe/Berlin')})`;
+        return `${fine.reasonMessage} (${FineAmount.description(fine.amount)}, ${PersonName.description(person.name)}, ${PayedState.description(fine.payedState)}, ${fine.date.description('de-DE', 'Europe/Berlin')})`;
     }
 
     export type Flatten = {
@@ -72,7 +72,7 @@ export namespace Fine {
         payedState: PayedState;
         date: string;
         reasonMessage: string;
-        amount: Amount.Flatten;
+        amount: FineAmount.Flatten;
     };
 
     export function flatten(fine: Fine): Fine.Flatten;
@@ -84,7 +84,7 @@ export namespace Fine {
             payedState: fine.payedState,
             date: fine.date.encoded,
             reasonMessage: fine.reasonMessage,
-            amount: Amount.flatten(fine.amount)
+            amount: FineAmount.flatten(fine.amount)
         };
     }
 
@@ -97,7 +97,7 @@ export namespace Fine {
             payedState: fine.payedState,
             date: UtcDate.decode(fine.date),
             reasonMessage: fine.reasonMessage,
-            amount: Amount.concrete(fine.amount)
+            amount: FineAmount.concrete(fine.amount)
         };
     }
 }

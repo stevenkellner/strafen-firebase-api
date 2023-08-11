@@ -39,7 +39,10 @@ describe('reasonTemplateUpdate', () => {
             reasonTemplate: {
                 id: reasonTemplateId.guidString,
                 reasonMessage: 'test-message-1',
-                amount: 9.50,
+                amount: { 
+                    item: 'crateOfBeer',
+                    count: 4
+                },
                 counts: {
                     item: 'minute',
                     maxCount: 5
@@ -50,7 +53,10 @@ describe('reasonTemplateUpdate', () => {
         const databasereasonTemplate = await firebaseApp.database.child('clubs').child(clubId.guidString).child('reasonTemplates').child(reasonTemplateId.guidString).get('decrypt');
         expect(databasereasonTemplate).to.be.deep.equal({
             reasonMessage: 'test-message-1',
-            amount: 9.50,
+            amount: { 
+                item: 'crateOfBeer',
+                count: 4
+            },
             counts: {
                 item: 'minute',
                 maxCount: 5

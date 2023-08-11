@@ -44,7 +44,10 @@ describe('fineUpdate', () => {
                 date: '2023-02-20-17-23',
                 payedState: 'unpayed',
                 reasonMessage: 'test-message-1',
-                amount: 9.50
+                amount: { 
+                    item: 'crateOfBeer',
+                    count: 3
+                }
             }
         });
         result.success;
@@ -54,7 +57,10 @@ describe('fineUpdate', () => {
             date: '2023-02-20-17-23',
             payedState: 'unpayed',
             reasonMessage: 'test-message-1',
-            amount: 9.50
+            amount: { 
+                item: 'crateOfBeer',
+                count: 3
+            }
         });
         const databaseFineChange = await firebaseApp.database.child('clubs').child(clubId.guidString).child('changes').child('fines').child(fineId.guidString).get();
         expect(UtcDate.decode(databaseFineChange.slice(0, 16)).setted({ hour: 0, minute: 0 })).to.be.deep.equal(UtcDate.now.setted({ hour: 0, minute: 0 }));

@@ -1,12 +1,12 @@
 import { HttpsError, type ILogger } from 'firebase-function';
-import { Amount } from './Amount';
 import { Guid } from './Guid';
 import { ReasonTemplateCountsItem } from './ReasonTemplateCountsItem';
+import { FineAmount } from './FineAmount';
 
 export type ReasonTemplate = {
     id: Guid;
     reasonMessage: string;
-    amount: Amount;
+    amount: FineAmount;
     counts?: {
         item: ReasonTemplateCountsItem;
         maxCount?: number;
@@ -38,7 +38,7 @@ export namespace ReasonTemplate {
         if (!('reasonMessage' in value) || typeof value.reasonMessage !== 'string')
             throw HttpsError('internal', 'Couldn\'t get reason message for reason template.', logger);
 
-        if (!('amount' in value) || typeof value.amount !== 'number')
+        if (!('amount' in value))
             throw HttpsError('internal', 'Couldn\'t get amount for reason template.', logger);
 
         let counts: {
@@ -62,23 +62,23 @@ export namespace ReasonTemplate {
 
         return {
             reasonMessage: value.reasonMessage,
-            amount: Amount.fromNumber(value.amount, logger.nextIndent),
+            amount: FineAmount.fromUnknown(value.amount, logger.nextIndent),
             counts: counts
         };
     }
 
     export function description(reasonTemplate: Omit<ReasonTemplate, 'id'>): string {
         if (reasonTemplate.counts === undefined)
-            return `${reasonTemplate.reasonMessage} (${Amount.description(reasonTemplate.amount)})`;
+            return `${reasonTemplate.reasonMessage} (${FineAmount.description(reasonTemplate.amount)})`;
         if (reasonTemplate.counts.maxCount === undefined)
-            return `${reasonTemplate.reasonMessage} (pro ${ReasonTemplateCountsItem.description(reasonTemplate.counts.item)}, ${Amount.description(reasonTemplate.amount)})`;
-        return `${reasonTemplate.reasonMessage} (pro ${ReasonTemplateCountsItem.description(reasonTemplate.counts.item)}, max. ${reasonTemplate.counts.maxCount}, ${Amount.description(reasonTemplate.amount)})`;
+            return `${reasonTemplate.reasonMessage} (pro ${ReasonTemplateCountsItem.description(reasonTemplate.counts.item)}, ${FineAmount.description(reasonTemplate.amount)})`;
+        return `${reasonTemplate.reasonMessage} (pro ${ReasonTemplateCountsItem.description(reasonTemplate.counts.item)}, max. ${reasonTemplate.counts.maxCount}, ${FineAmount.description(reasonTemplate.amount)})`;
     }
 
     export type Flatten = {
         id: string;
         reasonMessage: string;
-        amount: number;
+        amount: FineAmount.Flatten;
         counts: {
             item: ReasonTemplateCountsItem;
             maxCount: number | null;
@@ -91,7 +91,7 @@ export namespace ReasonTemplate {
         return {
             ...('id' in reasonTemplate ? { id: reasonTemplate.id.guidString } : {}),
             reasonMessage: reasonTemplate.reasonMessage,
-            amount: Amount.flatten(reasonTemplate.amount),
+            amount: FineAmount.flatten(reasonTemplate.amount),
             counts: reasonTemplate.counts === undefined
                 ? null
                 : {
@@ -107,7 +107,7 @@ export namespace ReasonTemplate {
         return {
             ...('id' in reasonTemplate ? { id: new Guid(reasonTemplate.id) } : {}),
             reasonMessage: reasonTemplate.reasonMessage,
-            amount: Amount.concrete(reasonTemplate.amount),
+            amount: FineAmount.concrete(reasonTemplate.amount),
             counts: reasonTemplate.counts === null
                 ? undefined
                 : {
